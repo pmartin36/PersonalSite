@@ -1,18 +1,14 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useReveal } from '../hooks/useReveal'
+import { useReveal } from '../reveal'
 import Carousel from './Carousel'
 
-export default function ProjectCard({ project, index = 0 }) {
-  const [ref, shown] = useReveal()
+export default function ProjectCard({ project, order = 0 }) {
+  const [ref, shown] = useReveal(order)
   const navigate = useNavigate()
   const to = `/projects/${project.slug}`
 
   return (
-    <article
-      ref={ref}
-      className={`card reveal${shown ? ' in' : ''}`}
-      style={{ transitionDelay: `${(index % 2) * 90}ms` }}
-    >
+    <article ref={ref} className={`card reveal${shown ? ' in' : ''}`}>
       <div
         className="card-media"
         onClick={() => navigate(to)}

@@ -118,22 +118,8 @@ a {
   transform: translateY(40vh) scale(2.9);
 }
 
-.landing .site-nav,
-.landing main {
-  transition:
-    opacity 0.7s ease 0.5s,
-    transform 0.7s ease 0.5s;
-}
-
-.landing:not(.entered) .site-nav {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.landing:not(.entered) main {
-  opacity: 0;
-  transform: translateY(14px);
-}
+/* nav + content appear via the ordered reveal cascade (see reveal.jsx), not a
+   block fade. */
 
 /* ---------- layout ---------- */
 main {
@@ -207,7 +193,7 @@ main > .section:first-child {
 
 .carousel-track {
   display: flex;
-  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .shot {
@@ -531,11 +517,6 @@ main > .section:first-child {
     scroll-behavior: auto;
   }
   .landing:not(.entered) .brand {
-    transform: none;
-  }
-  .landing:not(.entered) .site-nav,
-  .landing:not(.entered) main {
-    opacity: 1;
     transform: none;
   }
   .reveal {

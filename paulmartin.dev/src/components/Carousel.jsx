@@ -44,7 +44,7 @@ function Chevron({ dir }) {
 // Auto-advances while on screen; pauses on hover and while scrolled out of view;
 // honors prefers-reduced-motion. A single steady interval reads refs each tick,
 // so pause/visibility changes never tear it down or reset its phase.
-export default function Carousel({ hue = 200, shots = 3, interval = 3200 }) {
+export default function Carousel({ hue = 200, shots = 3, interval = 6400 }) {
   const [i, setI] = useState(0)
   const ref = useRef(null)
   const pausedRef = useRef(false)
