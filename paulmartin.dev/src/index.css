@@ -137,7 +137,7 @@ a {
 
 /* ---------- layout ---------- */
 main {
-  max-width: 940px;
+  max-width: 1180px;
   margin: 0 auto;
   padding: clamp(1.5rem, 4vw, 2.75rem) 1.5rem 6rem;
 }
@@ -164,18 +164,17 @@ main > .section:first-child {
 .cards {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1.1rem;
+  gap: 1.5rem;
 }
 
 .card {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
   color: var(--ink);
-  padding: 1.4rem 1.5rem 1.3rem;
   background: var(--surface);
   border: 1px solid var(--hairline);
-  border-radius: 14px;
+  border-radius: 16px;
+  overflow: hidden;
   box-shadow: var(--shadow);
   transition:
     transform 0.2s ease,
@@ -185,6 +184,159 @@ main > .section:first-child {
 .card:hover {
   transform: translateY(-3px);
   border-color: color-mix(in srgb, var(--accent) 45%, var(--hairline));
+}
+
+.card-media {
+  cursor: pointer;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.3rem 1.5rem 1.4rem;
+  flex: 1;
+}
+
+/* ---------- carousel / mock screenshots ---------- */
+.carousel {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.carousel-track {
+  display: flex;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.shot {
+  position: relative;
+  flex: 0 0 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.shot-ui {
+  position: absolute;
+  inset: 0;
+}
+
+.shot-bar,
+.shot-chip,
+.shot-block {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 99px;
+}
+
+.shot-bar {
+  top: 12%;
+  left: 7%;
+  width: 38%;
+  height: 6%;
+}
+
+.shot-chip {
+  top: 11%;
+  right: 7%;
+  width: 13%;
+  height: 15%;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+}
+
+.shot-block {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+}
+
+.shot-block.b1 {
+  top: 30%;
+  left: 7%;
+  width: 55%;
+  height: 24%;
+}
+
+.shot-block.b2 {
+  top: 62%;
+  left: 7%;
+  width: 34%;
+  height: 22%;
+}
+
+.shot-block.b3 {
+  top: 62%;
+  left: 45%;
+  width: 34%;
+  height: 22%;
+}
+
+.shot-count {
+  position: absolute;
+  bottom: 7%;
+  right: 5%;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.car-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.38);
+  color: #fff;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.carousel:hover .car-arrow {
+  opacity: 1;
+}
+
+.car-arrow.left {
+  left: 8px;
+}
+
+.car-arrow.right {
+  right: 8px;
+}
+
+.car-dots {
+  position: absolute;
+  bottom: 9px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: width 0.2s ease, background 0.2s ease;
+}
+
+.dot.on {
+  width: 16px;
+  border-radius: 3px;
+  background: #fff;
 }
 
 .card-top {
@@ -199,6 +351,15 @@ main > .section:first-child {
   font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.01em;
+}
+
+.card-name a {
+  color: var(--ink);
+  transition: color 0.18s ease;
+}
+
+.card-name a:hover {
+  color: var(--accent);
 }
 
 .card-year {
@@ -290,6 +451,13 @@ main > .section:first-child {
   color: var(--accent);
 }
 
+.detail-media {
+  margin: 1.6rem 0 0.5rem;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+}
+
 .detail-title {
   margin: 1.8rem 0 0.4rem;
   font-size: clamp(2rem, 6vw, 3rem);
@@ -346,6 +514,9 @@ main > .section:first-child {
   .reveal {
     opacity: 1;
     transform: none;
+    transition: none;
+  }
+  .carousel-track {
     transition: none;
   }
 }

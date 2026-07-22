@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useParams, Link, Navigate } from 'react-router-dom'
 import { getProject } from '../data/projects'
+import Carousel from '../components/Carousel'
 
 const RESUME_URL =
   'https://drive.google.com/file/d/1SpGooyH4FvJe9ykl-nXWoyM3i8u40Vyr/view?usp=sharing'
@@ -34,6 +35,9 @@ export default function ProjectDetail() {
         <Link to="/" className="detail-back">
           ← Back
         </Link>
+        <div className="detail-media">
+          <Carousel hue={project.hue} shots={project.shots} />
+        </div>
         <h1 className="detail-title">{project.name}</h1>
         <p className="detail-headline">{project.headline}</p>
         <div className="detail-meta">

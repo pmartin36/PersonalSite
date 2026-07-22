@@ -1,33 +1,47 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useReveal } from '../hooks/useReveal'
+import Carousel from './Carousel'
 
-// Whole card is the link to the detail page; reveals on scroll with a small
-// per-column stagger.
 export default function ProjectCard({ project, index = 0 }) {
   const [ref, shown] = useReveal()
+  const navigate = useNavigate()
+  const to = `/projects/${project.slug}`
+
   return (
-    <Link
+    <article
       ref={ref}
-      to={`/projects/${project.slug}`}
       className={`card reveal${shown ? ' in' : ''}`}
       style={{ transitionDelay: `${(index % 2) * 90}ms` }}
     >
-      <div className="card-top">
-        <h3 className="card-name">{project.name}</h3>
-        <span className="card-year">{project.year}</span>
+      <div
+        className="card-media"
+        onClick={() => navigate(to)}
+        aria-hidden="true"
+      >
+        <Carousel hue={project.hue} shots={project.shots} />
       </div>
-      <p className="card-headline">{project.headline}</p>
-      <p className="card-blurb">{project.blurb}</p>
-      {project.tags?.length > 0 && (
-        <div className="card-tags">
-          {project.tags.map((t) => (
-            <span key={t} className="tag">
-              {t}
-            </span>
-          ))}
+      <div className="card-body">
+        <div className="card-top">
+          <h3 className="card-name">
+            <Link to={to}>{project.name}</Link>
+          </h3>
+          <span className="card-year">{project.year}</span>
         </div>
-      )}
-      <span className="card-more">See details</span>
-    </Link>
+        <p className="card-headline">{project.headline}</p>
+        <p className="card-blurb">{project.blurb}</p>
+        {project.tags?.length > 0 && (
+          <div className="card-tags">
+            {project.tags.map((t) => (
+              <span key={t} className="tag">
+                {t}
+              </span>
+            ))}
+          </div>
+        )}
+        <Link to={to} className="card-more">
+          See details
+        </Link>
+      </div>
+    </article>
   )
 }
