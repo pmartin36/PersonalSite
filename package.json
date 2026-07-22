@@ -1,0 +1,16 @@
+{
+  "name": "personalsite",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Monorepo for Paul Martin's personal web properties.",
+  "scripts": {
+    "dev": "npm --prefix paulmartin.dev run dev",
+    "build": "npm --prefix paulmartin.dev install && npm --prefix paulmartin.dev run build",
+    "deploy": "npm run deploy:paulmartin && npm run deploy:ulmartin",
+    "deploy:paulmartin": "npm run build && cd paulmartin.dev && firebase deploy",
+    "deploy:ulmartin": "cd ulmartin.me && firebase deploy"
+  },
+  "devDependencies": {
+    "firebase-tools": "^15.24.0"
+  }
+}

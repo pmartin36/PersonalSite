@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ulmartin</title>
+    <meta name="robots" content="noindex" />
+    <meta name="description" content="Redirecting to paulmartin.dev" />
+    <!-- No-JS fallback: still forward users on. -->
+    <noscript>
+      <meta http-equiv="refresh" content="0; url=https://paulmartin.dev" />
+    </noscript>
+    <style>
+      :root {
+        --bg: #0a0a0c;
+        --fg: #f4f4f6;
+        --accent: #6ee7ff;
+        --glitch-a: #00e5ff; /* cyan channel  */
+        --glitch-b: #ff2f6d; /* magenta channel */
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body { height: 100%; margin: 0; }
+
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100dvh;
+        padding: 2rem;
+        overflow: hidden;
+        font-family: "SFMono-Regular", "SF Mono", ui-monospace, "JetBrains Mono",
+          "Fira Code", Menlo, Consolas, "Liberation Mono", monospace;
+        cursor: default;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* subtle vignette so the text sits in a pool of light */
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          ellipse at center,
+          transparent 40%,
+          rgba(0, 0, 0, 0.55) 100%
+        );
+      }
+
+      .word {
+        margin: 0;
+        font-weight: 600;
+        font-size: clamp(2.25rem, 11vw, 8rem);
+        letter-spacing: 0.01em;
+        line-height: 1;
+        white-space: nowrap;
+        user-select: none;
+        display: inline-flex;
+        align-items: baseline;
+      }
+
+      /* --- the morphing @ -> a glyph --- */
+      .morph {
+        position: relative;
+        display: inline-block;
+      }
+
+      .morph.glitching {
+        text-shadow:
+          0.03em 0 var(--glitch-b),
+          -0.03em 0 var(--glitch-a);
+        animation: jitter 0.12s steps(2) infinite;
+      }
+
+      .morph.glitching::before,
+      .morph.glitching::after {
+        content: attr(data-char);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg);
+        overflow: hidden;
+      }
+
+      .morph.glitching::before {
+        color: var(--glitch-a);
+        animation: glitch-top 0.5s steps(2) infinite;
+      }
+
+      .morph.glitching::after {
+        color: var(--glitch-b);
+        animation: glitch-bottom 0.5s steps(2) infinite;
+      }
+
+      @keyframes jitter {
+        0%   { transform: translate(0, 0); }
+        50%  { transform: translate(-0.01em, 0.01em); }
+        100% { transform: translate(0.01em, -0.01em); }
+      }
+
+      @keyframes glitch-top {
+        0%   { clip-path: inset(0 0 62% 0); transform: translateX(-0.04em); }
+        30%  { clip-path: inset(18% 0 40% 0); transform: translateX(0.05em); }
+        60%  { clip-path: inset(45% 0 18% 0); transform: translateX(-0.06em); }
+        100% { clip-path: inset(8% 0 55% 0); transform: translateX(0.03em); }
+      }
+
+      @keyframes glitch-bottom {
+        0%   { clip-path: inset(70% 0 0 0); transform: translateX(0.05em); }
+        30%  { clip-path: inset(48% 0 22% 0); transform: translateX(-0.05em); }
+        60%  { clip-path: inset(30% 0 40% 0); transform: translateX(0.06em); }
+        100% { clip-path: inset(58% 0 8% 0); transform: translateX(-0.03em); }
+      }
+
+      /* --- typed .dev --- */
+      .tld { color: var(--fg); }
+
+      .caret {
+        display: inline-block;
+        width: 0.08em;
+        align-self: stretch;
+        margin-left: 0.06em;
+        background: var(--accent);
+        animation: blink 1s steps(1) infinite;
+      }
+
+      @keyframes blink {
+        0%, 50%   { opacity: 1; }
+        50.01%, 100% { opacity: 0; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .morph.glitching,
+        .morph.glitching::before,
+        .morph.glitching::after,
+        .caret { animation: none; }
+        .caret { opacity: 1; }
+      }
+    </style>
+  </head>
+  <body>
+    <h1 class="word" aria-label="paulmartin.dev">
+      <span aria-hidden="true">p</span><span
+        class="morph"
+        id="morph"
+        data-char="@"
+        aria-hidden="true"
+        >@</span
+      ><span aria-hidden="true">ulmartin</span
+      ><span class="tld" id="tld" aria-hidden="true"></span
+      ><span class="caret" id="caret" aria-hidden="true"></span>
+    </h1>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var DEST = "https://paulmartin.dev";
+
+        var morph = document.getElementById("morph");
+        var tld = document.getElementById("tld");
+        var caret = document.getElementById("caret");
+
+        var reduced =
+          window.matchMedia &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        var done = false;
+        function go() {
+          if (done) return;
+          done = true;
+          // Replace history so the back button skips this page entirely.
+          window.location.replace(DEST);
+        }
+
+        // Let a returning visitor skip the whole thing.
+        function skip() {
+          go();
+        }
+        window.addEventListener("keydown", skip, { once: true });
+        window.addEventListener("pointerdown", skip, { once: true });
+
+        // Timeline (ms)
+        var T = {
+          hold: 1300, // read "p@ulmartin"
+          glitch: 650, // @ glitches
+          settle: 260, // beat before typing
+          typeStep: 150, // per character of .dev
+          postType: 850, // beat on full domain before redirect
+        };
+
+        var SCRAMBLE = ["#", "%", "&", "@", "4", "ä", "§", "a"];
+
+        function setChar(ch) {
+          morph.textContent = ch;
+          morph.setAttribute("data-char", ch);
+        }
+
+        function typeTld(str, i) {
+          if (i >= str.length) {
+            setTimeout(go, T.postType);
+            return;
+          }
+          tld.textContent += str[i];
+          setTimeout(function () {
+            typeTld(str, i + 1);
+          }, T.typeStep);
+        }
+
+        function runTyping() {
+          setTimeout(function () {
+            typeTld(".dev", 0);
+          }, T.settle);
+        }
+
+        if (reduced) {
+          // No motion: show the resolved domain, then forward.
+          setChar("a");
+          tld.textContent = ".dev";
+          setTimeout(go, 1200);
+          return;
+        }
+
+        // Phase 1 -> 2: glitch the @, scramble, resolve to 'a'.
+        setTimeout(function () {
+          morph.classList.add("glitching");
+          var scrambleEnd = performance.now() + T.glitch * 0.62;
+          var iv = setInterval(function () {
+            if (performance.now() >= scrambleEnd) {
+              clearInterval(iv);
+              setChar("a"); // land on the letter
+              return;
+            }
+            setChar(SCRAMBLE[(Math.random() * SCRAMBLE.length) | 0]);
+          }, 55);
+
+          // End the glitch, then type the TLD.
+          setTimeout(function () {
+            morph.classList.remove("glitching");
+            runTyping();
+          }, T.glitch);
+        }, T.hold);
+      })();
+    </script>
+  </body>
+</html>
