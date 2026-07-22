@@ -1,0 +1,27 @@
+.header {
+  width: 100%;
+  height: 50px;
+  top: 0;
+  background-color: #111111;
+  display: flex;
+  justify-content: space-around;
+  position: static;
+}
+
+.logo {
+  display: block;
+  cursor: pointer;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-color: transparent;
+  height: 100%;
+  width: auto;
+  background-image: url('/madebymoonlight/assets/logo-oneline.png');
+  background-position: center;
+  margin: auto;
+}
+
+.spacer {
+  position: relative;
+  width: 33%;
+}

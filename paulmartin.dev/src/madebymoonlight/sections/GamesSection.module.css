@@ -1,0 +1,147 @@
+.section {
+  background: linear-gradient(rgba(0, 0, 25, 0.8) 0%, rgba(10, 0, 30, 0.8) 100%);
+  height: 100vh;
+  width: 100vw;
+  z-index: 2;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.gameSection {
+  width: 1000px;
+  height: 700px;
+}
+
+.blowupContainer {
+  height: 450px;
+  margin: 0 auto 3% auto;
+  width: 800px;
+  cursor: pointer;
+}
+
+.thumbnailScroll {
+  height: 110px;
+  width: 700px;
+  margin: 0 auto 1% auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filterContainer {
+  height: 5%;
+  width: 20%;
+  margin: 0 auto;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.thumbnail {
+  height: 100px;
+  width: 100px;
+  margin-left: 5px;
+  margin-right: 5px;
+  cursor: pointer;
+  object-fit: contain;
+}
+
+.thumbnailSelected {
+  border: 10px solid transparent;
+  border-image: url('/madebymoonlight/assets/thumbnail-border.png') 5 stretch;
+}
+
+.navLink {
+  color: gray;
+  cursor: pointer;
+  user-select: none;
+}
+
+.navLink:hover {
+  color: rgb(200, 200, 200);
+}
+
+.navLinkSelected {
+  color: white !important;
+}
+
+.separator {
+  color: lightgray;
+  user-select: none;
+}
+
+.title {
+  position: absolute;
+  color: white;
+  width: 250px;
+  height: 75px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 35px;
+}
+
+.blowup {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.noGame {
+  color: white;
+  width: 800px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 35px;
+}
+
+@media only screen and (max-width: 760px) {
+  .gameSection {
+    width: 100%;
+    height: 80%;
+  }
+
+  .blowupContainer {
+    max-width: 95%;
+    max-height: 50%;
+    height: auto;
+    width: 95%;
+  }
+
+  .thumbnailScroll {
+    width: 100%;
+    height: 20%;
+    margin-bottom: 3%;
+  }
+
+  .thumbnail {
+    width: 15%;
+    height: auto;
+  }
+
+  .filterContainer {
+    width: 90%;
+  }
+
+  .title {
+    font-size: 20px;
+    width: 35%;
+    height: auto;
+  }
+
+  .section svg {
+    width: 40%;
+    height: auto;
+  }
+
+  .noGame {
+    width: 100%;
+    height: auto;
+  }
+}

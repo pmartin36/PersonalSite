@@ -1,0 +1,28 @@
+/* Global styles scoped to the Made By Moonlight subtree (.mbm wrapper) plus the
+   game display fonts. Ported from the Angular app's styles.css. */
+@import url('https://fonts.googleapis.com/css2?family=Didact+Gothic&display=swap');
+
+@font-face {
+  font-family: 'solar-express';
+  src: url('/madebymoonlight/assets/goodtimesrg.ttf');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'the-16-spaces';
+  src: url('/madebymoonlight/assets/Aladin.ttf');
+  font-display: swap;
+}
+
+.mbm {
+  font-family: 'Didact Gothic', system-ui, sans-serif;
+  color: #fff;
+}
+
+/* The original hid the scrollbar site-wide; scope it to while Moonlight is
+   mounted so the single-scroll home page reads full-bleed. */
+html.mbm-lock::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  background: transparent;
+}

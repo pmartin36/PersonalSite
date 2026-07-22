@@ -1,0 +1,81 @@
+.section {
+  background: linear-gradient(rgba(20, 8, 0, 0.8), rgba(0, 0, 25, 0.8));
+  height: 100vh;
+  width: 100vw;
+  z-index: 2;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container {
+  position: relative;
+  left: 2.5%;
+}
+
+.method {
+  width: 400px;
+  height: 50px;
+  color: white;
+  margin: 0 auto 20px auto;
+  position: relative;
+}
+
+.icon {
+  width: 50px;
+  height: 50px;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  margin-right: 25px;
+  display: inline-block;
+}
+
+.twitter {
+  background-image: url('/madebymoonlight/assets/twitter.png');
+}
+
+.email {
+  background-image: url('/madebymoonlight/assets/email.png');
+}
+
+.plus {
+  background-image: url('/madebymoonlight/assets/plus.png');
+}
+
+.contact {
+  display: inline-block;
+  float: right;
+  width: 325px;
+  line-height: 50px;
+  vertical-align: center;
+}
+
+.section a {
+  color: lightgray;
+}
+
+.section a:hover {
+  color: white;
+}
+
+@media only screen and (max-width: 480px) {
+  .icon,
+  .contact {
+    display: block;
+    width: 100%;
+    float: none;
+  }
+
+  .contact {
+    text-align: center;
+  }
+
+  .method {
+    width: 100%;
+    height: 25%;
+    margin-bottom: 10%;
+  }
+}

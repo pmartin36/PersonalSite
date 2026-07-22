@@ -1,0 +1,98 @@
+.title {
+  text-align: center;
+}
+
+/* Black outline drawn behind the gradient/coloured title via a duplicated
+   layer, matching the original .shadowed::before trick. */
+.shadowed {
+  position: relative;
+}
+
+.shadowed::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  width: 100%;
+  text-shadow:
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000;
+}
+
+.titleContainer {
+  position: relative;
+  margin: 2% auto 0 auto;
+  color: white;
+  font-size: 96px;
+  font-weight: bold;
+  width: 75%;
+  text-align: center;
+}
+
+.available {
+  text-align: center;
+}
+
+.availableContainer {
+  position: relative;
+  margin: 3% auto 0 auto;
+  font-size: 48px;
+  color: white;
+  width: 75%;
+  text-align: center;
+}
+
+.youtubeContainer {
+  position: relative;
+  margin: 2% auto 0 auto;
+  width: 800px;
+  height: 0;
+  padding-bottom: 450px;
+}
+
+.youtube {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border: 0;
+}
+
+.platforms {
+  position: relative;
+  margin: 1% auto 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.storeButton {
+  max-width: 200px;
+  object-fit: contain;
+}
+
+@media only screen and (max-width: 760px) {
+  .titleContainer {
+    font-size: 48px;
+  }
+
+  .youtubeContainer {
+    width: 95%;
+    padding-bottom: 56.25%;
+  }
+
+  .platforms {
+    height: 20%;
+    width: 95%;
+  }
+
+  .availableContainer {
+    font-size: 32px;
+  }
+}

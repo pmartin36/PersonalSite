@@ -1,0 +1,87 @@
+.host {
+  position: fixed;
+  width: 100%;
+  top: 90vh;
+  height: 5vh;
+  z-index: 3;
+}
+
+.container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-around;
+  align-items: center;
+  border-radius: 15px;
+  padding: 0 5%;
+}
+
+.center {
+  position: relative;
+  left: -2%;
+  width: 50%;
+  height: 100%;
+  margin: 0 auto;
+}
+
+.host span {
+  font-weight: bold;
+  flex: none;
+}
+
+.host a {
+  color: gray;
+  text-decoration: none;
+  user-select: none;
+}
+
+.host a:hover {
+  color: rgb(200, 200, 200);
+}
+
+.focused {
+  color: white !important;
+}
+
+.separator {
+  color: lightgray;
+  user-select: none;
+}
+
+.scroller {
+  position: fixed;
+  width: 5px;
+  border-radius: 3px;
+  height: 30px;
+  right: 0;
+  top: 0;
+  z-index: 1;
+  opacity: 0;
+  background: radial-gradient(white, black);
+  transition: opacity 1s ease-out;
+}
+
+.fadeIn {
+  opacity: 1;
+}
+
+.fadeOut {
+  opacity: 0;
+}
+
+.outline {
+  text-shadow:
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000;
+  letter-spacing: 0.5px;
+}
+
+@media only screen and (max-width: 480px) {
+  .center {
+    width: 85%;
+    height: 150%;
+  }
+}
