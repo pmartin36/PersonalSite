@@ -34,14 +34,16 @@ export default function Landing() {
     document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  // reveal order: nav(0) -> Current label(1) -> its rows(2,3) -> Previous
-  // label -> its rows -> Contact label -> body
+  // reveal order: nav(0) -> Current label -> its rows -> Previous label -> its
+  // rows -> About label -> About body -> footer heading -> contact links
   const curRows = Math.ceil(currentProjects.length / 2)
   const prevLabelOrder = 2 + curRows
   const prevBase = prevLabelOrder + 1
   const prevRows = Math.ceil(previousProjects.length / 2)
-  const contactLabelOrder = prevBase + prevRows
-  const contactBodyOrder = contactLabelOrder + 1
+  const aboutLabelOrder = prevBase + prevRows
+  const aboutBodyOrder = aboutLabelOrder + 1
+  const footerHeadingOrder = aboutBodyOrder + 1
+  const contactBase = footerHeadingOrder + 1
 
   return (
     <RevealProvider active={armed} stagger={240}>
@@ -100,54 +102,66 @@ export default function Landing() {
             </div>
           </section>
 
-          <section
-            className="section"
-            id="contact"
-            aria-labelledby="contact-label"
-          >
+          <section className="section about" aria-labelledby="about-label">
             <Reveal
               as="p"
-              order={contactLabelOrder}
+              order={aboutLabelOrder}
               className="section-label"
-              id="contact-label"
+              id="about-label"
             >
-              Contact
+              About
             </Reveal>
-            <div className="contact-list">
-              <Reveal
-                as="a"
-                order={contactBodyOrder}
-                className="contact-item"
-                href="mailto:p@ulmartin.me"
-              >
-                <span className="contact-kind">Email</span>
-                <span className="contact-value">p@ulmartin.me</span>
-              </Reveal>
-              <Reveal
-                as="a"
-                order={contactBodyOrder + 1}
-                className="contact-item"
-                href="https://bsky.app/profile/made4me.bsky.social"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <span className="contact-kind">Bluesky</span>
-                <span className="contact-value">@made4me.bsky.social</span>
-              </Reveal>
-              <Reveal
-                as="a"
-                order={contactBodyOrder + 2}
-                className="contact-item"
-                href="https://www.linkedin.com/in/paul-martin-b8547616/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <span className="contact-kind">LinkedIn</span>
-                <span className="contact-value">Paul Martin</span>
-              </Reveal>
-            </div>
+            <Reveal as="div" order={aboutBodyOrder} className="about-body">
+              <p>
+                I'm a software developer who builds web apps, games, and the
+                occasional tool. I care about the small details that make
+                software feel good to use.
+              </p>
+              <p className="about-note">
+                (Placeholder — replace with your own words.)
+              </p>
+            </Reveal>
           </section>
         </main>
+
+        <footer id="contact" className="site-footer">
+          <Reveal as="h2" order={footerHeadingOrder} className="footer-heading">
+            Want to get in touch?
+          </Reveal>
+          <div className="contact-list">
+            <Reveal
+              as="a"
+              order={contactBase}
+              className="contact-item"
+              href="mailto:p@ulmartin.me"
+            >
+              <span className="contact-kind">Email</span>
+              <span className="contact-value">p@ulmartin.me</span>
+            </Reveal>
+            <Reveal
+              as="a"
+              order={contactBase + 1}
+              className="contact-item"
+              href="https://bsky.app/profile/made4me.bsky.social"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="contact-kind">Bluesky</span>
+              <span className="contact-value">@made4me.bsky.social</span>
+            </Reveal>
+            <Reveal
+              as="a"
+              order={contactBase + 2}
+              className="contact-item"
+              href="https://www.linkedin.com/in/paul-martin-b8547616/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="contact-kind">LinkedIn</span>
+              <span className="contact-value">Paul Martin</span>
+            </Reveal>
+          </div>
+        </footer>
       </div>
     </RevealProvider>
   )
