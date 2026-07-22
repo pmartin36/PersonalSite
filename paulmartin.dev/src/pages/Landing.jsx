@@ -113,9 +113,39 @@ export default function Landing() {
             >
               Contact
             </Reveal>
-            <Reveal as="p" order={contactBodyOrder} className="contact-body">
-              Coming soon.
-            </Reveal>
+            <div className="contact-list">
+              <Reveal
+                as="a"
+                order={contactBodyOrder}
+                className="contact-item"
+                href="mailto:p@ulmartin.me"
+              >
+                <span className="contact-kind">Email</span>
+                <span className="contact-value">p@ulmartin.me</span>
+              </Reveal>
+              <Reveal
+                as="a"
+                order={contactBodyOrder + 1}
+                className="contact-item"
+                href="https://bsky.app/profile/made4me.bsky.social"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className="contact-kind">Bluesky</span>
+                <span className="contact-value">@made4me.bsky.social</span>
+              </Reveal>
+              <Reveal
+                as="a"
+                order={contactBodyOrder + 2}
+                className="contact-item"
+                href="https://www.linkedin.com/in/paul-martin-b8547616/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className="contact-kind">LinkedIn</span>
+                <span className="contact-value">Paul Martin</span>
+              </Reveal>
+            </div>
           </section>
         </main>
       </div>

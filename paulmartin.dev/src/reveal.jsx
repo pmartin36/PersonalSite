@@ -22,19 +22,21 @@ export function RevealProvider({ active = true, stagger = 220, children }) {
 
   function pump() {
     if (!s.active || s.timer) return
-    const remaining = s.entries
-      .filter((r) => !r.revealed)
+    // Cascade among items currently in view, lowest order first. Reveal every
+    // item sharing that order together (a "row" lands at once). We deliberately
+    // do NOT block on out-of-view earlier items, so jumping straight to a
+    // section (e.g. the Contact nav) still reveals it instead of stalling.
+    const eligible = s.entries
+      .filter((r) => !r.revealed && r.inView)
       .sort((a, b) => a.order - b.order)
-    if (!remaining.length) return
-    // reveal every item sharing the next order together (a "row" lands at once),
-    // but only once all of them are in view
-    const nextOrder = remaining[0].order
-    const batch = remaining.filter((r) => r.order === nextOrder)
-    if (!batch.every((r) => r.inView)) return
-    batch.forEach((r) => {
-      r.revealed = true
-      r.reveal()
-    })
+    if (!eligible.length) return
+    const nextOrder = eligible[0].order
+    eligible
+      .filter((r) => r.order === nextOrder)
+      .forEach((r) => {
+        r.revealed = true
+        r.reveal()
+      })
     s.timer = setTimeout(() => {
       s.timer = null
       pump()
