@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "npm --prefix paulmartin.dev run dev",
     "build": "npm --prefix paulmartin.dev install && npm --prefix paulmartin.dev run build",
-    "deploy": "npm run deploy:paulmartin && npm run deploy:ulmartin",
-    "deploy:paulmartin": "npm run build && cd paulmartin.dev && firebase deploy",
-    "deploy:ulmartin": "cd ulmartin.me && firebase deploy"
+    "deploy": "npm run build && firebase deploy --only hosting",
+    "deploy:paulmartin": "npm run build && firebase deploy --only hosting:paulmartin",
+    "deploy:ulmartin": "firebase deploy --only hosting:ulmartin"
   },
   "devDependencies": {
     "firebase-tools": "^15.24.0"

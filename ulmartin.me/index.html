@@ -161,7 +161,9 @@
       (function () {
         "use strict";
 
-        var DEST = "https://paulmartin.dev";
+        // ?from=ulmartin lets paulmartin.dev detect arrivals via the transition
+        // and skip its own intro animation (they just watched this one).
+        var DEST = "https://paulmartin.dev/?from=ulmartin";
 
         var morph = document.getElementById("morph");
         var tld = document.getElementById("tld");

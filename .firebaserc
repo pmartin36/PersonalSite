@@ -1,0 +1,13 @@
+{
+  "projects": {
+    "default": "paulmartin"
+  },
+  "targets": {
+    "paulmartin": {
+      "hosting": {
+        "paulmartin": ["paulmartin-dev"],
+        "ulmartin": ["ulmartin-me"]
+      }
+    }
+  }
+}

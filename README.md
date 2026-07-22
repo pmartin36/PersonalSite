@@ -22,28 +22,32 @@ npm run dev            # http://localhost:5173
 
 ## Deploy (Firebase Hosting)
 
-Each site is its **own Firebase project**, self-contained in its folder
-(`firebase.json` + `.firebaserc`) — same pattern as the CodeScenes repo.
+One Firebase project (`paulmartin`) hosts two sites via targets, configured at
+the repo root (`firebase.json` + `.firebaserc`).
 
-| Folder | Firebase project | Serves |
-|--------|------------------|--------|
-| `paulmartin.dev/` | `paulmartin-dev` | `dist/` (built Vite app) |
-| `ulmartin.me/` | `ulmartin-me` | the folder itself (static) |
+| Target | Site ID | Serves |
+|--------|---------|--------|
+| `paulmartin` | `paulmartin-dev` | `paulmartin.dev/dist` (built Vite app) |
+| `ulmartin` | `ulmartin-me` | `ulmartin.me/` (static) |
 
-`firebase-tools` is installed once at the repo root and resolved by `firebase`
-inside each folder.
+`firebase-tools` is installed once at the repo root.
 
-### First-time setup (interactive — run these yourself)
+### First-time setup
 
 ```sh
-npm install                                   # installs firebase-tools at the root
-npx firebase login
-npx firebase projects:create paulmartin-dev   # or reuse existing ids
-npx firebase projects:create ulmartin-me
+npm install                                        # firebase-tools at the root
+npx firebase login                                 # (already done on this machine)
+npx firebase projects:create paulmartin
+npx firebase hosting:sites:create paulmartin-dev --project paulmartin
+npx firebase hosting:sites:create ulmartin-me --project paulmartin
 ```
 
-If you pick different project ids, update `default` in the matching
-`<folder>/.firebaserc`.
+Target→site mappings live in `.firebaserc` (already wired). Re-apply if needed:
+
+```sh
+npx firebase target:apply hosting paulmartin paulmartin-dev
+npx firebase target:apply hosting ulmartin ulmartin-me
+```
 
 ### Deploy
 
