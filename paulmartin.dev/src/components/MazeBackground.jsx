@@ -1,9 +1,8 @@
 import { useEffect, useRef } from 'react'
 
 // The hidden interactive maze, rendered as a fixed full-viewport metallic-shimmer
-// background. Dark at rest; it only reveals on mouse move (directional wake), scroll
-// (a wave that sets out from the pointer and breaks down the page), or ball impact.
-// Controls are U/L/D/R (the letters hidden in "paulmartin.dev" - no arrow-key
+// background. Dark at rest; it only reveals on mouse move (directional wake) or ball
+// impact. Controls are U/L/D/R (the letters hidden in "paulmartin.dev" - no arrow-key
 // workaround). Reaching the exit calls onSolve.
 export default function MazeBackground({ onSolve }) {
   const canvasRef = useRef(null)
@@ -273,176 +272,6 @@ export default function MazeBackground({ onSolve }) {
       }
     }
 
-    // ---- scroll reveal ----
-    // Driven by window.scrollY sampled in the rAF loop, never by wheel events. Wheel,
-    // trackpad, touch drag, keyboard and anchor jumps all move scrollY, so one source covers
-    // every input and the response is continuous with the page's motion.
-    let lastSY = window.scrollY
-    let sVel = 0        // |px| moved this frame
-    let sDir = 1        // last non-zero scroll direction
-    let env = 0         // 0..1 smoothed scroll energy: fast attack, slow release
-    const SCROLL_FULL = 42 // px/frame that counts as "full tilt"
-
-    function readScroll() {
-      const sy = window.scrollY
-      const dy = sy - lastSY
-      lastSY = sy
-      sVel = Math.abs(dy)
-      if (sVel > 0.5) sDir = dy > 0 ? 1 : -1
-      const t = Math.min(1, sVel / SCROLL_FULL)
-      env += (t - env) * (t > env ? 0.34 : 0.055)
-      if (env < 0.002) env = 0
-    }
-
-    // Soft-edged alpha sprite. Drawing a stretched sprite gives two-axis softness in one
-    // call, which a canvas gradient cannot do; the reveal mask is what defines the shape, so
-    // the colour pass on top only needs to cover it and can stay a plain gradient.
-    const makeSprite = (w, h, f) => {
-      const cv = document.createElement('canvas'); cv.width = w; cv.height = h
-      const c = cv.getContext('2d'), img = c.createImageData(w, h)
-      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-        const i = (y * w + x) * 4
-        img.data[i] = 255; img.data[i + 1] = 255; img.data[i + 2] = 255
-        img.data[i + 3] = Math.max(0, Math.min(255, f(x / (w - 1), y / (h - 1)) * 255)) | 0
-      }
-      c.putImageData(img, 0, 0); return cv
-    }
-    // symmetric falloff; p=2 is a bell, higher p is a plateau with soft shoulders
-    const plateau = (t, p) => Math.pow(Math.max(0, 1 - Math.pow(Math.abs(2 * t - 1), p)), 1.4)
-    const SPR_BLOB = makeSprite(48, 48, (x, y) => plateau(x, 3) * plateau(y, 2))
-
-    // A swell sets out from the pointer and breaks further down the page, like a wave
-    // running up a shore. The pointer sets only WHERE it starts; scroll decides when one
-    // sets out. It is a row of soft stamps along an irregular crest rather than one shape,
-    // so the crest never has an edge to alias and the break can travel along its length.
-    //
-    // The crest is a CIRCULAR front centred on the origin, which is what makes it start as a
-    // point and radiate out: early on only the segments near the origin are inside the
-    // front, and as it advances the arc widens and flattens into a shore-parallel line.
-    //
-    // Everything affecting TIMING is fixed, so every wave paces identically. Only shape is
-    // random: how wide it is, how the crest undulates, and the order the break travels.
-    const SPREAD = 2.6      // curvature of the front, not how fast it opens out
-    const WIDEN_AT = 0.75   // full width reached at this fraction of the total travel
-    const WIDEN_EASE = 0.9
-    const WAVE_SPD = 5.2    // px/frame, constant
-    const BREAK_AT = 92     // px of travel before the crest starts to curl
-    const BREAK_LEN = 70    // px over which a segment goes from crest to full foam
-    const DISSIPATE = 48    // px more before the foam is gone
-    const BREAK_SLOW = 0.30 // the wave slows by this much as it piles up
-    const FADE_POW = 1.6    // >1 trims the dim tail so the wave does not linger
-    const WAVE_MAX = 2
-    const GAP_MIN = 260, GAP_RND = 300 // px of scroll before the next wave is due
-    // A floor in TIME as well. Lifetime is wall-clock but the distance gap is not, so
-    // scrolling faster would otherwise shrink the gap while the wave lasted just as long,
-    // and they would run together with the screen never empty.
-    const GAP_MS = 1300
-    const WAVE_TOTAL = BREAK_AT * 1.4 + BREAK_LEN + DISSIPATE // travel before it is spent
-    const WAVE_GAIN = 1.7   // the wave covers little of the screen, so it needs to carry more
-
-    const waves = []
-    let waveDist = 0, waveNext = GAP_MIN, lastWaveT = -1e9
-    function spawnWave() {
-      // at the cap, SKIP rather than drop the oldest: shifting one out kills a wave mid-life
-      if (waves.length >= WAVE_MAX) return
-      // pointer if we have one, otherwise a sensible spot high on the viewport
-      const ox = pmx >= 0 ? pmx : W * 0.5
-      const oy = pmy >= 0 ? pmy : H * 0.32
-      const span = 128 + Math.random() * 247
-      const n = Math.max(10, (span * 2 / 13) | 0)
-      const segs = new Array(n)
-      for (let i = 0; i < n; i++) {
-        segs[i] = {
-          u: (i / (n - 1)) * 2 - 1,
-          // stagger each segment's break so the collapse travels along the crest
-          breakOff: (Math.random() - 0.5) * BREAK_AT * 0.8,
-          sprayX: (Math.random() - 0.5) * 44, sprayY: 12 + Math.random() * 30,
-          sprayS: 0.4 + Math.random() * 0.5,
-        }
-      }
-      waves.push({
-        ox, oy, span, segs, dir: sDir, travel: 0, age: 0,
-        k1: 2.4 + Math.random() * 3, p1: Math.random() * 6.283, a1: 5 + Math.random() * 9,
-        k2: 6 + Math.random() * 7, p2: Math.random() * 6.283, a2: 3 + Math.random() * 5,
-      })
-    }
-    // how far a segment at lateral offset dx has advanced along the elliptical front
-    const segFwd = (w, dx) => {
-      const reach = w.travel * SPREAD
-      const adx = Math.min(Math.abs(dx), reach * 0.98)
-      return Math.sqrt(reach * reach - adx * adx) / SPREAD
-    }
-    // half-width the wave has opened out to so far, 0..1 of its span
-    const widthT = (w) => Math.min(1, Math.pow(w.travel / (WAVE_TOTAL * WIDEN_AT), WIDEN_EASE))
-    function stepWave() {
-      if (env > 0.05) {
-        waveDist += sVel
-        if (waveDist >= waveNext && nowT - lastWaveT >= GAP_MS) {
-          spawnWave()
-          waveDist = 0; lastWaveT = nowT
-          waveNext = GAP_MIN + Math.random() * GAP_RND
-        }
-      }
-      for (let i = waves.length - 1; i >= 0; i--) {
-        const w = waves[i]
-        w.age++
-        const b = Math.min(1, Math.max(0, (w.travel - BREAK_AT) / BREAK_LEN))
-        w.travel += WAVE_SPD * (1 - BREAK_SLOW * b)
-        // Gate on the CENTRE's travel. The outer segments lag well behind on the elliptical
-        // front, so gating on them would tie the duration to the random span.
-        if (w.travel > WAVE_TOTAL || w.age > 200) waves.splice(i, 1)
-      }
-    }
-    function waveAlpha(c2) {
-      for (const w of waves) {
-        const born = Math.min(1, w.age / 4)
-        const wt = widthT(w)
-        for (const s of w.segs) {
-          const au = Math.abs(s.u)
-          if (au > wt) continue // the wave has not opened out this far yet
-          const dx = s.u * w.span
-          const fwd = segFwd(w, dx)
-          const edge = Math.pow(Math.max(0, 1 - s.u * s.u), 0.7) // fade out toward the ends
-          if (edge <= 0.01) continue
-          const tip = Math.min(1, (wt - au) * w.span / 55) // soft opening tip, no pop-in
-          const b = Math.min(1, Math.max(0, (fwd - BREAK_AT - s.breakOff) / BREAK_LEN))
-          const over = fwd - BREAK_AT - s.breakOff - BREAK_LEN
-          // Clamp the base BEFORE the power. Past full dissipation this goes negative, and a
-          // fractional exponent on a negative base is NaN, which slips through a `<= 0.01`
-          // guard and then silently voids the globalAlpha assignment, so spent segments
-          // repaint at the previous alpha and flash.
-          const dis = over <= 0 ? 1 : Math.pow(Math.max(0, 1 - over / DISSIPATE), FADE_POW)
-          if (dis <= 0.01) continue
-          // brightest right as it curls, then the foam dims as it spreads
-          const bright = 0.62 + 0.95 * Math.exp(-Math.pow((b - 0.2) / 0.19, 2))
-          // an unbroken crest still needs height to catch glints, or the run-up is lost
-          const thick = 12 + 44 * b
-          const x = w.ox + dx
-          const y = w.oy + w.dir * fwd + w.a1 * Math.sin(s.u * w.k1 + w.p1) + w.a2 * Math.sin(s.u * w.k2 + w.p2)
-          c2.globalAlpha = Math.min(1, edge * tip * bright * dis * born * 0.9)
-          c2.drawImage(SPR_BLOB, x - 15, y - thick / 2, 30, thick)
-          if (b > 0.15) { // foam thrown forward off the crest
-            c2.globalAlpha = Math.min(1, edge * tip * dis * born * b * 0.45)
-            c2.drawImage(SPR_BLOB, x - 11 + s.sprayX * b, y + w.dir * s.sprayY * b, 22, 14 * s.sprayS + 10 * b)
-          }
-        }
-      }
-      c2.globalAlpha = 1
-    }
-    function waveTint(c2) {
-      // colour runs ALONG each wave, so one swell is a single ribbon of spectrum
-      for (const w of waves) {
-        const g = c2.createLinearGradient(w.ox - w.span, 0, w.ox + w.span, 0)
-        const STOPS = 16, stops = specStops(STOPS, Math.min(120, w.age), 190)
-        for (let k = 0; k <= STOPS; k++) g.addColorStop(k / STOPS, stops[k])
-        c2.fillStyle = g
-        // cover the whole arc: the leading centre back to where the outer tails lag
-        const yLead = w.oy + w.dir * w.travel
-        const yA = yLead + w.dir * 90, yB = yLead - w.dir * (w.travel + 200)
-        c2.fillRect(w.ox - w.span - 50, Math.min(yA, yB), w.span * 2 + 100, Math.abs(yA - yB))
-      }
-    }
-
     const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
 
     const WAKE_SPEED = 2.2, WAKE_LIFE = 52, RING_W = 38, REVEAL = 0.5
@@ -496,7 +325,7 @@ export default function MazeBackground({ onSolve }) {
     // rendered on the FRONT layer with a black cut-through) vs ambient mouse wakes (BACK).
     // blackBack paints an opaque #030304 punched to the reveal mask so the shimmer shows
     // THROUGH any content in front — the ball's wall-hit tears a shimmer-on-black hole.
-    const renderReveal = (target, wantFull, includeScroll, blackBack) => {
+    const renderReveal = (target, wantFull, blackBack) => {
       // 1) reveal alpha into waveC
       vctx.setTransform(DPR, 0, 0, DPR, 0, 0)
       vctx.clearRect(0, 0, W, H)
@@ -509,7 +338,6 @@ export default function MazeBackground({ onSolve }) {
         g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, `rgba(255,255,255,${peak})`); g.addColorStop(1, 'rgba(255,255,255,0)')
         vctx.fillStyle = g; wedge(vctx, w, rad + ring); vctx.fill()
       }
-      if (includeScroll) waveAlpha(vctx)
 
       // 2) metal glints -> spectrum tint -> ball blue -> clip to the reveal mask
       mctx.setTransform(DPR, 0, 0, DPR, 0, 0)
@@ -528,7 +356,6 @@ export default function MazeBackground({ onSolve }) {
         for (let s = 0; s <= STOPS; s++) cg.addColorStop(s / STOPS, stops[s])
         mctx.fillStyle = cg; wedge(mctx, w, outer); mctx.fill()
       }
-      if (includeScroll) waveTint(mctx)
       { // the ball's own distinct blue, painted last so it pops however it's revealed
         const cg = mctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, 18)
         cg.addColorStop(0, 'hsla(197,100%,73%,1)')
@@ -547,8 +374,7 @@ export default function MazeBackground({ onSolve }) {
         target.globalCompositeOperation = 'destination-in'; target.drawImage(waveC, 0, 0, W, H)
         target.globalCompositeOperation = 'source-over'
       }
-      const gain = includeScroll ? WAVE_GAIN : 1
-      target.globalAlpha = Math.min(1, REVEAL * gain); target.drawImage(mask, 0, 0, W, H); target.globalAlpha = 1
+      target.globalAlpha = REVEAL; target.drawImage(mask, 0, 0, W, H); target.globalAlpha = 1
     }
 
     // The ball's porthole (FRONT layer): a FIXED-size soft disc centred on the ball that
@@ -606,8 +432,6 @@ export default function MazeBackground({ onSolve }) {
 
     function frame(now) {
       nowT = now
-      readScroll()
-      stepWave()
 
       if (tween.active) {
         const t = (now - tween.t0) / tween.dur
@@ -640,8 +464,8 @@ export default function MazeBackground({ onSolve }) {
       let hasNonFull = false
       for (let i = 0; i < wake.length; i++) if (!wake[i].full) hasNonFull = true
 
-      // BACK: ambient mouse wakes + the scroll reveal, revealed behind the content
-      if (hasNonFull || waves.length) renderReveal(ctx, false, true, false)
+      // BACK: ambient mouse wakes, revealed behind the content
+      if (hasNonFull) renderReveal(ctx, false, false)
       // FRONT: the destination porthole(s) — dim content so the shimmer + ball show through
       if (reveals.length) renderReveals(fgCtx)
 
