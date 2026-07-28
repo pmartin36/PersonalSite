@@ -779,14 +779,6 @@ main > .section:first-child {
   text-align: center;
 }
 
-.solved-eyebrow {
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin: 0 0 0.75rem;
-}
 
 .solved-title {
   margin: 0 0 1rem;
@@ -842,11 +834,6 @@ main > .section:first-child {
   margin-left: 0.6rem;
 }
 
-.solved-empty {
-  color: var(--muted);
-  font-style: italic;
-  margin: 0;
-}
 
 .solved-back {
   display: inline-block;

@@ -70,10 +70,10 @@ export const currentProjects = [
     slug: 'code-scenes',
     name: 'Code Scenes',
     year: '2026',
-    headline: 'Unity scenes as plain C#, in sync with the editor both ways.',
+    headline: 'Unity scene editing, designed for the AI era',
     tags: ['C#', 'Unity', '.NET', 'Dev Tooling'],
     blurb:
-      'Write a scene as a readable C# file and press Build. The real scene appears in Unity. Move something in the editor and the file rewrites itself to match.',
+      'Write a scene as readable C# and watch the scene in the Unity editor update automatically. Move something in the editor and the file rewrites itself to match.',
     thumb: still(
       'code-scenes',
       'Unity and VS Code side by side: a scene of cars and props on the left, the C# file that built it on the right',
