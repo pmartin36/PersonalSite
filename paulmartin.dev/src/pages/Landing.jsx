@@ -1,32 +1,57 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { currentProjects, previousProjects } from '../data/projects'
 import ProjectCard from '../components/ProjectCard'
+import MazeBackground from '../components/MazeBackground'
+import IntroWake from '../components/IntroWake'
 import { RevealProvider, Reveal } from '../reveal'
 
 const RESUME_URL =
   'https://drive.google.com/file/d/1SpGooyH4FvJe9ykl-nXWoyM3i8u40Vyr/view?usp=sharing'
 
+// Module scope, so it survives client-side navigation but resets on a real
+// document load. The intro is a greeting for arriving at the site, not for
+// arriving at this component: without this, hitting Back from a project replays
+// the whole thing. Typing the URL or reloading gets a fresh module and does
+// play it. Set on handoff rather than on mount, so navigating away mid-intro
+// (before anything was actually seen) still counts as unplayed.
+let introPlayed = false
+
 export default function Landing() {
+  const navigate = useNavigate()
   const [params] = useSearchParams()
   const skipIntro = params.get('from') === 'ulmartin'
   const reduce =
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-  // entered = name has settled into the header; armed = the content cascade may
-  // begin (a beat after the settle, so the name lands first).
-  const [entered, setEntered] = useState(skipIntro || reduce)
-  const [armed, setArmed] = useState(skipIntro || reduce)
+  // The "Wake" intro plays on a normal visit; it does the hero-name settle on its own canvas
+  // over the page. So the brand always renders in its final header slot (hidden under the intro
+  // canvas until handoff), and the content cascade waits for the intro to finish.
+  // Captured into state on the first render so it cannot flip mid-life.
+  const [playIntro] = useState(!skipIntro && !reduce && !introPlayed)
+  const [armed, setArmed] = useState(!playIntro) // content revealed immediately when skipping the intro
+  const [showIntro, setShowIntro] = useState(playIntro)
 
+  function handoff() {
+    introPlayed = true
+    setArmed(true)
+  }
+
+  // Chrome that lives outside the reveal cascade (the footer rule, the header's
+  // scrolled backdrop) paints on first frame regardless of the cascade. On a
+  // reload taken partway down the page the browser restores scroll, so that
+  // chrome shows through the intro before any content does. Hold it back until
+  // the cascade is armed.
+  const introHold = playIntro && !armed
+
+  // the header stays transparent (maze shows through) until content scrolls up under it
+  const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
-    if (reduce || skipIntro) return
-    const t1 = setTimeout(() => setEntered(true), 400)
-    const t2 = setTimeout(() => setArmed(true), 1150)
-    return () => {
-      clearTimeout(t1)
-      clearTimeout(t2)
-    }
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
   function scrollToContact(e) {
@@ -47,9 +72,15 @@ export default function Landing() {
 
   return (
     <RevealProvider active={armed} stagger={240}>
-      <div className={`landing${entered ? ' entered' : ''}`}>
-        <header className="site-header">
-          <h1 className="brand">Paul Martin</h1>
+      <MazeBackground onSolve={() => navigate('/solved')} />
+      {showIntro && (
+        <IntroWake onReveal={handoff} onDone={() => setShowIntro(false)} />
+      )}
+      <div className={`landing entered${introHold ? ' intro-hold' : ''}`}>
+        <header className={`site-header${scrolled ? ' scrolled' : ''}`}>
+          <h1 className={`brand${playIntro && !armed ? ' brand-hidden' : ''}`}>
+            Paul Martin
+          </h1>
           <Reveal as="nav" order={0} className="site-nav">
             <a href={RESUME_URL} target="_blank" rel="noopener noreferrer">
               Resume
@@ -109,16 +140,13 @@ export default function Landing() {
               className="section-label"
               id="about-label"
             >
-              About
+              About Me
             </Reveal>
             <Reveal as="div" order={aboutBodyOrder} className="about-body">
               <p>
-                I'm a software developer who builds web apps, games, and the
-                occasional tool. I care about the small details that make
-                software feel good to use.
-              </p>
-              <p className="about-note">
-                (Placeholder — replace with your own words.)
+                I’m a software engineer focused on building games and interactive
+                experiences. My passion is bringing new and unseen experiences into the world
+                in a way that feels like magic.
               </p>
             </Reveal>
           </section>

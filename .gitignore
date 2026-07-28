@@ -31,3 +31,10 @@ Thumbs.db
 # Firebase
 .firebase/
 firebase-debug.log
+
+# Design plans / prototypes (local only)
+plans/
+
+# Source media (local only). The encoded, size-optimized versions the site
+# actually serves live in paulmartin.dev/public/projects.
+Assets/

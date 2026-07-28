@@ -54,7 +54,9 @@ a {
   text-decoration: none;
 }
 
-/* ---------- sticky header ---------- */
+/* ---------- header. Transparent at the top so the maze renders straight through "like
+   nothing is there"; it only gains a (maze-coloured, no-line) background once site content
+   scrolls up under it — so the bar blocks the content, never the maze. */
 .site-header {
   position: sticky;
   top: 0;
@@ -65,18 +67,30 @@ a {
   gap: 0.35rem;
   padding: 0.9rem 1.5rem;
   text-align: center;
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
-  backdrop-filter: saturate(1.4) blur(12px);
-  border-bottom: 1px solid var(--hairline);
+  background: transparent;
+  transition: background 0.25s ease, backdrop-filter 0.25s ease;
+}
+
+.site-header.scrolled {
+  background: color-mix(in srgb, #030304 92%, transparent);
+  backdrop-filter: saturate(1.2) blur(12px);
 }
 
 .brand {
   margin: 0;
   font-weight: 700;
-  font-size: 1.4rem;
+  font-size: 2.15rem;
   letter-spacing: -0.02em;
   transform-origin: center center;
   color: var(--ink);
+  transition: opacity 0.5s ease;
+  cursor: default; /* keep the normal pointer over the name, not the text I-beam */
+  user-select: none;
+}
+
+/* hidden while the intro plays; fades in at the handoff (crossfades with the intro canvas) */
+.brand-hidden {
+  opacity: 0;
 }
 
 .site-nav {
@@ -108,24 +122,16 @@ a {
   color: var(--hairline);
 }
 
-/* ---------- header settle-in ---------- */
-.landing .brand {
-  transition:
-    transform 0.95s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.landing:not(.entered) .brand {
-  transform: translateY(40vh) scale(2.9);
-}
-
-/* nav + content appear via the ordered reveal cascade (see reveal.jsx), not a
-   block fade. */
+/* The hero-name settle is done by the IntroWake canvas now; the brand renders directly in
+   its header slot. nav + content appear via the ordered reveal cascade (see reveal.jsx). */
 
 /* ---------- layout ---------- */
 main {
   max-width: 1180px;
   margin: 0 auto;
-  padding: clamp(1.5rem, 4vw, 2.75rem) 1.5rem 6rem;
+  /* the footer supplies its own top margin above the rule, so main's bottom
+     padding only needs to keep About off it, not restate the whole gap */
+  padding: clamp(1.5rem, 4vw, 2.75rem) 1.5rem 1.5rem;
 }
 
 .section {
@@ -153,7 +159,14 @@ main > .section:first-child {
   gap: 1.5rem;
 }
 
+/* The whole card is one click target. Rather than an onClick on a div, the
+   project-name link stretches an invisible ::after over the entire card, so the
+   click area is a real link: focusable, middle-clickable, and it shows its
+   href on hover. Anything with a different destination (the affiliation chip)
+   has to be lifted above it. */
 .card {
+  position: relative;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   color: var(--ink);
@@ -172,8 +185,19 @@ main > .section:first-child {
   border-color: color-mix(in srgb, var(--accent) 45%, var(--hairline));
 }
 
-.card-media {
-  cursor: pointer;
+/* :not(.org-tag) — the chip is also a direct <a> child of .card-name, and it
+   must not stretch anything; it goes somewhere else entirely. */
+.card-name > a:not(.org-tag)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.card .org-tag,
+.card .card-more {
+  position: relative;
+  z-index: 2;
 }
 
 .card-body {
@@ -184,7 +208,41 @@ main > .section:first-child {
   flex: 1;
 }
 
-/* ---------- carousel / mock screenshots ---------- */
+/* ---------- project media ----------
+   Source stills vary in aspect (terminal captures are wide, the Orion grabs
+   wider still), so cards crop to a fixed 16/9 window to keep the grid on one
+   rhythm. Detail heroes are never cropped — they show the whole frame. */
+.media-still {
+  display: block;
+  background: var(--surface-2);
+}
+
+.media-still img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Only the cropped case gets a fixed box; a hero left at auto height must not
+   inherit height:100% against an auto-height <picture> or it collapses. */
+.card-media .media-still {
+  aspect-ratio: 16 / 9;
+}
+
+.card-media .media-still img {
+  height: 100%;
+  object-fit: cover;
+}
+
+.media-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--surface-2);
+}
+
+/* Multi-still gallery. Slides are uniform 16/9 so the track never jumps height
+   between shots of differing aspect. */
 .carousel {
   position: relative;
   overflow: hidden;
@@ -197,75 +255,30 @@ main > .section:first-child {
 }
 
 .shot {
-  position: relative;
+  display: block;
   flex: 0 0 100%;
   aspect-ratio: 16 / 9;
-  overflow: hidden;
 }
 
-.shot-ui {
+.shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* YouTube trailers: 16/9 box, iframe pinned to fill it. */
+.media-embed {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+.media-embed iframe {
   position: absolute;
   inset: 0;
-}
-
-.shot-bar,
-.shot-chip,
-.shot-block {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 99px;
-}
-
-.shot-bar {
-  top: 12%;
-  left: 7%;
-  width: 38%;
-  height: 6%;
-}
-
-.shot-chip {
-  top: 11%;
-  right: 7%;
-  width: 13%;
-  height: 15%;
-  background: rgba(255, 255, 255, 0.4);
-  border-radius: 10px;
-}
-
-.shot-block {
-  background: rgba(255, 255, 255, 0.22);
-  border-radius: 10px;
-}
-
-.shot-block.b1 {
-  top: 30%;
-  left: 7%;
-  width: 55%;
-  height: 24%;
-}
-
-.shot-block.b2 {
-  top: 62%;
-  left: 7%;
-  width: 34%;
-  height: 22%;
-}
-
-.shot-block.b3 {
-  top: 62%;
-  left: 45%;
-  width: 34%;
-  height: 22%;
-}
-
-.shot-count {
-  position: absolute;
-  bottom: 7%;
-  right: 5%;
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.05em;
-  color: rgba(255, 255, 255, 0.92);
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 
 /* Reusable icon button: guarantees a perfectly centered icon. Put an <svg>
@@ -360,6 +373,10 @@ main > .section:first-child {
 }
 
 .card-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
@@ -407,6 +424,65 @@ main > .section:first-child {
   padding: 0.15rem 0.5rem;
   border: 1px solid var(--hairline);
   border-radius: 999px;
+}
+
+/* The role a project was built in, sat with the tech chips but tinted so it
+   does not read as another technology. */
+.tag.role {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+/* Affiliation, sat beside the project name rather than in the tech row: it
+   answers "who was this for", not "what is it made of". Square, not pill, so it
+   never reads as one of the tags below it, and carries the company's color.
+   Both brand colors are lightened from the official values, which are too dark
+   to clear contrast against the near-black landing. */
+.org-tag {
+  display: inline-flex;
+  align-items: center;
+  /* Two independent knobs, both default to no-op except the text nudge:
+       --org-text-nudge  moves the TEXT within the chip, keeping chip height
+                         identical (padding gains on top what it loses below).
+                         Uppercase has no descenders, so geometric centring
+                         leaves the letters sitting high in the box.
+       --org-nudge       moves the WHOLE chip against the project name. */
+  padding: calc(0.16rem + var(--org-text-nudge, 1px)) 0.45rem
+    calc(0.16rem - var(--org-text-nudge, 1px));
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--org);
+  border: 1px solid color-mix(in srgb, var(--org) 45%, transparent);
+  background: color-mix(in srgb, var(--org) 14%, transparent);
+  border-radius: 5px;
+  transform: translateY(var(--org-nudge, 1px));
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.org-tag:hover {
+  background: color-mix(in srgb, var(--org) 26%, transparent);
+  border-color: color-mix(in srgb, var(--org) 70%, transparent);
+}
+
+.org-tag.meta {
+  --org: #4a9bff;
+}
+
+.org-tag.moonlight {
+  --org: #a99bf0;
+}
+
+.detail-title .org-tag {
+  font-size: 0.8rem;
+  padding: calc(0.25rem + var(--org-text-nudge, 1px)) 0.6rem
+    calc(0.25rem - var(--org-text-nudge, 1px));
 }
 
 .card-more {
@@ -477,18 +553,34 @@ main > .section:first-child {
   margin: 0 0 0.8rem;
 }
 
-.about-body .about-note {
-  color: var(--muted);
-  font-size: 0.9rem;
+/* no trailing gap under the last line, so the footer rule sits where the
+   footer's own margin puts it and nothing else */
+.about-body p:last-child {
+  margin-bottom: 0;
 }
 
 /* ---------- get-in-touch footer ---------- */
 .site-footer {
   border-top: 1px solid var(--hairline);
-  margin-top: clamp(3rem, 8vw, 6rem);
+  margin-top: clamp(1.75rem, 4vw, 3rem);
   padding: clamp(3rem, 7vw, 5rem) 1.5rem;
   text-align: center;
   scroll-margin-top: 96px;
+  transition: border-color 0.6s ease;
+}
+
+/* Chrome that lives outside the reveal cascade paints on the first frame no
+   matter where the cascade is. Reload partway down the page and the browser
+   restores the scroll position, so this chrome shows through the intro before
+   any content has arrived. Hold it back until the cascade is armed, then let it
+   fade in with everything else. */
+.landing.intro-hold .site-footer {
+  border-top-color: transparent;
+}
+
+.landing.intro-hold .site-header.scrolled {
+  background: transparent;
+  backdrop-filter: none;
 }
 
 .footer-heading {
@@ -537,6 +629,10 @@ main > .section:first-child {
 }
 
 .detail-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   margin: 1.8rem 0 0.4rem;
   font-size: clamp(2rem, 6vw, 3rem);
   font-weight: 700;
@@ -565,10 +661,203 @@ main > .section:first-child {
 
 .detail-links {
   display: flex;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 0.7rem;
   margin-top: 2rem;
   font-family: var(--mono);
   font-size: 0.85rem;
+}
+
+.detail-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  color: var(--ink);
+  text-decoration: none;
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.detail-link:hover {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--hairline));
+}
+
+.detail-link svg {
+  display: block;
+  width: 1.05em;
+  height: 1.05em;
+}
+
+/* ---------- hidden maze background (Landing only) ---------- */
+/* Fixed, full-viewport canvas painted behind the content. Dark at rest; it only
+   shimmers on pointer/scroll movement. pointer-events:none so links/cards stay
+   clickable and the canvas never eats interaction (it listens on window). The
+   dark CSS background covers the (possibly light) body immediately, no flash. */
+.maze-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  background: #030304;
+}
+
+/* "Wake" intro: a transparent canvas over everything (the maze background shows and stays
+   interactive underneath) while the name develops and settles onto the header brand, then
+   fades out to hand off. The real brand is hidden until then, so there's no double name. */
+.intro-wake {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  background: transparent;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+
+.intro-wake--hide {
+  opacity: 0;
+}
+
+/* Front layer: only the ball-impact ripple draws here, as an opaque cut-through so
+   it shows OVER the content. Transparent everywhere else; never eats interaction. */
+.maze-fg {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  background: transparent;
+}
+
+/* The Landing commits to the dark palette so its content reads over the near-black
+   maze, regardless of the visitor's system light/dark preference. */
+.landing {
+  --bg: #0b0b0f;
+  --surface: #141419;
+  --surface-2: #1b1b22;
+  --ink: #f1f1f4;
+  --muted: #9595a1;
+  --hairline: rgba(255, 255, 255, 0.11);
+  --accent: #38c5e0;
+  --accent-2: #ff5c86;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.4);
+  position: relative;
+  z-index: 1; /* content sits above .maze-bg */
+  min-height: 100vh;
+  color: var(--ink);
+}
+
+/* ---------- solved page (temporary) ---------- */
+.solved {
+  --bg: #0b0b0f;
+  --ink: #f1f1f4;
+  --muted: #9595a1;
+  --accent: #38c5e0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem 1.5rem;
+  background: #050507;
+  color: var(--ink);
+}
+
+.solved-inner {
+  max-width: 540px;
+  text-align: center;
+}
+
+.solved-eyebrow {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.75rem;
+}
+
+.solved-title {
+  margin: 0 0 1rem;
+  font-size: clamp(2rem, 7vw, 3.25rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.solved-lede {
+  color: var(--muted);
+  font-size: 1.08rem;
+  line-height: 1.7;
+  margin: 0 0 1.5rem;
+}
+
+.solved-cta a {
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  color: var(--accent);
+}
+
+.solved-list {
+  margin-top: 3rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 1.5rem;
+}
+
+.solved-list-label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 1rem;
+}
+
+.solved-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.solved-name {
+  font-weight: 600;
+}
+
+.solved-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-left: 0.6rem;
+}
+
+.solved-empty {
+  color: var(--muted);
+  font-style: italic;
+  margin: 0;
+}
+
+.solved-back {
+  display: inline-block;
+  margin-top: 2.5rem;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.solved-back:hover {
+  color: var(--accent);
 }
 
 @media (max-width: 640px) {

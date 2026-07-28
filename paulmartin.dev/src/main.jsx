@@ -5,6 +5,7 @@ import '@fontsource-variable/hanken-grotesk'
 import '@fontsource-variable/jetbrains-mono'
 import Landing from './pages/Landing.jsx'
 import ProjectDetail from './pages/ProjectDetail.jsx'
+import Solved from './pages/Solved.jsx'
 import Moonlight from './madebymoonlight/Moonlight.jsx'
 import './index.css'
 
@@ -13,6 +14,7 @@ createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/solved" element={<Solved />} />
         <Route path="/projects/:slug" element={<ProjectDetail />} />
         <Route path="/madebymoonlight/*" element={<Moonlight />} />
       </Routes>

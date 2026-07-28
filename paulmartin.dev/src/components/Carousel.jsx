@@ -1,28 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-
-// Placeholder "screenshot" — a hue-tinted gradient with an abstract app UI, so
-// the carousel visibly cycles. Swap MockShot for real <img> screenshots later.
-function MockShot({ hue, index, total }) {
-  return (
-    <div
-      className="shot"
-      style={{
-        background: `linear-gradient(135deg, hsl(${hue} 68% 56%), hsl(${(hue + 45) % 360} 62% 40%))`,
-      }}
-    >
-      <div className="shot-ui">
-        <span className="shot-bar" />
-        <span className="shot-chip" />
-        <span className="shot-block b1" />
-        <span className="shot-block b2" />
-        <span className="shot-block b3" />
-      </div>
-      <span className="shot-count">
-        {String(index + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
-      </span>
-    </div>
-  )
-}
+import Still from './Still'
 
 // SVG chevron — centers perfectly inside .icon-btn (no font side-bearing games).
 function Chevron({ dir }) {
@@ -44,11 +21,13 @@ function Chevron({ dir }) {
 // Auto-advances while on screen; pauses on hover and while scrolled out of view;
 // honors prefers-reduced-motion. A single steady interval reads refs each tick,
 // so pause/visibility changes never tear it down or reset its phase.
-export default function Carousel({ hue = 200, shots = 3, interval = 6400 }) {
+// A single-image project renders the still alone, with no chrome to operate.
+export default function Carousel({ images = [], interval = 6400 }) {
   const [i, setI] = useState(0)
   const ref = useRef(null)
   const pausedRef = useRef(false)
   const inViewRef = useRef(false)
+  const shots = images.length
 
   const go = (n, e) => {
     if (e) {
@@ -75,7 +54,7 @@ export default function Carousel({ hue = 200, shots = 3, interval = 6400 }) {
     if (shots <= 1) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     // per-card phase offset so a screenful of carousels doesn't flip in unison
-    const offset = (hue % 6) * 400
+    const offset = (shots % 6) * 400
     let id
     const start = setTimeout(() => {
       id = setInterval(() => {
@@ -88,7 +67,10 @@ export default function Carousel({ hue = 200, shots = 3, interval = 6400 }) {
       clearTimeout(start)
       clearInterval(id)
     }
-  }, [shots, interval, hue])
+  }, [shots, interval])
+
+  if (shots === 0) return null
+  if (shots === 1) return <Still image={images[0]} className="media-still" />
 
   return (
     <div
@@ -105,42 +87,38 @@ export default function Carousel({ hue = 200, shots = 3, interval = 6400 }) {
         className="carousel-track"
         style={{ transform: `translateX(-${i * 100}%)` }}
       >
-        {Array.from({ length: shots }).map((_, k) => (
-          <MockShot key={k} hue={(hue + k * 42) % 360} index={k} total={shots} />
+        {images.map((img) => (
+          <Still key={img.webp} image={img} className="shot" />
         ))}
       </div>
 
-      {shots > 1 && (
-        <>
+      <button
+        type="button"
+        className="icon-btn car-arrow left"
+        onClick={(e) => go(i - 1, e)}
+        aria-label="Previous image"
+      >
+        <Chevron dir="left" />
+      </button>
+      <button
+        type="button"
+        className="icon-btn car-arrow right"
+        onClick={(e) => go(i + 1, e)}
+        aria-label="Next image"
+      >
+        <Chevron dir="right" />
+      </button>
+      <div className="car-dots">
+        {images.map((img, k) => (
           <button
             type="button"
-            className="icon-btn car-arrow left"
-            onClick={(e) => go(i - 1, e)}
-            aria-label="Previous image"
-          >
-            <Chevron dir="left" />
-          </button>
-          <button
-            type="button"
-            className="icon-btn car-arrow right"
-            onClick={(e) => go(i + 1, e)}
-            aria-label="Next image"
-          >
-            <Chevron dir="right" />
-          </button>
-          <div className="car-dots">
-            {Array.from({ length: shots }).map((_, k) => (
-              <button
-                type="button"
-                key={k}
-                className={`dot${k === i ? ' on' : ''}`}
-                onClick={(e) => go(k, e)}
-                aria-label={`Go to image ${k + 1}`}
-              />
-            ))}
-          </div>
-        </>
-      )}
+            key={img.webp}
+            className={`dot${k === i ? ' on' : ''}`}
+            onClick={(e) => go(k, e)}
+            aria-label={`Go to image ${k + 1}`}
+          />
+        ))}
+      </div>
     </div>
   )
 }

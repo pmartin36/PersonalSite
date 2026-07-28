@@ -1,25 +1,24 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useReveal } from '../reveal'
-import Carousel from './Carousel'
+import Still from './Still'
+import OrgTag from './OrgTag'
 
 export default function ProjectCard({ project, order = 0 }) {
   const [ref, shown] = useReveal(order)
-  const navigate = useNavigate()
   const to = `/projects/${project.slug}`
 
+  // The card name's link stretches over the whole card (see .card-name > a::after),
+  // so the entire card is clickable without an onClick handler on a div.
   return (
     <article ref={ref} className={`card reveal${shown ? ' in' : ''}`}>
-      <div
-        className="card-media"
-        onClick={() => navigate(to)}
-        aria-hidden="true"
-      >
-        <Carousel hue={project.hue} shots={project.shots} />
+      <div className="card-media">
+        <Still image={project.thumb} className="media-still" />
       </div>
       <div className="card-body">
         <div className="card-top">
           <h3 className="card-name">
             <Link to={to}>{project.name}</Link>
+            <OrgTag org={project.org} />
           </h3>
           <span className="card-year">{project.year}</span>
         </div>
