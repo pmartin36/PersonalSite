@@ -133,54 +133,76 @@ a {
   -webkit-text-fill-color: #4e4e58;
 }
 
-/* The four controls stay ordinary letters at their normal weight and footprint. The maze
-   rides on an overlay copy that MULTIPLIES into the letter underneath, so the colour is the
-   letter tinted rather than a shape laid over it. That also handles ".dev" on its own: the
-   same strip over that letter's darker grey comes out muted by exactly the ratio the two
-   text colours differ by, with no second texture and no fade ramp. */
-.brand-key {
+/* Reaching the hint draws one unbroken rule under each word. The four control letters lay a
+   gradient segment over their stretch of it, so the colour is part of the line rather than a
+   separate bar. */
+.brand-word {
   position: relative;
-  /* inline-block so the overlay's containing block is the glyph's own line box; as a plain
-     inline the pseudo-element anchors to the inline box and the copy lands off the baseline */
-  display: inline-block;
 }
 
-/* the controls stay the same white as the rest of the name; only the one inside ".dev"
-   takes that block's grey */
-.brand-tld .brand-key {
-  -webkit-text-fill-color: #4e4e58;
-}
-
-.brand-key::after {
-  content: attr(data-ch);
+/* ::before, not ::after: it is the word's FIRST child, so it paints beneath the key
+   segments. As ::after it would be the last child and cover them. */
+.brand-word::before {
+  content: '';
   position: absolute;
-  left: 0;
-  top: 0;
-  -webkit-text-fill-color: transparent;
-  background-image: var(--brand-tex);
-  /* a third of the strip per letter, panned by --k, so each one carries a gradient of its
-     own and sits at a different point of the sweep from its neighbours */
-  background-size: 300% 100%;
-  background-position: calc(var(--k) * 100%) 0;
-  -webkit-background-clip: text;
-  background-clip: text;
-  /* inset off the glyph edge, so the letter itself reads as a border around the maze */
-  filter: url(#brand-erode);
-  line-height: inherit;
-  opacity: 0;
-  transition: opacity 0.7s ease;
+  /* trimmed to the ink of the word's first and last glyph, so the rule does not overhang
+     into the side bearings */
+  left: var(--wl);
+  right: var(--wr);
+  /* the baseline sits 0.291em above this box's bottom, so this lands the rule ~0.10em under
+     the baseline rather than under the whole line box */
+  bottom: 0.19em;
+  height: 0.07em;
+  background-color: rgba(241, 241, 244, 0.26);
+  /* drawn on, not faded on: clipped to nothing and unclipped left to right. Fading every
+     rule at once landed as a single flash, with all three hitting half opacity together. */
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path var(--rt, 0.3s) linear var(--rd, 0s);
   pointer-events: none;
 }
 
-.brand-tld .brand-key::after {
-  filter: url(#brand-erode-sm); /* ".dev" is 0.8em, so the same radius eats its thinner stems */
+.brand-key {
+  position: relative;
 }
 
-/* Half opacity, so the letter underneath shows through the maze rather than being covered
-   by it. The interior reads as the white letter tinted, not as saturated colour sitting in
-   a white outline. */
+.brand-key::after {
+  content: '';
+  position: absolute;
+  /* the letter's INK, not its box. The side bearings stay grey, which is what puts a gap
+     between the adjacent "u" and "l" and keeps "r" from carrying a rule wider than itself. */
+  left: var(--kl);
+  right: var(--kr);
+  bottom: 0.19em;
+  height: 0.07em;
+  background-image: var(--brand-tex);
+  /* a NINTH of the strip per letter: each segment comes out close to a single hue, and the
+     four sit at different points of the sweep. A wider window puts the whole
+     blue-to-pink run inside one letter, which is far too much movement for a 2px rule. */
+  background-size: 900% 100%;
+  background-position: calc(var(--k) * 100%) 0;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path var(--rt, 0.3s) linear var(--rd, 0s);
+  pointer-events: none;
+}
+
+.brand--hint .brand-word::before,
 .brand--hint .brand-key::after {
-  opacity: 0.75;
+  clip-path: inset(0 0 0 0);
+}
+
+/* ".dev" is grey text, and its rule sits lower in contrast to match */
+.brand-tld {
+  color: #4e4e58;
+}
+
+.brand-tld .brand-word::before {
+  background-color: rgba(241, 241, 244, 0.13);
+}
+
+/* the segment under ".dev" sits on dimmer text, so it comes down to match. Set outright
+   rather than transitioned, since the wipe is what reveals it. */
+.brand-tld .brand-key::after {
+  opacity: 0.62;
 }
 
 .site-nav {
@@ -963,7 +985,8 @@ main > .section:first-child {
     transition: none;
   }
   .brand-tld,
-  .brand-key {
+  .brand-word::before,
+  .brand-key::after {
     transition: none;
   }
 }

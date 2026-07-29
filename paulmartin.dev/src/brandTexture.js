@@ -17,7 +17,7 @@ const spectrumHue = (t) => {
 // vary, so every letter comes out one flat colour. Running several means one letter spans a
 // real span of hue and carries a gradient of its own, while sitting at a different point of
 // the spectrum from its neighbours.
-const CYCLES = 3.1
+const CYCLES = 1
 const hueAtX = (u) => spectrumHue(0.75 + u * 0.5 * CYCLES)
 
 // The strip is multiplied into the letter rather than drawn over it, so it needs no fade at

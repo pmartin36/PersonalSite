@@ -109,37 +109,42 @@ export default function Landing() {
       {showIntro && (
         <IntroWake pointer={pointerRef} onReveal={handoff} onDone={() => setShowIntro(false)} />
       )}
-      {/* Shrinks the maze overlay inward off the letter it sits on, so the letter shows as
-          a border around it. Erode works on the composited alpha, which is the union of the
-          glyph's contours — unlike a stroke, which traces each contour and draws a line
-          through letters whose parts overlap, and which also grows the glyph outward. */}
-      <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute' }}>
-        <filter id="brand-erode" colorInterpolationFilters="sRGB">
-          <feMorphology operator="erode" radius="1.28" />
-        </filter>
-        <filter id="brand-erode-sm" colorInterpolationFilters="sRGB">
-          <feMorphology operator="erode" radius="1.1" />
-        </filter>
-      </svg>
       <div className={`landing entered${introHold ? ' intro-hold' : ''}`}>
         <header className={`site-header${scrolled ? ' scrolled' : ''}`}>
-          {/* Split so the four maze controls can be filled separately from the rest. The
-              texture is one strip across the whole wordmark, so each letter samples its own
-              slice of the sweep and the four read as one continuous run of the maze. */}
+          {/* One rule per word rather than per letter, so the line runs unbroken. Word-level
+              insets trim it to the ink of the first and last glyph; the control letters lay a
+              gradient segment over their own ink, so the side bearings either side stay grey
+              and adjacent controls like "u" and "l" read as two segments, not one.
+
+              --rd/--rt are the wipe's delay and duration, derived from where each piece sits
+              along the wordmark: the stroke reaches position x at T * x^0.625, so it starts
+              slow and gains speed. Encoding the ease in the DELAYS and keeping each piece
+              linear is what makes it one accelerating stroke; an ease-in curve on every
+              piece would instead have each of them start slow and stutter in turn. */}
           <h1
             className={`brand${playIntro && !armed ? ' brand-hidden' : ''}${hintOn ? ' brand--hint' : ''}`}
             style={{ '--brand-tex': `url(${brandTex})` }}
           >
-            <span className="brand-plain">Pa</span>
-            <span className="brand-key" data-ch="u" style={{ '--k': 0 }}>u</span>
-            <span className="brand-key" data-ch="l" style={{ '--k': 0.14 }}>l</span>
-            <span className="brand-plain"> Ma</span>
-            <span className="brand-key" data-ch="r" style={{ '--k': 0.55 }}>r</span>
-            <span className="brand-plain">tin</span>
+            <span className="brand-word" style={{ '--wl': '0.052em', '--wr': '0.004em', '--rd': '0.03s', '--rt': '0.256s' }}>
+              Pa
+              <span className="brand-key" style={{ '--k': 0, '--kl': '0.052em', '--kr': '0.038em', '--rd': '0.207s', '--rt': '0.05s' }}>u</span>
+              <span className="brand-key" style={{ '--k': 0.16, '--kl': '0.055em', '--kr': '0.004em', '--rd': '0.266s', '--rt': '0.02s' }}>l</span>
+            </span>{' '}
+            <span className="brand-word" style={{ '--wl': '0.063em', '--wr': '0.032em', '--rd': '0.314s', '--rt': '0.213s' }}>
+              Ma
+              <span className="brand-key" style={{ '--k': 0.58, '--kl': '0.058em', '--kr': '0em', '--rd': '0.425s', '--rt': '0.026s' }}>r</span>
+              tin
+            </span>
+            {/* the rule lives on an inline span INSIDE the tld, not on the tld itself: the tld
+                is inline-block for its growth animation, and an inline-block resolves the
+                rule against its line box while the letters resolve against their content
+                area, which put the two at different heights */}
             <span className="brand-tld">
-              <span className="brand-plain">.</span>
-              <span className="brand-key" data-ch="d" style={{ '--k': 1 }}>d</span>
-              <span className="brand-plain">ev</span>
+              <span className="brand-word" style={{ '--wl': '0.048em', '--wr': '0em', '--rd': '0.532s', '--rt': '0.088s' }}>
+                .
+                <span className="brand-key" style={{ '--k': 1, '--kl': '0.035em', '--kr': '0.037em', '--rd': '0.543s', '--rt': '0.024s' }}>d</span>
+                ev
+              </span>
             </span>
           </h1>
           <Reveal as="nav" order={0} className="site-nav">
