@@ -41,7 +41,7 @@ export const currentProjects = [
     slug: 'agent-battles',
     name: 'Agent Battles',
     year: '2026',
-    headline: 'A terminal battle game where a local LLM commands the army you wrote.',
+    headline: 'A terminal-based battle game controlled by AI',
     tags: ['Rust', 'ratatui', 'Local LLM', 'Terminal'],
     blurb:
       'A local LLM commands both armies; your only input is the skill files you write for your six pieces. Once a day it takes them to war and plays the battle out in colored braille while you watch.',
@@ -100,7 +100,7 @@ export const currentProjects = [
     slug: 'braille-engine',
     name: 'Braille Engine',
     year: '2026',
-    headline: 'A Rust terminal engine that draws everything but text in dots.',
+    headline: 'A Rust terminal engine that renders using braille dots',
     tags: ['Rust', 'ratatui', 'Renderer', 'Terminal'],
     blurb:
       'A game engine for the terminal. Sprites, effects and UI chrome all render through one braille dot pipeline at 2×4 dots per cell in truecolor, with no graphics protocol required.',
