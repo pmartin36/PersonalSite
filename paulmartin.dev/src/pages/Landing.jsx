@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { currentProjects, previousProjects } from '../data/projects'
 import ProjectCard from '../components/ProjectCard'
@@ -32,6 +32,8 @@ export default function Landing() {
   const [playIntro] = useState(!skipIntro && !reduce && !introPlayed)
   const [armed, setArmed] = useState(!playIntro) // content revealed immediately when skipping the intro
   const [showIntro, setShowIntro] = useState(playIntro)
+  // and this drives the maze's real wake from the intro's sweep
+  const pointerRef = useRef(null)
 
   function handoff() {
     introPlayed = true
@@ -44,6 +46,19 @@ export default function Landing() {
   // chrome shows through the intro before any content does. Hold it back until
   // the cascade is armed.
   const introHold = playIntro && !armed
+
+  // Hide the scrollbar for the length of the intro. Whatever width the bar was taking is
+  // handed back as padding, so the content box keeps the exact same width and nothing
+  // shifts when the bar returns at the handoff. Browsers with overlay scrollbars measure
+  // zero here and get no padding.
+  useEffect(() => {
+    if (!introHold) return
+    const el = document.documentElement
+    const barW = window.innerWidth - el.clientWidth
+    el.classList.add('intro-playing')
+    if (barW > 0) el.style.paddingRight = `${barW}px`
+    return () => { el.classList.remove('intro-playing'); el.style.paddingRight = '' }
+  }, [introHold])
 
   // the header stays transparent (maze shows through) until content scrolls up under it
   const [scrolled, setScrolled] = useState(false)
@@ -72,9 +87,9 @@ export default function Landing() {
 
   return (
     <RevealProvider active={armed} stagger={240}>
-      <MazeBackground onSolve={() => navigate('/solved')} />
+      <MazeBackground onSolve={() => navigate('/solved')} pointerApi={pointerRef} />
       {showIntro && (
-        <IntroWake onReveal={handoff} onDone={() => setShowIntro(false)} />
+        <IntroWake pointer={pointerRef} onReveal={handoff} onDone={() => setShowIntro(false)} />
       )}
       <div className={`landing entered${introHold ? ' intro-hold' : ''}`}>
         <header className={`site-header${scrolled ? ' scrolled' : ''}`}>

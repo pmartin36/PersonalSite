@@ -1,10 +1,15 @@
 import { useEffect, useRef } from 'react'
+import { makeScheduler } from '../devClock'
 
 // The hidden interactive maze, rendered as a fixed full-viewport metallic-shimmer
 // background. Dark at rest; it only reveals on mouse move (directional wake) or ball
 // impact. Controls are U/L/D/R (the letters hidden in "paulmartin.dev" - no arrow-key
 // workaround). Reaching the exit calls onSolve.
-export default function MazeBackground({ onSolve }) {
+//
+// pointerApi is a ref this fills with { moveTo, seedAt, setMuted }. The intro drives the wake
+// from its own positions through the same code the mouse uses, drops single wavelets where its
+// particles land, and silences the real mouse while it plays.
+export default function MazeBackground({ onSolve, pointerApi }) {
   const canvasRef = useRef(null)
   const fgCanvasRef = useRef(null)
   const onSolveRef = useRef(onSolve)
@@ -27,7 +32,7 @@ export default function MazeBackground({ onSolve }) {
     let cr = 0, cc = 0 // current cell
     const tween = { active: false, fromX: 0, fromY: 0, toX: 0, toY: 0, tr: 0, tc: 0, t0: 0, dur: 1 }
     let solved = false, nowT = 0
-    let rafId = 0
+    const sched = makeScheduler()
 
     const X = (c) => offX + c * CELL, Y = (r) => offY + r * CELL
     const cellCenter = (r, c) => [X(c) + CELL / 2, Y(r) + CELL / 2]
@@ -257,8 +262,9 @@ export default function MazeBackground({ onSolve }) {
       const ang = Math.random() * 6.283, rr = Math.sqrt(Math.random()) * 15
       ballGlints.push({ dx: Math.cos(ang) * rr, dy: Math.sin(ang) * rr, sz: Math.random() < 0.32 ? 2 : 1 })
     }
-    const onMouseMove = (e) => {
-      const nx = e.clientX, ny = e.clientY
+    // Shared by the real mouse and by the intro's scripted sweep, so the intro's wake is not
+    // a lookalike — it is this, spawned from a different source of positions.
+    const feedPointer = (nx, ny) => {
       const dx = pmx >= 0 ? nx - pmx : 0, dy = pmx >= 0 ? ny - pmy : 0
       const d = Math.hypot(dx, dy)
       if (d > 0.5) lastDir = Math.atan2(dy, dx)
@@ -270,6 +276,25 @@ export default function MazeBackground({ onSolve }) {
         if (wake.length > 16) wake.shift()
         distAcc -= SPAWN_DIST
       }
+    }
+    // The intro mutes this while it plays: it is driving the wake itself, and a real mouse
+    // moving at the same time fires a second, unrelated one over the top of it.
+    let mouseMuted = false
+    const onMouseMove = (e) => { if (!mouseMuted) feedPointer(e.clientX, e.clientY) }
+    // Drop a single wavelet at a point, with no travel-distance bookkeeping. feedPointer is
+    // wrong for scattered points: it spawns per SPAWN_DIST of movement, so jumping around the
+    // screen fires a burst per call. The intro seeds the maze one dot at a time with this.
+    const seedAt = (x, y) => {
+      wake.push({ x, y, age: 0, dir: Math.random() * 6.283, phase: Math.random() * 6.283,
+                  full: false, spd: WAKE_SPEED, life: WAKE_LIFE })
+      if (wake.length > 16) wake.shift()
+    }
+    if (pointerApi) pointerApi.current = {
+      moveTo: feedPointer,
+      seedAt,
+      // resetting the last-position tracking matters on UNMUTE: without it the first real
+      // move after the intro looks like one enormous jump and spawns a burst of wavelets
+      setMuted: (v) => { mouseMuted = !!v; pmx = -1; pmy = -1; distAcc = 0 },
     }
 
     const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
@@ -469,17 +494,18 @@ export default function MazeBackground({ onSolve }) {
       // FRONT: the destination porthole(s) — dim content so the shimmer + ball show through
       if (reveals.length) renderReveals(fgCtx)
 
-      rafId = requestAnimationFrame(frame)
+      sched.request(frame)
     }
 
     window.addEventListener('resize', resize)
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('mousemove', onMouseMove, { passive: true })
     resize()
-    rafId = requestAnimationFrame(frame)
+    sched.request(frame)
 
     return () => {
-      cancelAnimationFrame(rafId)
+      sched.cancel()
+      if (pointerApi) pointerApi.current = null
       window.removeEventListener('resize', resize)
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('mousemove', onMouseMove)

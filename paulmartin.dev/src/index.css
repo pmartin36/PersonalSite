@@ -34,6 +34,19 @@ html {
   scroll-behavior: smooth;
 }
 
+/* The intro plays over a black field with nothing to scroll to yet, so the scrollbar just
+   reads as chrome sitting on top of it. Only the bar is hidden — the page still scrolls,
+   so a reload part-way down keeps its restored position. Landing pairs this with a
+   padding-right equal to the bar's width, so removing it reflows nothing. */
+html.intro-playing {
+  scrollbar-width: none;
+}
+
+html.intro-playing::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
 html,
 body {
   margin: 0;

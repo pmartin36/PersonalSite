@@ -1,14 +1,83 @@
 import { useEffect, useRef, useState } from 'react'
+import { makeScheduler, FREEZE_MS } from '../devClock'
 
-// "Wake" intro (ported from plans/intro-prototype.html, Wake style only): on a #030304 field
-// the name emerges as a turbulent wake of dim iridescent sequins, a second wake smooths them
-// into dim metal, then it shrinks up ONTO the real header brand and brightens to a soft gray.
+// Intro: the name forms out of fine iridescent sequins, left to right, and a second wave chases
+// the first — each part of the name comes apart shortly after it forms, sliding gently until it
+// is gone. The dots that slide away are the maze's dots. The name is where the maze comes from.
 //
-// Mounted over the Landing on a normal visit as a TRANSPARENT canvas — the maze background
-// shows and stays interactive underneath (the real brand is hidden until handoff). The parent
-// gates it (skips on ?from=ulmartin / reduced-motion). At T_DONE it calls onReveal (parent
-// shows the real brand + arms the content cascade), fades the canvas out, then calls onDone.
-export default function IntroWake({ onReveal, onDone }) {
+// Two things that took a while to get right, both counter-intuitive:
+//
+// Nothing radiates. Every version that measured direction from a centre read as an explosion no
+// matter how slow it ran, because arbitrary headings average out to net expansion and expansion
+// is what the eye calls a blast. Motion here is the CURL of a smooth field — divergence-free,
+// so neighbours shear past each other and separate locally while the group never inflates.
+//
+// The dots go PALE, not colourful. A maze fleck is rgba(246,247,255) and carries no colour of
+// its own; the blue/purple/pink you see in the maze is a wake tinting it as it sweeps past. So
+// a sequin loses its hue as it lets go and settles at the dim level the maze's dots rest at.
+// Giving each dot its own hue makes the whole thing read as confetti.
+//
+// The dissolve front also feeds the maze's real wake through the same feedPointer() the mouse
+// calls, so the genuine effect fires along the same line the name is coming apart on.
+//
+// Mounted over the Landing as a TRANSPARENT canvas; the maze shows and stays interactive
+// underneath. The parent gates it (skips on ?from=ulmartin / reduced-motion). It calls onReveal
+// (real brand + content cascade), fades the canvas out, then calls onDone.
+
+// Override live with a lowercase query param, e.g. ?span=1.6&travel=0.35
+const TUNE = {
+  hold: 80,   // black beat before the name starts forming
+  wipe: 800,  // time for the forming front to cross the NAME itself; the run is longer than
+              // this by the tail the last dots need, so linger/span move the end rather than
+              // speeding the front up
+  reveal: 0,  // when brand + content come up, ms. 0 means "as the run ends"
+
+  // Both waves are measured in FRONT UNITS — fractions of the name's width — because they hang
+  // off the same travelling front. A dot forms when the front reaches it, holds for `linger`,
+  // then slides and fades over `span`. Dispersal is a second wave chasing the first, so no two
+  // parts of the name ever let go together; everything releasing at once is a burst however
+  // slowly it moves. `linger` is the readability dial: higher keeps more of the name intact.
+  linger: 0.5,
+  span: 1.1,
+
+  // Where a dot slides. Direction is the curl of a smooth field, so clumps shear past each
+  // other without the group expanding. `travel` over `span` IS the slide speed: at 0.5 and 1.1
+  // a dot covers ~45px over ~880ms, about 50px/s.
+  clump: 1.0,
+  travel: 0.5,
+  noise: 0.5,   // radians of jitter on its heading, so a clump frays rather than moving rigid
+  sag: 0.18,    // slight downward bias, in cap-heights: melting rather than only shearing
+  meander: 0.5, // per-particle wander, in cap-heights. Kept near `travel`, or it outruns the
+                // slide it is riding on and everything looks flicky
+
+  // Turning from sequin into maze fleck: over this share of the slide, and settling to `rest`.
+  pale: 0.35,
+  rest: 0.22,
+
+  // How the maze gets lit as the name comes apart.
+  //   1 = a wake running along the dissolve front, one moving point on the centre line
+  //   2 = a wavelet at each dot's own position as it goes, so the maze is seeded across the
+  //       whole area the letters covered rather than along a single line
+  feed: 2,
+  seeds: 70,     // roughly how many dots seed the maze, spread evenly through the run
+  seedat: 0.72,  // how far into a dot's slide it seeds, as a share of `span`
+  gap: 26,       // px of front travel between wavelets, for feed=1 (the maze's SPAWN_DIST)
+
+  density: 0.75, // particle spacing multiple; count goes as the inverse square
+  wave: 0.045,   // bends the forming front along a smooth field so it is not a ruled line
+  grain: 0.07,   // per-sequin scatter on that front
+  bead: 3.0,     // brightness of a formed sequin
+  wobble: 0.18,  // per-sequin jitter while it is still part of the name
+  twinkle: 1.0,  // brightness flicker; moves nothing
+  warp: 1.0,     // the maze's own Y-and-time horizontal sway, arriving as a dot lets go
+}
+
+const q = new URLSearchParams(window.location.search)
+const T = { ...TUNE }
+for (const k in T) { const v = q.get(k); if (v !== null && v !== '' && !Number.isNaN(+v)) T[k] = +v }
+const DEV_TUNE = FREEZE_MS !== null || q.has('tune')
+
+export default function IntroWake({ pointer, onReveal, onDone }) {
   const canvasRef = useRef(null)
   const [hide, setHide] = useState(false)
   const cbRef = useRef({ onReveal, onDone })
@@ -17,32 +86,32 @@ export default function IntroWake({ onReveal, onDone }) {
   useEffect(() => {
     const cv = canvasRef.current, ctx = cv.getContext('2d')
     const mk = () => document.createElement('canvas')
-    const tmask = mk(), tctx = tmask.getContext('2d')   // white name (letter mask + ink sampling)
-    const buf = mk(), bctx = buf.getContext('2d')       // letter composite (clipped to letters)
-    const sc = mk(), scctx = sc.getContext('2d')        // polish-coverage mask
-    const pol = mk(), polctx = pol.getContext('2d')     // polished-metal layer
+    const tmask = mk(), tctx = tmask.getContext('2d') // white name, for sampling where the ink is
 
     const NAME = 'Paul Martin'
     let W, H, DPR, hero, cx, cy, tw
-    let bx, by, bw, bh, originY
-    let pts = [], beads = [], blob = null, metalSrc = null, grayAmt = 0
-    // settle target — measured from the real header brand
-    let brandCx = 0, brandCy = 42, brandPx = 27, brandWeight = '800', brandFamily = 'system-ui, sans-serif', brandColor = '#f1f1f4', brandLSem = 0
-    let t0 = performance.now(), rafId = 0, revealed = false
-
-    // --- timeline ---
-    const HOLD1 = 250, DEVELOP = 4200, T_DEV = HOLD1 // short black beat, then the wake starts
-    const T_SHRINK = T_DEV + Math.round(DEVELOP * 0.53) + 200
-    const SHRINK = 1050, T_DONE = T_SHRINK + SHRINK
+    let bx, by, bw, bh, CAP, lineY = 0
+    let pts = [], beads = []
+    let brandPx = 27, brandWeight = '800', brandFamily = 'system-ui, sans-serif', brandLSem = 0
+    const sched = makeScheduler()
+    let t0 = sched.t0(), revealed = false, hidden = false
 
     const clamp01 = (t) => (t < 0 ? 0 : t > 1 ? 1 : t)
-    const easeIO = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
     const smooth = (t) => { t = clamp01(t); return t * t * (3 - 2 * t) }
-    const hueAt = (u) => 200 + u * 140 // deep blue -> ... -> magenta/pink
+    const hueAt = (u) => 200 + u * 140 // deep blue -> ... -> magenta/pink, across the name
     const hcss = (h) => (((h % 360) + 360) % 360)
     const NHUE = 24
-    // match the real brand's font so the shrink lands seamlessly (falls back until measured)
     const font = (px) => `${brandWeight} ${px}px ${brandFamily}`
+
+    const SOFT = 0.06 // forming front width, in fractions of the name's width
+
+    // --- timeline ---
+    const HOLD1 = T.hold, WIPE = T.wipe
+    // the front keeps going past the last sequin, long enough for it to wait out `linger` and
+    // finish its `span` — otherwise the right-hand end never gets to come apart
+    const REACH = 1 + T.linger + T.span + SOFT
+    const T_END = HOLD1 + WIPE * REACH
+    const T_REVEAL = T.reveal > 0 ? Math.min(T.reveal, T_END) : T_END
 
     function makeBead(hue, sat, li) {
       const D = 16, c = mk(); c.width = D; c.height = D; const g = c.getContext('2d')
@@ -58,14 +127,11 @@ export default function IntroWake({ onReveal, onDone }) {
     function measureBrand() {
       const el = document.querySelector('.site-header .brand')
       if (!el) return
-      const r = el.getBoundingClientRect()
-      if (r.width > 0) { brandCx = r.left + r.width / 2; brandCy = r.top + r.height / 2 }
       const cs = getComputedStyle(el)
       brandPx = parseFloat(cs.fontSize) || 27
       brandWeight = cs.fontWeight || '800'
       brandFamily = cs.fontFamily || 'system-ui, sans-serif'
-      brandColor = cs.color || brandColor
-      const ls = cs.letterSpacing // normalise to an em ratio so it scales with the draw size
+      const ls = cs.letterSpacing
       brandLSem = ls && ls !== 'normal' ? parseFloat(ls) / brandPx : 0
     }
 
@@ -73,39 +139,36 @@ export default function IntroWake({ onReveal, onDone }) {
       measureBrand()
       DPR = Math.min(window.devicePixelRatio || 1, 2)
       W = window.innerWidth; H = window.innerHeight
-      for (const c of [cv, tmask, buf, sc, pol]) { c.width = W * DPR; c.height = H * DPR }
+      for (const c of [cv, tmask]) { c.width = W * DPR; c.height = H * DPR }
       cv.style.width = W + 'px'; cv.style.height = H + 'px'
-      for (const c of [ctx, tctx, bctx, scctx, polctx]) c.setTransform(DPR, 0, 0, DPR, 0, 0)
+      for (const c of [ctx, tctx]) c.setTransform(DPR, 0, 0, DPR, 0, 0)
 
       hero = Math.min(W * 0.11, 132); cx = W / 2; cy = H / 2
-      const LS = (brandLSem * hero).toFixed(3) + 'px' // brand letter-spacing at draw scale
+      const LS = (brandLSem * hero).toFixed(3) + 'px'
       ctx.font = font(hero); ctx.letterSpacing = LS; tw = ctx.measureText(NAME).width
       bx = cx - tw / 2; bw = tw; bh = hero * 1.5; by = cy - bh / 2
 
       tctx.clearRect(0, 0, W, H)
       tctx.font = font(hero); tctx.letterSpacing = LS; tctx.textAlign = 'center'; tctx.textBaseline = 'middle'
       tctx.fillStyle = '#fff'; tctx.fillText(NAME, cx, cy)
-      const sw = W * DPR, d = tctx.getImageData(0, 0, sw, H * DPR).data
+      const sw = W * DPR, data = tctx.getImageData(0, 0, sw, H * DPR).data
       const inkAt = (x, y) => {
         const px = (x * DPR) | 0, py = (y * DPR) | 0
         if (px < 0 || py < 0 || px >= sw) return 0
-        return d[(py * sw + px) * 4 + 3]
+        return data[(py * sw + px) * 4 + 3]
       }
 
       let minY = 1e9, maxY = -1e9, sumY = 0, cnt = 0
       for (let y = by | 0; y < (by + bh) | 0; y += 2)
         for (let x = bx - 2; x < bx + bw + 2; x += 2)
           if (inkAt(x, y) > 130) { if (y < minY) minY = y; if (y > maxY) maxY = y; sumY += y; cnt++ }
-      originY = cnt ? sumY / cnt : cy
+      CAP = cnt ? maxY - minY : hero * 0.72
+      lineY = cnt ? sumY / cnt : cy
 
       beads = []
       for (let i = 0; i < NHUE; i++) beads.push(makeBead(hueAt(i / (NHUE - 1)), 52, 54))
-      { const D = 32; blob = mk(); blob.width = D; blob.height = D; const g = blob.getContext('2d')
-        const gr = g.createRadialGradient(D / 2, D / 2, 0, D / 2, D / 2, D / 2)
-        gr.addColorStop(0, '#fff'); gr.addColorStop(0.72, 'rgba(255,255,255,0.98)'); gr.addColorStop(1, 'rgba(255,255,255,0)')
-        g.fillStyle = gr; g.beginPath(); g.arc(D / 2, D / 2, D / 2, 0, 6.2832); g.fill() }
 
-      const SS = Math.max(3.0, hero * 0.028)
+      const SS = Math.max(2.0, hero * 0.028 * T.density)
       pts = []
       for (let y = by; y <= by + bh; y += SS)
         for (let x = bx - SS; x <= bx + bw + SS; x += SS) {
@@ -114,157 +177,177 @@ export default function IntroWake({ onReveal, onDone }) {
           const jy = y + (Math.random() - 0.5) * SS * 0.8
           const u = clamp01((jx - bx) / bw)
           const hi = Math.max(0, Math.min(NHUE - 1, Math.round((u + (Math.random() - 0.5) * 0.13) * (NHUE - 1))))
-          const d = SS * (1.3 + Math.random() * 0.7)
-          const ph = Math.random() * 6.2832, sp = 0.6 + Math.random() * 0.9, bf = 0.6 + Math.random() * 0.4
-          const appear = Math.random(), big = Math.random() < 0.10
-          // per-point constants (depend only on static jx/jy) — precomputed once, read every frame
+          const d0 = SS * (1.3 + Math.random() * 0.7)
+
+          // Reveal order: mostly the dot's own x, so the front sweeps left to right — bent
+          // along a smooth field and scattered per dot, so the edge is ragged rather than a
+          // ruled line. This is also its clock: everything it does keys off how far the front
+          // has travelled past its own rt.
           const turb = Math.sin(jx * 0.055 + jy * 0.100 + 1.3)
             + 0.7 * Math.sin(jx * 0.130 - jy * 0.045 + 4.2)
             + 0.5 * Math.sin(jy * 0.170 - jx * 0.022)
-          pts.push({ x: jx, y: jy, hi, ph, sp, bf, appear, big,
-            turb26: turb * 2.6,                          // band phase offset: age*30 + turb*2.6
-            foamPhase: jx * 0.08 - jy * 0.06 + turb * 1.5, // foam base phase (+ wc*0.0012 live)
-            wxPhase: jy * 0.06, wyPhase: jx * 0.05,        // wobble base phases (+ wc term live)
-            dd: d * (big ? 1.2 : 0.88) })                  // bead draw size
+          const rt = u + turb * T.wave + (Math.random() - 0.5) * T.grain
+
+          // Curl of a two-octave scalar field: v = (dPsi/dy, -dPsi/dx). Taking the
+          // perpendicular of the gradient is what kills the divergence — dots slide along the
+          // field's contours instead of down its slope, so neighbours shear past each other
+          // and the group never puffs outward.
+          const cf = T.clump * 0.02
+          const f1x = 0.9 * cf, f1y = 1.3 * cf, f2x = 1.7 * cf, f2y = 0.7 * cf
+          const c1 = Math.cos(f1x * jx + f1y * jy + 1.7)
+          const c2 = Math.cos(f2x * jx - f2y * jy + 4.1)
+          const vx = f1y * c1 - 0.7 * f2y * c2
+          const vy = -(f1x * c1 + 0.7 * f2x * c2)
+          const vlen = Math.hypot(vx, vy) || 1
+          // where the field is flat a dot barely moves at all, which is what stops this
+          // reading as every dot leaving at once
+          const mag = Math.min(1, vlen / (f1y + 0.7 * f2y))
+          const jit = (Math.random() - 0.5) * T.noise
+          const ca = Math.cos(jit), sa = Math.sin(jit)
+          const ux = (vx * ca - vy * sa) / vlen, uy = (vx * sa + vy * ca) / vlen
+          const dist = T.travel * CAP * (0.35 + 0.65 * mag) * (0.7 + Math.random() * 0.6)
+
+          pts.push({
+            x: jx, y: jy, hi, rt,
+            dx: ux * dist,
+            dy: uy * dist + T.sag * CAP * (0.5 + Math.random()),
+            dd: d0 * (Math.random() < 0.10 ? 1.2 : 0.88),
+            ph: Math.random() * 6.2832, sp: 0.6 + Math.random() * 0.9,
+            wxPhase: jy * 0.06, wyPhase: jx * 0.05,
+            fsz: Math.random() < 0.16 ? 3 : Math.random() < 0.5 ? 2 : 1,
+            fa: 0.5 + Math.random() * 0.5,
+            mfx: 0.0004 + Math.random() * 0.0008, mfy: 0.0003 + Math.random() * 0.0007,
+            mpx: Math.random() * 6.2832, mpy: Math.random() * 6.2832,
+            mamp: 0.5 + Math.random() * 1.1,
+            seeds: false, // whether this dot lights the maze on its way out
+          })
         }
 
-      // Wake reveal timing: a drifting source throws off ripples; each sequin's reveal time is the
-      // earliest a ripple reaches it. Level sets of this field form the wake's curved arcs.
-      const NS = 60, pad = hero * 0.35
-      const pathX = (u) => (bx - pad) + u * (bw + 2 * pad)
-      const pathY = (u) => originY + Math.sin(u * Math.PI * 1.1 + 0.4) * hero * 0.55
-      const C = bw * 0.45
-      let rtMax = 1e-6
-      for (const s of pts) {
-        let best = 1e9
-        for (let k = 0; k <= NS; k++) {
-          const u = k / NS, t = u + Math.hypot(s.x - pathX(u), s.y - pathY(u)) / C
-          if (t < best) best = t
-        }
-        s.rt = best; if (best > rtMax) rtMax = best
+      // Mark an even scattering of dots as maze-seeders. Every dot doing it would be 3300
+      // wavelets against a wake list that holds 16 — they would evict each other within a
+      // frame and nothing would be visible.
+      if (T.feed === 2 && T.seeds > 0) {
+        const step = Math.max(1, Math.floor(pts.length / T.seeds))
+        for (let i = 0; i < pts.length; i += step) pts[i].seeds = true
       }
-      for (const s of pts) s.rt /= rtMax
 
-      // pre-render the "polished" surface: solid iridescent base + blurred sequins added on top
-      const sharp = mk(); sharp.width = W * DPR; sharp.height = H * DPR
-      const shc = sharp.getContext('2d'); shc.setTransform(DPR, 0, 0, DPR, 0, 0)
-      const mr = SS * 1.4
-      for (const s of pts) shc.drawImage(beads[s.hi], s.x - mr, s.y - mr, mr * 2, mr * 2)
-      metalSrc = mk(); metalSrc.width = W * DPR; metalSrc.height = H * DPR
-      const mc = metalSrc.getContext('2d'); mc.setTransform(DPR, 0, 0, DPR, 0, 0)
-      const hgm = mc.createLinearGradient(bx, 0, bx + bw, 0)
-      for (let k = 0; k <= 12; k++) { const u = k / 12; hgm.addColorStop(u, `hsl(${hcss(hueAt(u))}, 28%, 16%)`) }
-      mc.fillStyle = hgm; mc.fillRect(bx - 8, by - 6, bw + 16, bh + 12)
-      mc.globalCompositeOperation = 'lighter'; mc.globalAlpha = 0.12
-      mc.filter = `blur(${Math.round(hero * 0.05 * DPR)}px)`
-      mc.setTransform(1, 0, 0, 1, 0, 0); mc.drawImage(sharp, 0, 0); mc.setTransform(DPR, 0, 0, DPR, 0, 0)
-      mc.filter = 'none'; mc.globalAlpha = 1; mc.globalCompositeOperation = 'source-over'
+      // Every field below feeds a coordinate or an alpha, and canvas ignores NaN draws in
+      // silence — one missing field renders a blank screen with no error anywhere.
+      if (pts.length) {
+        const p0 = pts[0]
+        for (const key of ['x', 'y', 'rt', 'dx', 'dy', 'dd', 'fa', 'fsz', 'mamp']) {
+          if (!Number.isFinite(p0[key])) throw new Error(`IntroWake: particle.${key} is ${p0[key]}`)
+        }
+      }
+
+      if (DEV_TUNE) window.__introTiming = {
+        hold: HOLD1, wipe: WIPE, linger: T.linger, span: T.span,
+        end: Math.round(T_END), reveal: Math.round(T_REVEAL), particles: pts.length,
+      }
     }
 
-    function clipAndBlit(g) {
-      bctx.globalCompositeOperation = 'destination-in'
-      bctx.setTransform(1, 0, 0, 1, 0, 0); bctx.drawImage(tmask, 0, 0); bctx.setTransform(DPR, 0, 0, DPR, 0, 0)
-      bctx.globalCompositeOperation = 'source-over'
-      g.drawImage(buf, 0, 0, W * DPR, H * DPR, 0, 0, W, H)
-    }
-
-    function paintWake(g, te, wc) {
-      const p = clamp01(te / DEVELOP)
-      const rp1 = 1.14 * easeIO(clamp01(p / 0.42))
-      const rp2 = 1.14 * easeIO(clamp01((p - 0.17) / 0.42))
-      const softP = 0.06, softP2 = 0.11
-      const br = Math.max(3, hero * 0.028) * 1.9
-
-      bctx.clearRect(bx - 8, by - 8, bw + 16, bh + 16)
-      scctx.clearRect(bx - 8, by - 8, bw + 16, bh + 16)
-      for (let i = 0; i < pts.length; i++) {
-        const s = pts[i]
-        const age = rp1 - s.rt + (s.appear - 0.5) * softP * 0.5
-        if (age <= -softP) continue
-        const rv = smooth(age / softP)
-        if (rv <= 0.01) continue
-        const polish = smooth((rp2 - s.rt) / softP2)
-
-        if (polish < 0.985) {
-          const band = Math.max(0, Math.cos(age * 30 + s.turb26)) * Math.max(0, 1 - age / 0.55)
-          const foam = 0.30 + 0.70 * (0.5 + 0.5 * Math.sin(s.foamPhase + wc * 0.0012)) * s.bf
-          const crest = band * band * foam
-          const twk = 0.7 + 0.3 * Math.sin(wc * 0.003 * s.sp + s.ph)
-          const a = rv * (s.big ? 0.28 : 0.14) * (1 + 3.6 * crest) * twk * (1 - polish)
-          if (a > 0.008) {
-            const wx = 2.6 * Math.sin(s.wxPhase + wc * 0.0021), wy = 1.8 * Math.sin(s.wyPhase - wc * 0.0017)
-            const dd = s.dd
-            bctx.globalAlpha = Math.min(0.8, a)
-            bctx.drawImage(beads[s.hi], s.x + wx - dd / 2, s.y + wy - dd / 2, dd, dd)
-          }
-        }
-        if (polish > 0.02) { scctx.globalAlpha = polish; scctx.drawImage(blob, s.x - br, s.y - br, br * 2, br * 2) }
+    // the dissolve front, handed to the maze so its real wake fires along the same line
+    let lastFx = -1, spawnAcc = 0
+    function feedWake(front) {
+      if (T.feed !== 1 || !pointer || !pointer.current) return
+      const fx = bx + front * bw
+      if (fx < bx - CAP || fx > bx + bw + CAP) return
+      if (lastFx >= 0) spawnAcc += Math.abs(fx - lastFx)
+      lastFx = fx
+      let guard = 0
+      while (spawnAcc >= T.gap && guard++ < 4) {
+        pointer.current.moveTo(fx, lineY)
+        spawnAcc -= T.gap
       }
-      bctx.globalAlpha = 1; scctx.globalAlpha = 1
-
-      polctx.globalCompositeOperation = 'source-over'
-      polctx.clearRect(bx - 8, by - 8, bw + 16, bh + 16)
-      polctx.drawImage(metalSrc, 0, 0, W * DPR, H * DPR, 0, 0, W, H)
-      polctx.globalCompositeOperation = 'destination-in'
-      polctx.drawImage(sc, 0, 0, W * DPR, H * DPR, 0, 0, W, H)
-      polctx.globalCompositeOperation = 'source-over'
-      bctx.drawImage(pol, 0, 0, W * DPR, H * DPR, 0, 0, W, H)
-      if (grayAmt > 0) {
-        bctx.globalAlpha = grayAmt; bctx.fillStyle = '#d9dbe1'
-        bctx.fillRect(bx - 8, by - 8, bw + 16, bh + 16); bctx.globalAlpha = 1
-      }
-      clipAndBlit(g)
     }
 
     function frame(now) {
       const e = now - t0
       ctx.clearRect(0, 0, W, H)
 
-      const te = Math.max(0, Math.min(DEVELOP, e - T_DEV))
-      const wc = Math.min(e, T_SHRINK) - T_DEV
+      // One front, crossing at a constant rate; both waves hang off it. Linear on purpose —
+      // an eased front sweeps unevenly, and uneven is what reads as a burst.
+      const rp1 = e < HOLD1 ? -1 : (e - HOLD1) / WIPE - SOFT
+      if (rp1 > T.linger) feedWake(rp1 - T.linger)
 
-      let S = 1, tx = cx, ty = cy; grayAmt = 0
-      if (e >= T_SHRINK) {
-        const sp = Math.min(1, (e - T_SHRINK) / SHRINK), pp = easeIO(sp)
-        const targetS = brandPx / hero
-        S = 1 + (targetS - 1) * pp
-        tx = cx + (brandCx - cx) * pp; ty = cy + (brandCy - cy) * pp
-        grayAmt = smooth(clamp01((sp - 0.25) / 0.62)) // hold, then brighten to gray ~25% into the shrink
+      for (let i = 0; i < pts.length; i++) {
+        const s = pts[i]
+        const age = rp1 - s.rt
+        if (age <= -SOFT) continue
+        const rv = smooth(age / SOFT)
+        if (rv <= 0.01) continue
+
+        // holds for `linger`, then slides and fades over `span`
+        const d = clamp01((age - T.linger) / T.span)
+        if (d >= 1) continue
+
+        const mw = T.meander * CAP * s.mamp * d
+        const bx0 = s.x + s.dx * d
+        const by0 = s.y + s.dy * d
+        // the maze's own sway, arriving as the dot lets go rather than shaking the held name
+        const wv = d * T.warp * (3.5 * Math.sin(by0 * 0.03 + e * 0.0016) + 1.8 * Math.sin(by0 * 0.09 - e * 0.0011))
+        const px = bx0 + wv + 2.6 * T.wobble * Math.sin(s.wxPhase + e * 0.0021)
+                 + mw * Math.sin(s.mpx + e * s.mfx)
+        const py = by0 + 1.8 * T.wobble * Math.sin(s.wyPhase - e * 0.0017)
+                 + mw * Math.cos(s.mpy + e * s.mfy)
+
+        // as it goes, it lights the maze where it is — the dot becomes a maze particle at
+        // that spot, rather than the maze being lit along a line somewhere else
+        if (s.seeds && d >= T.seedat && pointer && pointer.current) {
+          s.seeds = false
+          pointer.current.seedAt(px, py)
+        }
+
+        const twk = 1 - T.twinkle * 0.3 * (1 - Math.sin(e * 0.003 * s.sp + s.ph))
+        const asFleck = smooth(d / T.pale) // sequin -> colourless maze fleck
+        const env = 1 - d                  // and gone by the end of the slide
+
+        if (asFleck < 0.99) {
+          const a = rv * 0.14 * T.bead * twk * (1 - asFleck) * (d > 0 ? env : 1)
+          if (a > 0.008) {
+            ctx.globalAlpha = Math.min(0.95, a)
+            ctx.drawImage(beads[s.hi], px - s.dd / 2, py - s.dd / 2, s.dd, s.dd)
+          }
+        }
+        if (asFleck > 0.01) {
+          // settles toward the dim level the maze's dots sit at, then goes out
+          const level = T.rest + (1 - T.rest) * (1 - asFleck)
+          const fl = rv * s.fa * asFleck * level * env * twk
+          if (fl > 0.01) {
+            ctx.globalAlpha = Math.min(1, fl)
+            ctx.fillStyle = 'rgb(246,247,255)'
+            ctx.fillRect(px, py, s.fsz, s.fsz)
+          }
+        }
       }
-      ctx.save()
-      if (S !== 1 || tx !== cx || ty !== cy) { ctx.translate(tx, ty); ctx.scale(S, S); ctx.translate(-cx, -cy) }
-      paintWake(ctx, te, wc)
-      // As it settles, fade in the name as CRISP native text (drawn under the same transform, so
-      // it's sharp at the final size) in the brand's exact colour. This lands the canvas name
-      // pixel-matched to the real brand, so the handoff crossfade is seamless (no soft->crisp pop).
-      if (grayAmt > 0.001) {
-        ctx.globalAlpha = grayAmt
-        ctx.fillStyle = brandColor
-        ctx.font = font(hero); ctx.letterSpacing = (brandLSem * hero).toFixed(3) + 'px'
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-        ctx.fillText(NAME, cx, cy)
-        ctx.globalAlpha = 1
-      }
-      ctx.restore()
       ctx.globalAlpha = 1
 
-      if (!revealed && e >= T_DONE) {
+      if (!revealed && e >= T_REVEAL) {
         revealed = true
-        if (cbRef.current.onReveal) cbRef.current.onReveal() // real brand + content appear underneath
-        setHide(true)                                        // fade this opaque layer out
+        if (cbRef.current.onReveal) cbRef.current.onReveal()
       }
-      rafId = requestAnimationFrame(frame)
+      if (!hidden && e >= T_END) { hidden = true; setHide(true) }
+      sched.request(frame)
     }
+
+    // silence the real mouse for as long as the intro is on screen
+    const muted = pointer && pointer.current && pointer.current.setMuted
+    if (muted) pointer.current.setMuted(true)
 
     const resize = () => layout()
     window.addEventListener('resize', resize)
-    layout()
-    // if the brand webfont isn't ready yet, re-layout once it is (during the black hold, invisible)
+
+    const begin = () => { layout(); t0 = sched.t0(); sched.request(frame) }
     if (document.fonts && document.fonts.status !== 'loaded') {
-      document.fonts.ready.then(() => { layout(); t0 = performance.now() }).catch(() => {})
+      if (FREEZE_MS !== null) document.fonts.ready.then(begin).catch(begin)
+      else { begin(); document.fonts.ready.then(() => { layout(); t0 = sched.t0() }).catch(() => {}) }
+    } else begin()
+
+    return () => {
+      sched.cancel()
+      window.removeEventListener('resize', resize)
+      if (pointer && pointer.current && pointer.current.setMuted) pointer.current.setMuted(false)
     }
-    rafId = requestAnimationFrame(frame)
-    return () => { cancelAnimationFrame(rafId); window.removeEventListener('resize', resize) }
   }, [])
 
   return (
