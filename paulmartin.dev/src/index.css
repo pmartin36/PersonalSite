@@ -106,6 +106,83 @@ a {
   opacity: 0;
 }
 
+/* ---------- maze control hint (surfaces at About Me) ---------- */
+/* ".dev" grows in from nothing rather than being revealed in place, so the wordmark
+   widens and the name slides left off centre. font-size carries the growth: it changes
+   the layout width the way a max-width/overflow pair would, but without redefining the
+   inline baseline and dropping ".dev" out of line with the name. */
+.brand-tld {
+  display: inline-block;
+  font-size: 0;
+  opacity: 0;
+  transition: font-size 0.65s ease, opacity 0.5s ease;
+}
+
+.brand--hint .brand-tld {
+  font-size: 0.8em;
+  opacity: 1;
+}
+
+.brand-plain {
+  color: var(--ink);
+  -webkit-text-fill-color: var(--ink);
+}
+
+.brand-tld .brand-plain {
+  color: #4e4e58;
+  -webkit-text-fill-color: #4e4e58;
+}
+
+/* The four controls stay ordinary letters at their normal weight and footprint. The maze
+   rides on an overlay copy that MULTIPLIES into the letter underneath, so the colour is the
+   letter tinted rather than a shape laid over it. That also handles ".dev" on its own: the
+   same strip over that letter's darker grey comes out muted by exactly the ratio the two
+   text colours differ by, with no second texture and no fade ramp. */
+.brand-key {
+  position: relative;
+  /* inline-block so the overlay's containing block is the glyph's own line box; as a plain
+     inline the pseudo-element anchors to the inline box and the copy lands off the baseline */
+  display: inline-block;
+}
+
+/* the controls stay the same white as the rest of the name; only the one inside ".dev"
+   takes that block's grey */
+.brand-tld .brand-key {
+  -webkit-text-fill-color: #4e4e58;
+}
+
+.brand-key::after {
+  content: attr(data-ch);
+  position: absolute;
+  left: 0;
+  top: 0;
+  -webkit-text-fill-color: transparent;
+  background-image: var(--brand-tex);
+  /* a third of the strip per letter, panned by --k, so each one carries a gradient of its
+     own and sits at a different point of the sweep from its neighbours */
+  background-size: 300% 100%;
+  background-position: calc(var(--k) * 100%) 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  /* inset off the glyph edge, so the letter itself reads as a border around the maze */
+  filter: url(#brand-erode);
+  line-height: inherit;
+  opacity: 0;
+  transition: opacity 0.7s ease;
+  pointer-events: none;
+}
+
+.brand-tld .brand-key::after {
+  filter: url(#brand-erode-sm); /* ".dev" is 0.8em, so the same radius eats its thinner stems */
+}
+
+/* Half opacity, so the letter underneath shows through the maze rather than being covered
+   by it. The interior reads as the white letter tinted, not as saturated colour sitting in
+   a white outline. */
+.brand--hint .brand-key::after {
+  opacity: 0.75;
+}
+
 .site-nav {
   display: flex;
   align-items: center;
@@ -879,6 +956,10 @@ main > .section:first-child {
     transition: none;
   }
   .carousel-track {
+    transition: none;
+  }
+  .brand-tld,
+  .brand-key {
     transition: none;
   }
 }

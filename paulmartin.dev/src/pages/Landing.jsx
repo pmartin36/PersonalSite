@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { currentProjects, previousProjects } from '../data/projects'
 import ProjectCard from '../components/ProjectCard'
 import MazeBackground from '../components/MazeBackground'
 import IntroWake from '../components/IntroWake'
 import { RevealProvider, Reveal } from '../reveal'
+import { makeBrandTexture } from '../brandTexture'
 
 const RESUME_URL =
   'https://drive.google.com/file/d/1SpGooyH4FvJe9ykl-nXWoyM3i8u40Vyr/view?usp=sharing'
@@ -60,6 +61,23 @@ export default function Landing() {
     return () => { el.classList.remove('intro-playing'); el.style.paddingRight = '' }
   }, [introHold])
 
+  // Reaching About Me surfaces the maze's controls: ".dev" arrives so the D exists at all,
+  // and the four control letters take a tint. One-way — once you have been shown the hint,
+  // taking it back would be worse than never giving it.
+  const [hintOn, setHintOn] = useState(false)
+  // the maze's flecks and spectrum, baked once and clipped into the four control letters
+  const brandTex = useMemo(() => makeBrandTexture(), [])
+  useEffect(() => {
+    const el = document.getElementById('about-label')
+    if (!el) return
+    const io = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setHintOn(true); io.disconnect() } },
+      { rootMargin: '0px 0px -20% 0px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
   // the header stays transparent (maze shows through) until content scrolls up under it
   const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
@@ -91,10 +109,38 @@ export default function Landing() {
       {showIntro && (
         <IntroWake pointer={pointerRef} onReveal={handoff} onDone={() => setShowIntro(false)} />
       )}
+      {/* Shrinks the maze overlay inward off the letter it sits on, so the letter shows as
+          a border around it. Erode works on the composited alpha, which is the union of the
+          glyph's contours — unlike a stroke, which traces each contour and draws a line
+          through letters whose parts overlap, and which also grows the glyph outward. */}
+      <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute' }}>
+        <filter id="brand-erode" colorInterpolationFilters="sRGB">
+          <feMorphology operator="erode" radius="1.28" />
+        </filter>
+        <filter id="brand-erode-sm" colorInterpolationFilters="sRGB">
+          <feMorphology operator="erode" radius="1.1" />
+        </filter>
+      </svg>
       <div className={`landing entered${introHold ? ' intro-hold' : ''}`}>
         <header className={`site-header${scrolled ? ' scrolled' : ''}`}>
-          <h1 className={`brand${playIntro && !armed ? ' brand-hidden' : ''}`}>
-            Paul Martin
+          {/* Split so the four maze controls can be filled separately from the rest. The
+              texture is one strip across the whole wordmark, so each letter samples its own
+              slice of the sweep and the four read as one continuous run of the maze. */}
+          <h1
+            className={`brand${playIntro && !armed ? ' brand-hidden' : ''}${hintOn ? ' brand--hint' : ''}`}
+            style={{ '--brand-tex': `url(${brandTex})` }}
+          >
+            <span className="brand-plain">Pa</span>
+            <span className="brand-key" data-ch="u" style={{ '--k': 0 }}>u</span>
+            <span className="brand-key" data-ch="l" style={{ '--k': 0.14 }}>l</span>
+            <span className="brand-plain"> Ma</span>
+            <span className="brand-key" data-ch="r" style={{ '--k': 0.55 }}>r</span>
+            <span className="brand-plain">tin</span>
+            <span className="brand-tld">
+              <span className="brand-plain">.</span>
+              <span className="brand-key" data-ch="d" style={{ '--k': 1 }}>d</span>
+              <span className="brand-plain">ev</span>
+            </span>
           </h1>
           <Reveal as="nav" order={0} className="site-nav">
             <a href={RESUME_URL} target="_blank" rel="noopener noreferrer">
