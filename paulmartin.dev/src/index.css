@@ -872,7 +872,11 @@ main > .section:first-child {
 
 .solved-title {
   margin: 0 0 1rem;
-  font-size: clamp(2rem, 7vw, 3.25rem);
+  /* Sized to keep "You found the way through." on one line at every width. The string needs
+     ~12.2px of width per 1px of font-size, and the column is min(540px, 100vw - 48px), so the
+     vw term is what holds it to one line on narrow screens; the cap keeps it off the ceiling
+     (540px fits 44px) on wide ones. */
+  font-size: clamp(1.05rem, 6.5vw, 2.5rem);
   font-weight: 800;
   letter-spacing: -0.02em;
 }
