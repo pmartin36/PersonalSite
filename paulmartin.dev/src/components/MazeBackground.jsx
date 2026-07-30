@@ -6,7 +6,10 @@ import { makeScheduler } from '../devClock'
 // impact. Controls are U/L/D/R (the letters hidden in "paulmartin.dev" - no arrow-key
 // workaround). Reaching the exit calls onSolve.
 //
-// pointerApi is a ref this fills with { moveTo, seedAt, setMuted }. The intro drives the wake
+// The route runs left to right in landscape and bottom to top in portrait, always along the
+// long axis of the viewport.
+//
+// pointerApi is a ref this fills with { moveTo, seedAt, move, setMuted }. The intro drives the wake
 // from its own positions through the same code the mouse uses, drops single wavelets where its
 // particles land, and silences the real mouse while it plays.
 export default function MazeBackground({ onSolve, pointerApi }) {
@@ -49,69 +52,128 @@ export default function MazeBackground({ onSolve, pointerApi }) {
 
       const rnd = Math.random // fresh maze every load
 
-      right = Array.from({ length: rows }, () => Array(cols).fill(true))
-      down = Array.from({ length: rows }, () => Array(cols).fill(true))
-      const onPath = Array.from({ length: rows }, () => Array(cols).fill(false))
+      // Portrait viewports run the route along the long axis (bottom to top). The walk is
+      // always generated left to right against a TRANSPOSED grid (cols<->rows swapped) and
+      // the wall data is transposed back into real space afterwards, so one set of
+      // probabilities and acceptance tests covers both orientations and the horizontal bias
+      // becomes a vertical one. Landscape uses the grid as-is.
+      const flip = H > W
+      const gRows = flip ? cols : rows
+      const gCols = flip ? rows : cols
+
+      // Route length. The walk strictly alternates H/V starting with H, and it can only
+      // finish on an H segment (the exit is the last column), so the reachable segment counts
+      // are odd; 7 is the nearest to the 8 we want. At 7 the direction counts are pinned to
+      // three forward runs, one doubling back, and a 2/1 split on the cross axis.
+      const TARGET_SEGS = 7
+      const SEG_CAP = TARGET_SEGS + 2
+      // Run lengths scale with the grid rather than being fixed, so the segment target holds
+      // on any viewport instead of only the ones the constants were picked against: a route
+      // of TARGET_SEGS has (TARGET_SEGS - 1) / 2 forward runs to cover the journey axis, less
+      // whatever the single backward run gives away.
+      const FWD_RUNS = (TARGET_SEGS - 1) / 2
+      const BACK_LEN = Math.max(2, Math.round((gCols - 1) * 0.2))
+      const FWD_LEN = (gCols - 1 + BACK_LEN) / FWD_RUNS
+      const RUN = {
+        E: [Math.max(3, Math.round(FWD_LEN * 0.72)), Math.max(3, Math.round(FWD_LEN * 0.7))],
+        W: [Math.max(2, Math.round(BACK_LEN * 0.7)), Math.max(3, Math.round(BACK_LEN * 0.8))],
+        N: [Math.max(3, Math.round(gRows * 0.22)), Math.max(3, Math.round(gRows * 0.32))],
+      }
+      RUN.S = RUN.N
+
+      const gRight = Array.from({ length: gRows }, () => Array(gCols).fill(true))
+      const gDown = Array.from({ length: gRows }, () => Array(gCols).fill(true))
+      const gOnPath = Array.from({ length: gRows }, () => Array(gCols).fill(false))
+      let gStartR = 0, gStartC = 0, gExitR = 0, gExitC = 0
+      const gOpenB = (r1, c1, r2, c2) => {
+        if (r1 === r2) gRight[r1][Math.min(c1, c2)] = false
+        else gDown[Math.min(r1, r2)][c1] = false
+      }
+
+      // real space. When not flipped these ARE the generation arrays, no copy involved.
+      right = flip ? Array.from({ length: rows }, () => Array(cols).fill(true)) : gRight
+      down = flip ? Array.from({ length: rows }, () => Array(cols).fill(true)) : gDown
+      const onPath = flip ? Array.from({ length: rows }, () => Array(cols).fill(false)) : gOnPath
       const openB = (r1, c1, r2, c2) => {
         if (r1 === r2) right[r1][Math.min(c1, c2)] = false
         else down[Math.min(r1, r2)][c1] = false
       }
+      // gen -> real: gen cell (gr, gc) is real cell (r = gc, c = gr), so a gen right-wall is a
+      // real down-wall and a gen down-wall is a real right-wall. The corridor itself has no
+      // direction, so portrait also swaps the two ends: the gen exit (real row rows-1) becomes
+      // the start and the gen start (real row 0) becomes the exit, making the journey run
+      // bottom to top. solvable() runs after this and so checks the direction actually played.
+      const materialize = () => {
+        if (!flip) { startR = gStartR; startC = gStartC; exitR = gExitR; exitC = gExitC; return }
+        for (let r = 0; r < rows; r++)
+          for (let c = 0; c < cols; c++) {
+            right[r][c] = gDown[c][r]
+            down[r][c] = gRight[c][r]
+            onPath[r][c] = gOnPath[c][r]
+          }
+        startR = gExitC; startC = gExitR; exitR = gStartC; exitC = gStartR
+      }
 
       const DR = { N: [-1, 0], S: [1, 0], W: [0, -1], E: [0, 1] }
       const tryWalk = (accept) => {
-        for (let r = 0; r < rows; r++) { right[r].fill(true); down[r].fill(true); onPath[r].fill(false) }
-        const firstR = 1 + ((rnd() * (rows - 2)) | 0)
+        for (let r = 0; r < gRows; r++) { gRight[r].fill(true); gDown[r].fill(true); gOnPath[r].fill(false) }
+        const firstR = 1 + ((rnd() * (gRows - 2)) | 0)
         let r = firstR, c = 0, axis = 'H', seg = 0, reached = false
         const used = {}
-        onPath[r][c] = true
+        gOnPath[r][c] = true
         let minR = firstR, maxR = firstR, sumR = firstR, cnt = 1
         const runLen = (d) => {
           const [dr, dc] = DR[d]; let nr = r, nc = c, steps = 0
-          const want = 4 + ((rnd() * (axis === 'H' ? 8 : 7)) | 0)
+          const wa = RUN[d]
+          const want = wa[0] + ((rnd() * wa[1]) | 0)
           while (steps < want) {
             const tr = nr + dr, tc = nc + dc
             // keep the route inside the visible interior: never the outermost rows
             // (top/bottom borders bleed off-screen) and never column 0 (left border is
-            // off-screen); column cols-1 stays reachable as the exit cell.
-            if (tr < 1 || tr > rows - 2 || tc < 1 || tc >= cols || onPath[tr][tc]) break
+            // off-screen); column gCols-1 stays reachable as the exit cell.
+            if (tr < 1 || tr > gRows - 2 || tc < 1 || tc >= gCols || gOnPath[tr][tc]) break
             nr = tr; nc = tc; steps++
           }
           return steps
         }
-        while (seg < 13) {
+        while (seg < SEG_CAP) {
           let dir
           if (axis === 'H') dir = rnd() < 0.7 ? 'E' : 'W'
-          else { const toC = r < rows / 2 ? 'S' : 'N'; dir = rnd() < 0.58 ? toC : toC === 'S' ? 'N' : 'S' }
+          else { const toC = r < gRows / 2 ? 'S' : 'N'; dir = rnd() < 0.58 ? toC : toC === 'S' ? 'N' : 'S' }
           let steps = runLen(dir)
           if (steps === 0) { dir = axis === 'H' ? (dir === 'E' ? 'W' : 'E') : (dir === 'N' ? 'S' : 'N'); steps = runLen(dir) }
           if (steps === 0) break
           const [dr, dc] = DR[dir]
-          for (let s = 0; s < steps; s++) { const tr = r + dr, tc = c + dc; openB(r, c, tr, tc); onPath[tr][tc] = true; r = tr; c = tc; if (tr < minR) minR = tr; if (tr > maxR) maxR = tr; sumR += tr; cnt++ }
+          for (let s = 0; s < steps; s++) { const tr = r + dr, tc = c + dc; gOpenB(r, c, tr, tc); gOnPath[tr][tc] = true; r = tr; c = tc; if (tr < minR) minR = tr; if (tr > maxR) maxR = tr; sumR += tr; cnt++ }
           used[dir] = (used[dir] || 0) + 1; seg++; axis = axis === 'H' ? 'V' : 'H'
-          if (c === cols - 1) { reached = true; break }
+          if (c === gCols - 1) { reached = true; break }
         }
-        const all4 = used.E && used.W && used.N && used.S
+        const all4 = !!(used.E && used.W && used.N && used.S)
         const meanR = sumR / cnt, span = maxR - minR
-        const balanced = span >= rows * 0.45 && meanR >= rows * 0.28 && meanR <= rows * 0.72
-        const split = used.W >= 2 && used.N >= 2 && used.S >= 2 && used.E > used.W
-        if (reached && accept(seg, all4, balanced, split)) { startR = firstR; startC = 0; exitR = r; exitC = c; return true }
+        const balanced = span >= gRows * 0.45 && meanR >= gRows * 0.28 && meanR <= gRows * 0.72
+        // every direction used, net progress toward the exit, and neither cross-axis
+        // direction hogging the route
+        const even = all4 && used.E > used.W && Math.abs(used.N - used.S) <= 1
+        if (reached && accept(seg, all4, balanced, even)) { gStartR = firstR; gStartC = 0; gExitR = r; gExitC = c; return true }
         return false
       }
+      const LO = TARGET_SEGS - 2, HI = TARGET_SEGS + 2
       const genPath = () => {
-        for (let a = 0; a < 6000; a++) if (tryWalk((s, all, bal, sp) => s >= 10 && s <= 12 && all && bal && sp)) return true
-        for (let a = 0; a < 6000; a++) if (tryWalk((s, all, bal, sp) => s >= 10 && s <= 13 && all && bal && sp)) return true
-        for (let a = 0; a < 4000; a++) if (tryWalk((s, all, bal, sp) => s >= 8 && s <= 13 && all && bal && sp)) return true
-        for (let a = 0; a < 3000; a++) if (tryWalk((s, all, bal) => s >= 8 && all && bal)) return true
+        for (let a = 0; a < 6000; a++) if (tryWalk((s, all, bal, ev) => s === TARGET_SEGS && all && bal && ev)) return true
+        for (let a = 0; a < 6000; a++) if (tryWalk((s, all, bal, ev) => s >= TARGET_SEGS && s <= HI && all && bal && ev)) return true
+        for (let a = 0; a < 4000; a++) if (tryWalk((s, all, bal, ev) => s >= LO && s <= HI && all && bal && ev)) return true
+        for (let a = 0; a < 3000; a++) if (tryWalk((s, all, bal) => s >= LO && all && bal)) return true
         for (let a = 0; a < 2000; a++) if (tryWalk(() => true)) return true
         return false
       }
       const straightFallback = () => {
-        const mr = (rows / 2) | 0
-        for (let r = 0; r < rows; r++) { right[r].fill(true); down[r].fill(true); onPath[r].fill(false) }
-        for (let c = 0; c < cols; c++) { onPath[mr][c] = true; if (c > 0) right[mr][c - 1] = false }
-        startR = mr; startC = 0; exitR = mr; exitC = cols - 1
+        const mr = (gRows / 2) | 0
+        for (let r = 0; r < gRows; r++) { gRight[r].fill(true); gDown[r].fill(true); gOnPath[r].fill(false) }
+        for (let c = 0; c < gCols; c++) { gOnPath[mr][c] = true; if (c > 0) gRight[mr][c - 1] = false }
+        gStartR = mr; gStartC = 0; gExitR = mr; gExitC = gCols - 1
       }
       if (!genPath()) straightFallback()
+      materialize()
 
       // guarantee the route is solvable by corner-to-corner sliding (BFS over slide moves)
       const canGoRC = (r, c, d) =>
@@ -134,7 +196,7 @@ export default function MazeBackground({ onSolve, pointerApi }) {
         return false
       }
       let solveGuard = 0
-      while (!solvable() && solveGuard++ < 25) { if (!genPath()) { straightFallback(); break } }
+      while (!solvable() && solveGuard++ < 25) { if (!genPath()) { straightFallback(); materialize(); break } materialize() }
 
       // --- decoy maze filling every dead pocket, SEALED from the real path ---
       const dvis = Array.from({ length: rows }, () => Array(cols).fill(false))
@@ -219,12 +281,14 @@ export default function MazeBackground({ onSolve, pointerApi }) {
       d === 'S' ? (r < rows - 1 && !down[r][c]) :
       d === 'W' ? (c > 0 && !right[r][c - 1]) :
                   (c < cols - 1 && !right[r][c])
+    // returns true when a slide actually started, false when it was rejected (already
+    // tweening, or a wall blocks that direction)
     function slide(d) {
-      if (tween.active) return
+      if (tween.active) return false
       const [dr, dc] = DV[d]
       let nr = cr, nc = cc
       while (canGo(nr, nc, d)) { nr += dr; nc += dc } // run to the next corner
-      if (nr === cr && nc === cc) return
+      if (nr === cr && nc === cc) return false
       tween.fromX = ball.x; tween.fromY = ball.y
       ;[tween.toX, tween.toY] = cellCenter(nr, nc)
       tween.tr = nr; tween.tc = nc
@@ -236,6 +300,7 @@ export default function MazeBackground({ onSolve, pointerApi }) {
       const dist = Math.abs(nr - cr) + Math.abs(nc - cc)
       tween.dur = Math.min(340, 45 * dist + 60) // quick slide
       tween.t0 = nowT; tween.active = true
+      return true
     }
 
     const KEY = { u: 'N', d: 'S', l: 'W', r: 'E' } // letters only — no arrow-key workaround
@@ -292,6 +357,9 @@ export default function MazeBackground({ onSolve, pointerApi }) {
     if (pointerApi) pointerApi.current = {
       moveTo: feedPointer,
       seedAt,
+      // 'N' | 'S' | 'E' | 'W'. true when the ball started moving, false when the move was
+      // rejected — a slide is already in flight, or a wall blocks that direction.
+      move: (dir) => (Object.hasOwn(DV, dir) ? slide(dir) : false),
       // resetting the last-position tracking matters on UNMUTE: without it the first real
       // move after the intro looks like one enormous jump and spawns a burst of wavelets
       setMuted: (v) => { mouseMuted = !!v; pmx = -1; pmy = -1; distAcc = 0 },
