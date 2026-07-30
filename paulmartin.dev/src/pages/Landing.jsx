@@ -10,6 +10,18 @@ import { makeBrandTexture } from '../brandTexture'
 const RESUME_URL =
   'https://drive.google.com/file/d/1SpGooyH4FvJe9ykl-nXWoyM3i8u40Vyr/view?usp=sharing'
 
+// A swipe only counts if it was meant: this much travel along the dominant axis, and that
+// axis at least this many times the other one, so a diagonal smudge is dropped rather than
+// snapped to whichever direction happened to win by a pixel. Both are tuned by feel.
+const SWIPE_MIN_PX = 70
+const SWIPE_AXIS_RATIO = 1.5
+// Locked mode releases itself. Page scroll is suppressed while it is on, so a lock that
+// outlives someone's attention would leave the page apparently broken.
+const LOCK_IDLE_MS = 9000
+// How long the header holds its swell when a swipe hits a wall. Long enough to read as a
+// breath rather than the blink of an error.
+const BREATH_MS = 520
+
 // Module scope, so it survives client-side navigation but resets on a real
 // document load. The intro is a greeting for arriving at the site, not for
 // arriving at this component: without this, hitting Back from a project replays
@@ -78,6 +90,124 @@ export default function Landing() {
     return () => io.disconnect()
   }, [])
 
+  // ---- touch: the wordmark is the maze's controller ----
+  // The keyboard hint (u/l/r/d) is meaningless without a keyboard, so a coarse pointer gets
+  // a different affordance entirely: the whole wordmark becomes a toggle, and swipes drive
+  // the ball. Read as a media query rather than from touch events, so it settles before the
+  // first render and a hybrid machine follows whichever pointer is actually in use.
+  const [coarse, setCoarse] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches,
+  )
+  useEffect(() => {
+    const mq = window.matchMedia('(pointer: coarse)')
+    const onChange = () => setCoarse(mq.matches)
+    onChange()
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+
+  const [locked, setLocked] = useState(false)
+  const [pulse, setPulse] = useState(false)
+  // bumped on every accepted swipe so the idle timer below restarts from the last one
+  const [moveTick, setMoveTick] = useState(0)
+  // set when a gesture turned out to be a swipe, so the click it may trail does not toggle
+  const swipedRef = useRef(false)
+
+  // a device that stops reporting a coarse pointer must not leave the lock (and its scroll
+  // suppression) behind
+  useEffect(() => {
+    if (!coarse) setLocked(false)
+  }, [coarse])
+
+  // Safety net: nothing accepted in this long and the lock lets go by itself.
+  useEffect(() => {
+    if (!locked) return
+    const t = setTimeout(() => setLocked(false), LOCK_IDLE_MS)
+    return () => clearTimeout(t)
+  }, [locked, moveTick])
+
+  const pulseTimer = useRef(0)
+  useEffect(() => () => clearTimeout(pulseTimer.current), [])
+
+  // Swipe handling and scroll suppression are the same effect on purpose. The suppression is
+  // added and removed by React's own lifecycle rather than by the handlers, so every way out
+  // of locked mode — second tap, idle timeout, unmount, a device that stops being touch —
+  // restores scrolling without any of them having to remember to.
+  useEffect(() => {
+    if (!locked) return
+    const root = document.documentElement
+    root.classList.add('maze-locked')
+
+    let id = null
+    let x0 = 0
+    let y0 = 0
+
+    const onStart = (e) => {
+      swipedRef.current = false
+      if (id !== null) return // a second finger joins the gesture, it does not start one
+      const t = e.changedTouches[0]
+      id = t.identifier
+      x0 = t.clientX
+      y0 = t.clientY
+    }
+
+    // The maze runs vertically on a phone, so a vertical swipe has to reach the ball rather
+    // than the page. touch-action on the document is what actually stops the scroll; this is
+    // the second lock on the same door, and is also what suppresses the trailing click.
+    const onMove = (e) => {
+      if (e.cancelable) e.preventDefault()
+    }
+
+    const onEnd = (e) => {
+      let t = null
+      for (const c of e.changedTouches) if (c.identifier === id) t = c
+      if (!t) return
+      id = null
+      const dx = t.clientX - x0
+      const dy = t.clientY - y0
+      const horizontal = Math.abs(dx) >= Math.abs(dy)
+      const along = horizontal ? Math.abs(dx) : Math.abs(dy)
+      const across = horizontal ? Math.abs(dy) : Math.abs(dx)
+      if (along < SWIPE_MIN_PX || along < across * SWIPE_AXIS_RATIO) return
+      swipedRef.current = true
+      const moved = pointerRef.current?.move(horizontal ? (dx > 0 ? 'E' : 'W') : dy > 0 ? 'S' : 'N')
+      // the swipe counts as attention either way, so the idle timer restarts on both
+      setMoveTick((n) => n + 1)
+      // Only a BLOCKED move gets feedback. One that works already shows itself: a reveal
+      // opens at the destination with the ball inside it. Answering a good move as well
+      // would just be noise on top of the thing it is announcing.
+      if (!moved) {
+        clearTimeout(pulseTimer.current)
+        setPulse(true)
+        pulseTimer.current = setTimeout(() => setPulse(false), BREATH_MS)
+      }
+    }
+
+    const onCancel = () => {
+      id = null
+    }
+
+    window.addEventListener('touchstart', onStart, { passive: true })
+    window.addEventListener('touchmove', onMove, { passive: false })
+    window.addEventListener('touchend', onEnd, { passive: true })
+    window.addEventListener('touchcancel', onCancel, { passive: true })
+    return () => {
+      root.classList.remove('maze-locked')
+      window.removeEventListener('touchstart', onStart)
+      window.removeEventListener('touchmove', onMove)
+      window.removeEventListener('touchend', onEnd)
+      window.removeEventListener('touchcancel', onCancel)
+    }
+  }, [locked])
+
+  function toggleLock() {
+    if (swipedRef.current) {
+      swipedRef.current = false
+      return
+    }
+    setLocked((v) => !v)
+  }
+
   // the header stays transparent (maze shows through) until content scrolls up under it
   const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
@@ -103,6 +233,67 @@ export default function Landing() {
   const footerHeadingOrder = aboutBodyOrder + 1
   const contactBase = footerHeadingOrder + 1
 
+  /* One rule per word rather than per letter, so the line runs unbroken. Word-level
+     insets trim it to the ink of the first and last glyph; the control letters lay a
+     gradient segment over their own ink, so the side bearings either side stay grey
+     and adjacent controls like "u" and "l" read as two segments, not one.
+
+     --rd/--rt/--re are the wipe's delay, duration and easing. One stroke crosses the
+     wordmark, reaching position x at T * x^(1/2.4) with T = 0.4s, and each piece is
+     handed the window of that stroke that passes over it. --rd/--rt come straight off
+     the curve. --re is the SEGMENT of the curve spanning that piece, refitted to a
+     cubic-bezier: a Hermite cubic through the piece's two endpoint velocities, which
+     for a power curve over a sub-span is exact to within 1%.
+
+     Per-piece easing is why this reads as one stroke rather than seven. The obvious
+     failure is putting the same ease-in on every piece, which restarts the wind-up
+     seven times and stutters. But that is a fault of the curve being wrong per piece,
+     not of easing per piece: give each one the true slice of the global curve and the
+     front's speed is continuous across every boundary, so the acceleration can be far
+     more pronounced than a chain of constant-speed chunks could carry. The old
+     schedule kept every piece linear, which capped it at three flat speeds and read
+     as a constant sweep.
+
+     --rw/--rk are the touch-only window onto the texture strip: the width of the strip as
+     a share of the piece, and how far along it to pan. They are measured so the three
+     words' rules sample one continuous sweep across the whole wordmark instead of
+     restarting it three times. */
+  const brandWords = (
+    <>
+      <span className="brand-word" style={{ '--wl': '0.052em', '--wr': '0.004em', '--rd': '0s', '--rt': '0.237s', '--re': 'cubic-bezier(0.333, 0, 0.667, 0.2)', '--rw': '353%', '--rk': 0 }}>
+        Pa
+        <span className="brand-key" style={{ '--k': 0, '--kl': '0.052em', '--kr': '0.038em', '--rd': '0.19s', '--rt': '0.03s', '--re': 'cubic-bezier(0.333, 0.3, 0.667, 0.633)' }}>u</span>
+        <span className="brand-key" style={{ '--k': 0.16, '--kl': '0.055em', '--kr': '0.004em', '--rd': '0.225s', '--rt': '0.012s', '--re': 'cubic-bezier(0.333, 0.321, 0.667, 0.655)' }}>l</span>
+      </span>{' '}
+      <span className="brand-word" style={{ '--wl': '0.063em', '--wr': '0.032em', '--rd': '0.253s', '--rt': '0.105s', '--re': 'cubic-bezier(0.333, 0.255, 0.667, 0.585)', '--rw': '230%', '--rk': 0.587 }}>
+        Ma
+        <span className="brand-key" style={{ '--k': 0.58, '--kl': '0.058em', '--kr': '0em', '--rd': '0.31s', '--rt': '0.013s', '--re': 'cubic-bezier(0.333, 0.324, 0.667, 0.657)' }}>r</span>
+        tin
+      </span>
+      {/* the rule lives on an inline span INSIDE the tld, not on the tld itself: the tld
+          is inline-block for its growth animation, and an inline-block resolves the
+          rule against its line box while the letters resolve against their content
+          area, which put the two at different heights */}
+      <span className="brand-tld">
+        <span className="brand-word" style={{ '--wl': '0.048em', '--wr': '0em', '--rd': '0.36s', '--rt': '0.04s', '--re': 'cubic-bezier(0.333, 0.309, 0.667, 0.642)', '--rw': '449%', '--rk': 1 }}>
+          .
+          <span className="brand-key" style={{ '--k': 1, '--kl': '0.035em', '--kr': '0.037em', '--rd': '0.365s', '--rt': '0.011s', '--re': 'cubic-bezier(0.333, 0.326, 0.667, 0.66)' }}>d</span>
+          ev
+        </span>
+      </span>
+    </>
+  )
+
+  const brandClass = [
+    'brand',
+    playIntro && !armed ? 'brand-hidden' : '',
+    hintOn ? 'brand--hint' : '',
+    coarse ? 'brand--touch' : '',
+    locked ? 'brand--locked' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
     <RevealProvider active={armed} stagger={240}>
       <MazeBackground onSolve={() => navigate('/solved')} pointerApi={pointerRef} />
@@ -110,42 +301,33 @@ export default function Landing() {
         <IntroWake pointer={pointerRef} onReveal={handoff} onDone={() => setShowIntro(false)} />
       )}
       <div className={`landing entered${introHold ? ' intro-hold' : ''}`}>
-        <header className={`site-header${scrolled ? ' scrolled' : ''}`}>
-          {/* One rule per word rather than per letter, so the line runs unbroken. Word-level
-              insets trim it to the ink of the first and last glyph; the control letters lay a
-              gradient segment over their own ink, so the side bearings either side stay grey
-              and adjacent controls like "u" and "l" read as two segments, not one.
+        <header
+          className={`site-header${scrolled ? ' scrolled' : ''}${pulse ? ' pulsed' : ''}`}
+        >
+          {/* On a coarse pointer the wordmark is a control, so it is a real button: it gets
+              pressed state, focus and Enter/Space for free, and nothing has to be bolted onto
+              an <h1>. A fine pointer renders the same spans bare, exactly as before.
 
-              --rd/--rt are the wipe's delay and duration, derived from where each piece sits
-              along the wordmark: the stroke reaches position x at T * x^0.625, so it starts
-              slow and gains speed. Encoding the ease in the DELAYS and keeping each piece
-              linear is what makes it one accelerating stroke; an ease-in curve on every
-              piece would instead have each of them start slow and stutter in turn. */}
-          <h1
-            className={`brand${playIntro && !armed ? ' brand-hidden' : ''}${hintOn ? ' brand--hint' : ''}`}
-            style={{ '--brand-tex': `url(${brandTex})` }}
-          >
-            <span className="brand-word" style={{ '--wl': '0.052em', '--wr': '0.004em', '--rd': '0.03s', '--rt': '0.256s' }}>
-              Pa
-              <span className="brand-key" style={{ '--k': 0, '--kl': '0.052em', '--kr': '0.038em', '--rd': '0.207s', '--rt': '0.05s' }}>u</span>
-              <span className="brand-key" style={{ '--k': 0.16, '--kl': '0.055em', '--kr': '0.004em', '--rd': '0.266s', '--rt': '0.02s' }}>l</span>
-            </span>{' '}
-            <span className="brand-word" style={{ '--wl': '0.063em', '--wr': '0.032em', '--rd': '0.314s', '--rt': '0.213s' }}>
-              Ma
-              <span className="brand-key" style={{ '--k': 0.58, '--kl': '0.058em', '--kr': '0em', '--rd': '0.425s', '--rt': '0.026s' }}>r</span>
-              tin
-            </span>
-            {/* the rule lives on an inline span INSIDE the tld, not on the tld itself: the tld
-                is inline-block for its growth animation, and an inline-block resolves the
-                rule against its line box while the letters resolve against their content
-                area, which put the two at different heights */}
-            <span className="brand-tld">
-              <span className="brand-word" style={{ '--wl': '0.048em', '--wr': '0em', '--rd': '0.532s', '--rt': '0.088s' }}>
-                .
-                <span className="brand-key" style={{ '--k': 1, '--kl': '0.035em', '--kr': '0.037em', '--rd': '0.543s', '--rt': '0.024s' }}>d</span>
-                ev
-              </span>
-            </span>
+              The button is mounted for the whole of a touch visit and merely disabled until
+              the hint has been earned, rather than appearing at that moment. Swapping the
+              wrapper on hintOn would reparent the word spans in the same commit that adds
+              brand--hint, and freshly mounted nodes have no previous value to transition
+              from: the rules would arrive already drawn instead of drawing on. */}
+          <h1 className={brandClass} style={{ '--brand-tex': `url(${brandTex})` }}>
+            {coarse ? (
+              <button
+                type="button"
+                className="brand-toggle"
+                disabled={!hintOn}
+                aria-pressed={locked}
+                aria-label="Paul Martin.dev. Tap to steer the maze by swiping."
+                onClick={toggleLock}
+              >
+                {brandWords}
+              </button>
+            ) : (
+              brandWords
+            )}
           </h1>
           <Reveal as="nav" order={0} className="site-nav">
             <a href={RESUME_URL} target="_blank" rel="noopener noreferrer">

@@ -8,6 +8,11 @@
   --accent: #0e8fa8;
   --accent-2: #d6356b;
   --shadow: 0 1px 2px rgba(20, 20, 28, 0.04), 0 8px 24px rgba(20, 20, 28, 0.06);
+  /* the middle stop of the ball's own radial gradient in MazeBackground. Sampling the ball
+     as it renders puts its brightest pixels at hue 210-211, so this is the hue the eye
+     actually takes off it; on screen the maze layer composites the ball down to about a
+     third of this lightness, which is right for a dim field and wrong for header text. */
+  --ball: hsl(211, 100%, 62%);
   --sans: 'Hanken Grotesk Variable', system-ui, -apple-system, sans-serif;
   --mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
 }
@@ -81,7 +86,14 @@ a {
   padding: 0.9rem 1.5rem;
   text-align: center;
   background: transparent;
-  transition: background 0.25s ease, backdrop-filter 0.25s ease;
+  transition: background 0.25s ease, backdrop-filter 0.25s ease, filter 0.42s ease-in-out;
+}
+
+/* An accepted swipe blinks the header, so the name reads as the thing that just moved the
+   ball. Only set while the blink is on: an always-present filter would make the header a
+   containing block for nothing's benefit. */
+.site-header.pulsed {
+  filter: brightness(1.16);
 }
 
 .site-header.scrolled {
@@ -115,7 +127,9 @@ a {
   display: inline-block;
   font-size: 0;
   opacity: 0;
-  transition: font-size 0.65s ease, opacity 0.5s ease;
+  /* paced to land with the stroke: the rule under ".dev" is measured against this box, so a
+     growth that outlasted the wipe would keep widening the rule after the stroke had stopped */
+  transition: font-size 0.42s ease, opacity 0.32s ease;
 }
 
 .brand--hint .brand-tld {
@@ -157,7 +171,7 @@ a {
   /* drawn on, not faded on: clipped to nothing and unclipped left to right. Fading every
      rule at once landed as a single flash, with all three hitting half opacity together. */
   clip-path: inset(0 100% 0 0);
-  transition: clip-path var(--rt, 0.3s) linear var(--rd, 0s);
+  transition: clip-path var(--rt, 0.3s) var(--re, linear) var(--rd, 0s);
   pointer-events: none;
 }
 
@@ -181,7 +195,7 @@ a {
   background-size: 900% 100%;
   background-position: calc(var(--k) * 100%) 0;
   clip-path: inset(0 100% 0 0);
-  transition: clip-path var(--rt, 0.3s) linear var(--rd, 0s);
+  transition: clip-path var(--rt, 0.3s) var(--re, linear) var(--rd, 0s);
   pointer-events: none;
 }
 
@@ -203,6 +217,85 @@ a {
    rather than transitioned, since the wipe is what reveals it. */
 .brand-tld .brand-key::after {
   opacity: 0.62;
+}
+
+/* ---------- the same wordmark on a touch device ----------
+   u/l/r/d name keyboard keys, so on a phone they mark nothing. The hint drops the
+   per-letter segments and runs the gradient the full length of each rule instead. Still one
+   rule per word: the gap between words stays bare. */
+.brand--touch .brand-key::after {
+  display: none;
+}
+
+/* --rw/--rk window the one strip so the three rules are three parts of a single sweep
+   across the wordmark, not three copies of it. */
+.brand--touch .brand-word::before {
+  background-color: transparent;
+  background-image: var(--brand-tex);
+  background-size: var(--rw, 100%) 100%;
+  background-position: calc(var(--rk, 0) * 100%) 0;
+}
+
+/* ".dev" is dimmer text; its grey rule matched by dropping alpha, the gradient one matches
+   by dropping opacity */
+.brand--touch .brand-tld .brand-word::before {
+  opacity: 0.62;
+}
+
+/* Locked: the name takes the colour of the ball it is steering. A flat colour, not the maze
+   strip: the point is that the blue name and the blue ball read as the same object, which a
+   spectrum sweep actively works against. Nothing is staged across the wordmark either — the
+   whole name changes at once, in one short crossfade. The key letters carry no rule of their
+   own on touch and set no colour, so they inherit this and travel with it. */
+.brand--touch .brand-word {
+  transition: color 0.16s ease;
+}
+
+.brand--touch.brand--locked .brand-word {
+  color: var(--ball);
+}
+
+/* ".dev" is subordinate at rest and stays subordinate locked: same blue, dimmed to about the
+   ratio its grey already sits at against the name */
+.brand--touch.brand--locked .brand-tld .brand-word {
+  color: color-mix(in srgb, var(--ball) 45%, #0b0b0f);
+}
+
+/* the name is the control, so it carries the pointer and the focus ring of one */
+.brand-toggle {
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* the swipe handler wants the gesture; this only keeps the tap off the 300ms delay */
+  touch-action: manipulation;
+}
+
+/* mounted from the start so the word spans are never reparented mid-animation, but inert
+   until the hint has surfaced the maze */
+.brand-toggle:disabled {
+  cursor: default;
+}
+
+.brand-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
+  border-radius: 8px;
+}
+
+/* While locked, a vertical swipe belongs to the ball — the maze runs vertically on a phone,
+   so letting the page scroll would have the two fighting. Set on the document rather than
+   handled per gesture, so the compositor never starts a scroll to begin with. pinch-zoom
+   rather than none: panning is what has to stop, zooming has no reason to. */
+html.maze-locked,
+html.maze-locked body {
+  touch-action: pinch-zoom;
+  overscroll-behavior: none;
 }
 
 .site-nav {
@@ -986,7 +1079,13 @@ main > .section:first-child {
   }
   .brand-tld,
   .brand-word::before,
-  .brand-key::after {
+  .brand-key::after,
+  .brand--touch .brand-word {
     transition: none;
+  }
+  /* restated rather than set to none: only the blink loses its fade here, the header's
+     scrolled backdrop keeps the one it has always had */
+  .site-header {
+    transition: background 0.25s ease, backdrop-filter 0.25s ease;
   }
 }
