@@ -143,7 +143,17 @@ export default function IntroWake({ pointer, onReveal, onDone }) {
       cv.style.width = W + 'px'; cv.style.height = H + 'px'
       for (const c of [ctx, tctx]) c.setTransform(DPR, 0, 0, DPR, 0, 0)
 
-      hero = Math.min(W * 0.11, 132); cx = W / 2; cy = H / 2
+      // Size the hero from the NAME's own measured width rather than from the viewport
+      // alone, so it fills a set share of the screen instead of a set fraction of the width.
+      // A flat W * 0.11 left the name at 55% of a phone's width — the narrower the screen,
+      // the more of it was margin. Measuring at a reference size and scaling means the
+      // proportion holds whatever the font metrics are. The cap is what keeps big screens
+      // where they were: above roughly 750px wide it binds and this has no effect.
+      const NAME_SPAN = 0.88
+      ctx.font = font(100); ctx.letterSpacing = (brandLSem * 100).toFixed(3) + 'px'
+      const per100 = ctx.measureText(NAME).width / 100
+      hero = Math.min(132, Math.max(W * 0.11, (W * NAME_SPAN) / per100))
+      cx = W / 2; cy = H / 2
       const LS = (brandLSem * hero).toFixed(3) + 'px'
       ctx.font = font(hero); ctx.letterSpacing = LS; tw = ctx.measureText(NAME).width
       bx = cx - tw / 2; bw = tw; bh = hero * 1.5; by = cy - bh / 2
