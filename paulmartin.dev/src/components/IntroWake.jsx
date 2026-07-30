@@ -149,7 +149,10 @@ export default function IntroWake({ pointer, onReveal, onDone }) {
       // the more of it was margin. Measuring at a reference size and scaling means the
       // proportion holds whatever the font metrics are. The cap is what keeps big screens
       // where they were: above roughly 750px wide it binds and this has no effect.
-      const NAME_SPAN = 0.88
+      // Leaves room for the dissolve. The sequins drift outward as they let go, roughly ten
+      // points of viewport width past the letterform itself, so sizing the NAME to the full
+      // width available clips the dots at the edge even though the text fits.
+      const NAME_SPAN = 0.8
       ctx.font = font(100); ctx.letterSpacing = (brandLSem * 100).toFixed(3) + 'px'
       const per100 = ctx.measureText(NAME).width / 100
       hero = Math.min(132, Math.max(W * 0.11, (W * NAME_SPAN) / per100))
