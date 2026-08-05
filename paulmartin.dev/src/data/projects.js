@@ -55,8 +55,8 @@ export const currentProjects = [
     ),
     body: [
       'Agent Battles is a terminal game about writing instincts rather than pressing buttons. Your army is six pieces, and you author a skill file for each one: its role, its opening, how it picks targets, when it should retreat instead of trade. Once a day your army is matched against someone else’s, a local LLM takes command of both sides, and the fight plays out without you.',
-      'You don’t get to intervene. You watch it happen, then go back and rewrite whatever got your pieces killed. Winners level up and grow more distinct with each victory, so an army that survives long enough stops resembling anyone else’s. The one-battle-a-day pacing is deliberate, and it moves the real game into the editing.',
-      'It’s built in Rust on ratatui and crossterm, and renders entirely in colored Unicode braille (see Braille Engine for how that works). Simulation runs on your machine against a local model. The server is a small thing on a Raspberry Pi handling matchmaking, replays and a leaderboard, nothing more. Opponent skill files are untrusted input, so the model is sandboxed and can’t reach outside the game directory.',
+      'You don’t get to intervene. You watch it happen, then go back and rewrite whatever got your pieces killed. Winners level up and grow more distinct with each victory, so an army that survives long enough stops resembling anyone else’s. One battle a day puts the real game in the editing.',
+      'It’s built in Rust and renders entirely in colored Unicode braille, so it runs in any truecolor terminal with nothing installed beyond the game. The battle and the model that commands it both run on your machine; matchmaking, replays and the leaderboard are the only things that leave it. Opponent skill files are untrusted input, so the model is sandboxed and can’t reach outside the game directory.',
     ],
     links: [
       {
@@ -85,7 +85,7 @@ export const currentProjects = [
     body: [
       'A Unity scene is normally a wall of generated YAML, unreadable in a diff and miserable in a merge. Code Scenes makes the scene a plain C# file instead. You describe what’s in it, press Build, and the scene materializes in Unity wired up and ready.',
       'The interesting half is the other direction. Move an object in the Scene view and save, and your file rewrites itself to match. It edits the line that produced that object rather than regenerating the whole thing, because every object carries a stable identity, so a rebuild never wipes and recreates what you already have. You can lay things out visually when that’s faster and let the code follow along.',
-      'The two-way sync is also what lets an AI assistant build Unity scenes well. Instead of fumbling through the editor one click at a time, it works in the medium it’s actually good at: a whole scene as one readable file it can generate and check. The engine is plain .NET with no Unity dependency, so it runs and tests fully headless. The design is settled and the engine is being built test-first, but it isn’t usable yet.',
+      'The two-way sync is also what lets an AI assistant build Unity scenes well. Instead of fumbling through the editor one click at a time, it works in the medium it’s actually good at: a whole scene as one readable file it can generate and check. The engine is plain .NET with no Unity dependency, so scenes build and verify headlessly, in CI or from an agent, without opening the editor at all.',
     ],
     links: [
       {
@@ -113,9 +113,9 @@ export const currentProjects = [
       'Side-by-side playback: a source animation on the left and its live braille conversion on the right',
     ),
     body: [
-      'This is the engine underneath Agent Battles, and it holds one rule hard: every visual element that isn’t text goes through the braille pipeline. Sprites, effects, borders, panels, buttons. Reaching for a box-drawing character to save time isn’t allowed, however minor the element. What that buys is one coherent look instead of the usual terminal-UI patchwork.',
+      'A game engine for the terminal that holds one rule hard: every visual element that isn’t text goes through the braille pipeline. Sprites, effects, borders, panels, buttons. Nothing falls back to a box-drawing character, however minor the element, so the whole interface reads as one coherent look instead of the usual terminal-UI patchwork.',
       'A braille glyph is a 2×4 grid of dots, so each cell carries eight times the spatial resolution of an ordinary character. Images decompose into that grid. A dot lights when its source pixel beats the cell’s adaptive luma threshold and its alpha clears the cutout, and the cell takes the average color of whatever remains, in 24-bit truecolor. Flat regions saturate into solid fill, and dot texture shows up exactly where the edges and gradients are.',
-      'On top of the renderer sits the rest of an engine. There is a scene graph, a camera with world-space projection, sprite animation on wall-clock time, back-to-front depth compositing at dot granularity, dot-precise layout, and a live debug inspector for editing fields while it runs. All of it lives in its own crates behind a hard boundary, so nothing in the engine knows Agent Battles exists.',
+      'On top of the renderer sits the rest of an engine. There is a scene graph, a camera with world-space projection, sprite animation on wall-clock time, back-to-front depth compositing at dot granularity, dot-precise layout, and a live debug inspector for editing fields while it runs. It ships as its own crates with no game-specific code in them, so anything that draws in a terminal can build on it.',
     ],
     links: [
       {
