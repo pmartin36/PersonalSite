@@ -5,7 +5,7 @@ import ProjectMedia from '../components/ProjectMedia'
 import OrgTag from '../components/OrgTag'
 
 const RESUME_URL =
-  'https://drive.google.com/file/d/1SpGooyH4FvJe9ykl-nXWoyM3i8u40Vyr/view?usp=sharing'
+  'https://drive.google.com/file/d/1utBX7U7q98kJ-Uqrk-3AnSkR2xn6BEXH/view?usp=sharing'
 
 function GitHubMark() {
   return (

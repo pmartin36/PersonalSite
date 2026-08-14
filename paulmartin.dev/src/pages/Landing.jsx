@@ -8,7 +8,7 @@ import { RevealProvider, Reveal } from '../reveal'
 import { makeBrandTexture } from '../brandTexture'
 
 const RESUME_URL =
-  'https://drive.google.com/file/d/1SpGooyH4FvJe9ykl-nXWoyM3i8u40Vyr/view?usp=sharing'
+  'https://drive.google.com/file/d/1utBX7U7q98kJ-Uqrk-3AnSkR2xn6BEXH/view?usp=sharing'
 
 // A swipe only counts if it was meant: this much travel along the dominant axis, and that
 // axis at least this many times the other one, so a diagonal smudge is dropped rather than
