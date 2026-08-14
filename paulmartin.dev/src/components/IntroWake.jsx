@@ -30,7 +30,10 @@ const TUNE = {
   wipe: 800,  // time for the forming front to cross the NAME itself; the run is longer than
               // this by the tail the last dots need, so linger/span move the end rather than
               // speeding the front up
-  reveal: 0,  // when brand + content come up, ms. 0 means "as the run ends"
+  reveal: 1.0, // when brand + content come up, in FRONT UNITS: the front is 1 unit wide, so
+               // 1.0 is content populating the moment the forming front clears the last letter.
+               // The dissolve runs on well past this, so the page fills in vertically while the
+               // sequins are still evaporating into the maze rather than after they have all gone.
 
   // Both waves are measured in FRONT UNITS — fractions of the name's width — because they hang
   // off the same travelling front. A dot forms when the front reaches it, holds for `linger`,
@@ -111,7 +114,10 @@ export default function IntroWake({ pointer, onReveal, onDone }) {
     // finish its `span` — otherwise the right-hand end never gets to come apart
     const REACH = 1 + T.linger + T.span + SOFT
     const T_END = HOLD1 + WIPE * REACH
-    const T_REVEAL = T.reveal > 0 ? Math.min(T.reveal, T_END) : T_END
+    // Place the reveal on the travelling front (front units) rather than at the run's end, so
+    // the content cascade starts while the dissolve is still going. rp1 reaches position p at
+    // HOLD1 + WIPE*(p + SOFT); clamp so an over-large tune never lands past T_END.
+    const T_REVEAL = Math.min(HOLD1 + WIPE * (T.reveal + SOFT), T_END)
 
     function makeBead(hue, sat, li) {
       const D = 16, c = mk(); c.width = D; c.height = D; const g = c.getContext('2d')
