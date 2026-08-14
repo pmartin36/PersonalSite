@@ -149,7 +149,7 @@ export const previousProjects = [
       title: 'Marques Brownlee plays Stargazer on Orion',
     },
     body: [
-      'Stargazer was one of the games built to show what Meta’s Orion AR glasses could do. I was pathfinding lead: I took it from nothing to a fleshed-out concept, working out what the game wanted to be on hardware nobody had designed for yet and proving it was worth building. It takes after Galaga, except the play space is the room you’re standing in, so the starfield opens on your wall and enemies come at you through it.',
+      'Stargazer was one of the games built to show what Meta’s Orion AR glasses could do. I led the pathfinding team of five that took it from nothing to a fleshed-out concept, working out what the game wanted to be on hardware nobody had designed for yet and proving it was worth building. It takes after Galaga, except the play space is wherever you happen to be standing. Enemies fly in out of the open air of your living room, your office, a hallway.',
       'It leans on every input Orion has at once. Eye tracking places your aim, the EMG wristband registers the finger tap that fires, hand and head tracking move you through the field, and spatial audio tells you where something is coming from before you’ve looked at it. Because it renders into your real space rather than a window you peer into, you can walk into the game and be surrounded by it.',
       'Orion was a prototype and never a product. A handful of pairs existed, and press got to try them at Connect in 2024. The video above is Marques Brownlee playing it.',
     ],
@@ -181,8 +181,8 @@ export const previousProjects = [
       title: 'The Verge plays 3D Pong on Orion',
     },
     body: [
-      'A 3D take on Pong for Meta’s Orion AR glasses. I was pathfinding lead here too, taking it from nothing to a fleshed-out concept and working out how the game should behave once two people share one physical court. The court is a cube in the middle of the room and you see it from your paddle’s position rather than from overhead, which changes the game. Depth is something you have to read, and the ball arrives rather than crosses.',
-      'Your paddle is your hand, with no controller involved. The harder problem was agreement between two players: two pairs of glasses have to believe the court is in the same physical place, or the game quietly falls apart. Both players look at a shared QR code, which fixes a common origin, and from there the cube sits in one spot in the actual room for both of them. You can also play remotely against a friend.',
+      'A 3D take on Pong for Meta’s Orion AR glasses. I led the pathfinding team of five that took it from nothing to a fleshed-out concept. The court is a cube in the middle of the room and you see it from your paddle’s position rather than from overhead, which changes the game. Depth is something you have to read, and the ball arrives rather than crosses.',
+      'Your paddle is your hand, with no controller involved. Two pairs of glasses also have to believe the court is in the same physical place, or the game quietly falls apart, so both players look at a shared QR code to fix a common origin and the cube lands in the same spot in the actual room for each of them. You can also play remotely against a friend.',
       'It became the demo people remembered, and the one Alex Heath played against Mark Zuckerberg. The Verge’s hands-on is above.',
     ],
     links: [
