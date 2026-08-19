@@ -1,0 +1,80 @@
+/* Overlay chrome only. Content inside .detail-modal__body reuses the
+   .detail-* / .tag / .card-year / .org-tag / .media-* rules already defined
+   in index.css, so this file never restyles content. */
+
+.detail-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(5, 3, 14, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.detail-modal__panel {
+  position: relative;
+  width: min(720px, 100%);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.detail-modal__close {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  z-index: 1;
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.detail-modal__close:hover {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--hairline));
+}
+
+.detail-modal__body {
+  overflow-y: auto;
+  padding: 0 0 1.6rem;
+  border-radius: 14px;
+}
+
+.detail-modal__body .detail-media {
+  margin: 0 0 0.5rem;
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.detail-modal__body .detail-title,
+.detail-modal__body .detail-headline,
+.detail-modal__body .detail-meta,
+.detail-modal__body .detail-body,
+.detail-modal__body .detail-links {
+  padding-left: 1.75rem;
+  padding-right: 1.75rem;
+}
+
+.detail-modal__body .detail-title {
+  margin-top: 1.6rem;
+}

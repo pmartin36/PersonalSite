@@ -422,3 +422,10 @@ STATUS: READY
   files keep their own literal, so the value can still drift on the old routes. Tolerated because
   Landing is deprecated (galaxy path, de-routed by b1-t3) and no task in this run touches ProjectDetail.
   OWNER: unassigned (no planned task removes/rewires the legacy /projects/:slug route or Landing).
+- LOW — DetailLink + GitHubMark link markup (incl. the GitHub SVG path) duplicated between the legacy
+  inline helper at paulmartin.dev/src/pages/ProjectDetail.jsx:10-43 and the new co-located helper in
+  paulmartin.dev/src/machine/DetailModal.jsx (b2-t1). Surfaced by b2-t1: the modal must render the
+  same project links but cannot dedupe without rewriting legacy ProjectDetail (out of its TOUCHES).
+  Tolerated because /projects/:slug is the legacy route no task in this run rewires; a shared
+  extraction would need both call sites edited together. OWNER: unassigned (no planned task rewires
+  the legacy /projects/:slug detail page).
