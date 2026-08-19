@@ -1,0 +1,111 @@
+.machine {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--m-crevice);
+}
+
+.machine__viewport {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  perspective: 1200px;
+}
+
+.machine__drum {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateX(calc(var(--rot, 0) * -72deg));
+  transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.machine__face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  /* Regular-pentagon apothem for a viewport-height face:
+     (faceHeight / 2) / tan(36deg) ~= 0.688 * faceHeight. */
+  transform: rotateX(calc(var(--face-index, 0) * 72deg)) translateZ(69vh);
+}
+
+.machine__face > .face-surface {
+  width: 100%;
+  height: 100%;
+}
+
+.machine--intro .machine__viewport {
+  animation: machine-shake 0.7s ease;
+}
+
+@keyframes machine-shake {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  20% {
+    transform: translate3d(-6px, 0, 0);
+  }
+  40% {
+    transform: translate3d(5px, 0, 0);
+  }
+  60% {
+    transform: translate3d(-3px, 0, 0);
+  }
+  80% {
+    transform: translate3d(2px, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Reduced motion: flatten the drum and crossfade the active face instead of
+   tumbling it, with no shake and no settle sound. */
+.machine--reduced .machine__drum {
+  transform: none;
+  transform-style: flat;
+  transition: none;
+}
+
+.machine--reduced .machine__face {
+  transform: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.machine--reduced .machine__face--active {
+  opacity: 1;
+}
+
+.machine__wayfinding {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 10;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.machine__pip {
+  width: 0.75rem;
+  height: 0.75rem;
+  padding: 0;
+  border: 1px solid var(--m-brass);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.machine__pip--lit {
+  background: var(--m-accent);
+}
+
+.machine__mute {
+  position: fixed;
+  left: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 10;
+}
