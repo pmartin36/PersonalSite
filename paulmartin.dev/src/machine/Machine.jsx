@@ -74,10 +74,15 @@ function MachineShell() {
   const rotateTo = useCallback(
     (index) => {
       const target = wrapIndex(index)
-      setCurrentFace((from) => {
-        setRotationSteps((s) => s + stepDelta(from, target))
-        return target
-      })
+      const from = currentFaceRef.current
+      currentFaceRef.current = target
+      // Two independent, pure updaters. rotationSteps accumulates the shortest
+      // signed turn so multi-turn rotation stays continuous. They stay separate
+      // rather than nesting setRotationSteps inside the setCurrentFace updater:
+      // an updater must be pure, and a nested setState double-fires under
+      // StrictMode, doubling the drum's rotation.
+      setRotationSteps((s) => s + stepDelta(from, target))
+      setCurrentFace(target)
       clearTimeout(snapTimer.current)
       snapTimer.current = setTimeout(
         () => play('snap'),
