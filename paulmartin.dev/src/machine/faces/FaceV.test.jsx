@@ -1,0 +1,140 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { render, cleanup, fireEvent } from '@testing-library/react'
+import FaceV from './FaceV.jsx'
+import { SEQUENCE, moveByOrder } from '../model.js'
+import { DIRECTION_GLYPH } from '../Clue.jsx'
+
+const { mockPlay } = vi.hoisted(() => ({ mockPlay: vi.fn() }))
+
+// FaceV's own lock/reveal logic is under test here, not audio arming or
+// synthesis (covered by audio.test.jsx), so audio.jsx is replaced with a bare
+// play() spy, matching the sibling face pattern.
+vi.mock('../audio.jsx', () => ({
+  useAudio: () => ({
+    play: mockPlay,
+    muted: false,
+    armed: true,
+    toggleMute: () => {},
+    mute: () => {},
+    unmute: () => {},
+    arm: () => {},
+  }),
+}))
+
+const FACE_V_MOVE = moveByOrder(1)
+
+beforeEach(() => {
+  mockPlay.mockClear()
+})
+
+afterEach(() => {
+  cleanup()
+})
+
+function arrowButtons(container) {
+  return Array.from(container.querySelectorAll('[data-direction]'))
+}
+
+function pressArrow(container, direction) {
+  const button = container.querySelector(`[data-direction="${direction}"]`)
+  expect(button, `arrow button for ${direction} exists`).not.toBeNull()
+  fireEvent.click(button)
+}
+
+function lockWrapper(container) {
+  const el = container.querySelector('[data-solved]')
+  expect(el, 'lock wrapper with data-solved exists').not.toBeNull()
+  return el
+}
+
+describe('FaceV arrow pad', () => {
+  it('renders exactly four arrow buttons, one per direction, glyph derived from DIRECTION_GLYPH', () => {
+    const { container } = render(<FaceV />)
+    const buttons = arrowButtons(container)
+    expect(buttons.length).toBe(4)
+    const directions = buttons.map((b) => b.getAttribute('data-direction')).sort()
+    expect(directions).toEqual(Object.keys(DIRECTION_GLYPH).sort())
+    buttons.forEach((b) => {
+      const dir = b.getAttribute('data-direction')
+      expect(b.textContent).toBe(DIRECTION_GLYPH[dir])
+    })
+  })
+})
+
+describe('FaceV sequence lock', () => {
+  it('solves on the full correct SEQUENCE and flips to the solved celebration', () => {
+    const { container, getByText } = render(<FaceV />)
+    SEQUENCE.forEach((direction) => pressArrow(container, direction))
+    expect(lockWrapper(container).getAttribute('data-solved')).toBe('true')
+    expect(getByText('You found the way through.')).toBeTruthy()
+  })
+
+  it('a wrong first press resets progress to 0 and does not solve', () => {
+    const { container } = render(<FaceV />)
+    const wrongFirst = Object.keys(DIRECTION_GLYPH).find((d) => d !== SEQUENCE[0])
+    pressArrow(container, wrongFirst)
+    expect(lockWrapper(container).getAttribute('data-lock-progress')).toBe('0')
+    expect(lockWrapper(container).getAttribute('data-solved')).toBe('false')
+  })
+
+  it('a wrong press at step 3 resets progress to 0, even when it equals SEQUENCE[0]', () => {
+    const { container } = render(<FaceV />)
+    pressArrow(container, SEQUENCE[0])
+    pressArrow(container, SEQUENCE[1])
+    pressArrow(container, SEQUENCE[0])
+    expect(lockWrapper(container).getAttribute('data-lock-progress')).toBe('0')
+    expect(lockWrapper(container).getAttribute('data-solved')).toBe('false')
+  })
+
+  it('one Up press from a fresh state advances progress to 1 (the mashing gimme)', () => {
+    const { container } = render(<FaceV />)
+    pressArrow(container, 'Up')
+    expect(lockWrapper(container).getAttribute('data-lock-progress')).toBe('1')
+  })
+
+  it('an extra press after solving leaves the solved state unchanged', () => {
+    const { container } = render(<FaceV />)
+    SEQUENCE.forEach((direction) => pressArrow(container, direction))
+    expect(lockWrapper(container).getAttribute('data-solved')).toBe('true')
+    pressArrow(container, SEQUENCE[0])
+    expect(lockWrapper(container).getAttribute('data-solved')).toBe('true')
+  })
+})
+
+describe('FaceV lock audio', () => {
+  it('plays shake and thunk on a correct advance', () => {
+    const { container } = render(<FaceV />)
+    pressArrow(container, SEQUENCE[0])
+    expect(mockPlay).toHaveBeenCalledWith('shake')
+    expect(mockPlay).toHaveBeenCalledWith('thunk')
+    expect(mockPlay).not.toHaveBeenCalledWith('deadThunk')
+  })
+
+  it('plays deadThunk, not shake, on a wrong press', () => {
+    const { container } = render(<FaceV />)
+    const wrongFirst = Object.keys(DIRECTION_GLYPH).find((d) => d !== SEQUENCE[0])
+    pressArrow(container, wrongFirst)
+    expect(mockPlay).toHaveBeenCalledWith('deadThunk')
+    expect(mockPlay).not.toHaveBeenCalledWith('shake')
+  })
+
+  it('plays seam in addition to shake and thunk on the completing press', () => {
+    const { container } = render(<FaceV />)
+    SEQUENCE.slice(0, -1).forEach((direction) => pressArrow(container, direction))
+    mockPlay.mockClear()
+    pressArrow(container, SEQUENCE[SEQUENCE.length - 1])
+    expect(mockPlay).toHaveBeenCalledWith('shake')
+    expect(mockPlay).toHaveBeenCalledWith('thunk')
+    expect(mockPlay).toHaveBeenCalledWith('seam')
+  })
+})
+
+describe('FaceV clue hook', () => {
+  it('emits exactly one clue hook equal to MOVES order 1 (Up)', () => {
+    const { container } = render(<FaceV />)
+    const clues = container.querySelectorAll('[data-clue-order]')
+    expect(clues.length).toBe(1)
+    expect(clues[0].getAttribute('data-clue-order')).toBe(String(FACE_V_MOVE.order))
+    expect(clues[0].getAttribute('data-clue-direction')).toBe(FACE_V_MOVE.direction)
+  })
+})

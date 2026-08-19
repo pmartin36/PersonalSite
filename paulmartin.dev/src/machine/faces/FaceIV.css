@@ -1,0 +1,97 @@
+.face4-backplate {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--m-crevice);
+}
+
+.face4-clue {
+  position: static;
+  display: contents;
+}
+
+.face4-clue__order {
+  position: absolute;
+  left: 33.33%;
+  top: 25%;
+  display: flex;
+  gap: 0.2rem;
+  transform: translate(-50%, -50%);
+}
+
+.face4-tally__stroke {
+  width: 2px;
+  height: 1.5rem;
+  background: var(--m-brass);
+}
+
+.face4-clue__direction {
+  position: absolute;
+  left: 66.66%;
+  top: 75%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  color: var(--m-brass);
+}
+
+.face4-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 2px;
+}
+
+.face4-cell {
+  position: relative;
+  min-height: 6rem;
+  background: var(--m-sandstone);
+  border: 1px solid var(--m-brass);
+  transition: transform 0.3s ease;
+}
+
+.face4-cell--gap {
+  background: transparent;
+  border-color: transparent;
+}
+
+.face4-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: none;
+  color: var(--m-crevice);
+  text-align: left;
+  cursor: pointer;
+}
+
+.face4-tile--about {
+  gap: 0.25rem;
+}
+
+.face4-tile__label {
+  font-weight: bold;
+}
+
+.face4-tile__copy {
+  font-size: 0.8rem;
+}
+
+.face4-tile--contact {
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  text-decoration: none;
+  color: var(--m-ochre);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .face4-cell {
+    transition: none;
+  }
+}

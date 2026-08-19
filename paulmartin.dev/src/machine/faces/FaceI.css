@@ -1,0 +1,35 @@
+.face1-name {
+  margin: 0 0 1rem;
+  font-family: var(--mono, monospace);
+  font-size: 2rem;
+  color: var(--m-crevice);
+}
+
+.face1-resume {
+  display: inline-flex;
+  gap: 0.35rem;
+  color: var(--m-ochre);
+  text-decoration: none;
+}
+
+/* The clue wrapper's underline variant is neutralized here: only the tell
+   letter below carries the underline, not the whole word. */
+.face1-resume__clue.clue--underline {
+  text-decoration: none;
+}
+
+.face1-resume__tell {
+  text-decoration: underline;
+  text-decoration-color: var(--m-brass);
+}
+
+.face1-contact {
+  display: block;
+  margin-top: 1.5rem;
+  padding: 0.5rem 1.25rem;
+  border: 1px solid var(--m-brass);
+  border-radius: 4px;
+  background: var(--m-buff);
+  color: var(--m-crevice);
+  cursor: pointer;
+}

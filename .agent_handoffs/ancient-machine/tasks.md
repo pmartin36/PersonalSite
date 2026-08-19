@@ -429,3 +429,17 @@ STATUS: READY
   Tolerated because /projects/:slug is the legacy route no task in this run rewires; a shared
   extraction would need both call sites edited together. OWNER: unassigned (no planned task rewires
   the legacy /projects/:slug detail page).
+- LOW — Contact link values duplicated: Face IV (b4-t2) inlines Email (mailto:p@ulmartin.me) and
+  LinkedIn (https://www.linkedin.com/in/paul-martin-b8547616/), the same values living at
+  paulmartin.dev/src/pages/Landing.jsx:170,185. No task hoists contact links to a shared export, and
+  Landing is the de-routed galaxy page (b1-t3), so the values can drift on the dead route. Same class
+  as the RESUME_URL defect. Tolerated because Landing is deprecated and no task rewires it.
+  OWNER: unassigned (no planned task hoists contact links into a shared model export).
+- LOW — /solved celebration content duplicated: Face V (b4-t3) renders the "you made it through"
+  message + solvers list inline in paulmartin.dev/src/machine/faces/FaceV.jsx, the same copy/markup
+  living at paulmartin.dev/src/pages/Solved.jsx:9-40. Face V reuses the solvers DATA
+  (src/data/solvers.js) but re-renders the heading/lede/mailto/list markup because extracting a shared
+  SolvedContent component would require editing Solved.jsx, which is outside b4-t3's TOUCHES and whose
+  legacy /solved route no task in this run rewires. Same class as the RESUME_URL/contact-link defects.
+  Tolerated because /solved is the de-emphasized legacy route (still in main.jsx, unrewired).
+  OWNER: unassigned (no planned task extracts a shared solved-content component or removes /solved).

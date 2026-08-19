@@ -80,7 +80,9 @@ describe('Machine shell — mount', () => {
     const { container } = render(<Machine />)
     const pips = container.querySelectorAll('.machine__pip')
     expect(pips[0]?.getAttribute('aria-current')).toBe('true')
-    expect(container.querySelector('.machine__face--active')?.textContent).toMatch(/Face I\b/)
+    expect(
+      container.querySelector('.machine__face--I')?.classList.contains('machine__face--active')
+    ).toBe(true)
   })
 
   it('plays the intro thunk once on mount and never the snap', () => {
@@ -99,7 +101,9 @@ describe('Machine shell — rotateTo via wayfinding pips', () => {
     fireEvent.click(pips[3])
     expect(pips[3].getAttribute('aria-current')).toBe('true')
     expect(pips[0].getAttribute('aria-current')).not.toBe('true')
-    expect(container.querySelector('.machine__face--active')?.textContent).toMatch(/Face IV\b/)
+    expect(
+      container.querySelector('.machine__face--IV')?.classList.contains('machine__face--active')
+    ).toBe(true)
   })
 
   it('every rotateTo settle fires the snap exactly once, not the thunk', () => {
