@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { makeScheduler } from '../devClock'
+import { nebulaColor } from '../shimmer'
 
 // The hidden interactive maze, rendered as a fixed full-viewport metallic-shimmer
 // background. Dark at rest; it only reveals on mouse move (directional wake) or ball
@@ -29,7 +30,10 @@ export default function MazeBackground({ onSolve, pointerApi }) {
 
     let W, H, DPR, CELL, cols, rows, offX, offY, WALL_THICK, WALL_HALF, BALL_R
     let right = [], down = [], segs = []
+    let ambient = []
+    let ambientClusters = []
     let startR, startC, exitR, exitC
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const DESIRED_CELL = 46
     const ball = { x: 0, y: 0 }
     let cr = 0, cc = 0 // current cell
@@ -238,6 +242,68 @@ export default function MazeBackground({ onSolve, pointerApi }) {
       ;[ball.x, ball.y] = cellCenter(cr, cc)
       tween.active = false; solved = false
       bakeWalls()
+      buildAmbient()
+    }
+
+    // Always-on ambient shimmer, same ethos as the hero chevron: a scattered field of small
+    // maze flecks that stay put and only wiggle, lit by slow ACTIVATIONS that move each fleck
+    // through opacity AND color like the maze wake. The activation is an organic field (a few
+    // slow waves in different directions), so lit regions drift across the maze in blobs rather
+    // than sweeping one way as a gradient. Flecks are biased onto the maze so it reads as the
+    // maze revealing, not a starfield.
+    function buildAmbient() {
+      const COUNT = Math.max(110, Math.round((W * H) / 3600))
+      ambient = []
+      for (let i = 0; i < COUNT; i++) {
+        let x, y
+        if (segs.length && Math.random() < 0.72) {
+          const s = segs[(Math.random() * segs.length) | 0]
+          if (s.v) { x = s.x + (Math.random() - 0.5) * CELL * 0.5; y = s.a + Math.random() * (s.b - s.a) }
+          else { y = s.y + (Math.random() - 0.5) * CELL * 0.5; x = s.a + Math.random() * (s.b - s.a) }
+        } else { x = Math.random() * W; y = Math.random() * H }
+        ambient.push({
+          x, y,
+          pale: Math.random() < 0.3, // white flecks mixed through the blues/violets
+          sz: Math.random() < 0.8 ? 1 : 2,
+          hoff: Math.random() * 2 - 1,          // per-fleck hue nudge
+          ph: Math.random() * 1.2,              // per-fleck activation jitter
+          wamp: 1.5 + Math.random() * 1.8,      // wiggle amplitude, px
+          wfx: 0.0005 + Math.random() * 0.0006, // wiggle frequencies (slow)
+          wfy: 0.0004 + Math.random() * 0.0006,
+          wpx: Math.random() * 6.2832,
+          wpy: Math.random() * 6.2832,
+        })
+      }
+
+      // a handful of tight micro-clusters that glimmer TOGETHER, for a little extra detail on
+      // top of the drifting field. Kept separate so the field behaviour above is unchanged.
+      const NC = Math.max(3, Math.round((W * H) / 200000))
+      ambientClusters = []
+      for (let i = 0; i < NC; i++) {
+        let cx, cy
+        if (segs.length) {
+          const s = segs[(Math.random() * segs.length) | 0]
+          if (s.v) { cx = s.x; cy = (s.a + s.b) / 2 } else { cy = s.y; cx = (s.a + s.b) / 2 }
+        } else { cx = Math.random() * W; cy = Math.random() * H }
+        const k = 2 + ((Math.random() * 3) | 0)
+        const dots = []
+        for (let j = 0; j < k; j++) {
+          dots.push({
+            x: cx + (Math.random() - 0.5) * CELL * 0.55,
+            y: cy + (Math.random() - 0.5) * CELL * 0.55,
+            sz: Math.random() < 0.3 ? 2 : 1,
+            uj: (Math.random() - 0.5) * 0.12,
+            pale: Math.random() < 0.3,
+          })
+        }
+        ambientClusters.push({
+          dots,
+          u: Math.random(),
+          ph: Math.random() * 6.2832,
+          sp: 0.00035 + Math.random() * 0.0004, // slow: glimmers occasionally
+          amp: 0.7 + Math.random() * 0.3,
+        })
+      }
     }
 
     function bakeWalls() {
@@ -315,7 +381,7 @@ export default function MazeBackground({ onSolve, pointerApi }) {
     // ---- mouse-wake reveal ----
     let pmx = -1, pmy = -1, lastDir = 0, distAcc = 0
     const wake = [] // wavelets {x, y, age, dir, phase, full, spd, life}
-    const SPAWN_DIST = 26 // one wavelet per this many px of travel -> density independent of speed
+    const SPAWN_DIST = 20 // one wavelet per this many px of travel -> density independent of speed
     // Reveals open at the DESTINATION cell (not following the ball). Each is a soft porthole
     // that dims that spot to ~25% so the shimmer + ball show through; it opens (scheduled to
     // finish a beat before arrival) while the ball is in transit, then seals. Keeping a LIST
@@ -337,7 +403,7 @@ export default function MazeBackground({ onSolve, pointerApi }) {
       distAcc += d
       let guard = 0
       while (distAcc >= SPAWN_DIST && guard++ < 4) {
-        wake.push({ x: nx, y: ny, age: 0, dir: lastDir, phase: Math.random() * 6.283, full: false, spd: WAKE_SPEED, life: WAKE_LIFE })
+        wake.push({ x: nx, y: ny, age: 0, dir: lastDir, phase: Math.random() * 6.283, full: false, soft: true, spd: WAKE_SPEED, life: WAKE_LIFE })
         if (wake.length > 16) wake.shift()
         distAcc -= SPAWN_DIST
       }
@@ -349,9 +415,11 @@ export default function MazeBackground({ onSolve, pointerApi }) {
     // Drop a single wavelet at a point, with no travel-distance bookkeeping. feedPointer is
     // wrong for scattered points: it spawns per SPAWN_DIST of movement, so jumping around the
     // screen fires a burst per call. The intro seeds the maze one dot at a time with this.
-    const seedAt = (x, y) => {
-      wake.push({ x, y, age: 0, dir: Math.random() * 6.283, phase: Math.random() * 6.283,
-                  full: false, spd: WAKE_SPEED, life: WAKE_LIFE })
+    const seedAt = (x, y, opts = {}) => {
+      const dir = opts.dir == null ? Math.random() * 6.283 : opts.dir
+      wake.push({ x, y, age: 0, dir, phase: Math.random() * 6.283, full: false,
+                  soft: !!opts.soft, spd: opts.spd || WAKE_SPEED, life: opts.life || WAKE_LIFE,
+                  spread: opts.spread, r0: opts.r0 || 0, peak: opts.peak })
       if (wake.length > 16) wake.shift()
     }
     if (pointerApi) pointerApi.current = {
@@ -376,9 +444,8 @@ export default function MazeBackground({ onSolve, pointerApi }) {
     const spectrumStop = (t, drift, A) => {
       const raw = Math.sin(2 * Math.PI * (t * 2.5 + drift))
       const shaped = Math.sign(raw) * Math.pow(Math.abs(raw), 1.5)
-      const hue = 268 + 76 * shaped // blue(192) <-> purple(268) <-> pink(344)
-      const li = 58 + ((hue - 192) / 152) * 5
-      return `hsla(${hue.toFixed(1)},100%,${li.toFixed(1)}%,${A.toFixed(3)})`
+      // held to blue -> violet (no magenta), a touch brighter for the wake
+      return nebulaColor(0.05 + 0.58 * (0.5 + 0.5 * shaped), A, { sat: 86, li: 60 })
     }
     // Memoise the STOPS+1 spectrum strings per (STOPS, age, life) — every render-loop
     // call derives from discrete integers, so cached output is byte-identical.
@@ -399,7 +466,7 @@ export default function MazeBackground({ onSolve, pointerApi }) {
       if (w.full) {
         c2.arc(w.x, w.y, rOuter, 0, 6.2832)
       } else {
-        const back = w.dir + Math.PI, spread = 1.15
+        const back = w.dir + Math.PI, spread = w.spread || 1.15
         c2.moveTo(w.x, w.y)
         c2.arc(w.x, w.y, rOuter, back - spread, back + spread)
       }
@@ -425,8 +492,11 @@ export default function MazeBackground({ onSolve, pointerApi }) {
       vctx.globalCompositeOperation = 'lighter'
       for (let i = 0; i < wake.length; i++) {
         const w = wake[i]; if (!!w.full !== wantFull) continue
-        const rad = w.age * (w.spd || WAKE_SPEED), fade = 1 - w.age / (w.life || WAKE_LIFE)
-        const ring = w.full ? 66 : RING_W, peak = (w.full ? 1.0 : 0.5) * fade
+        const rad = (w.r0 || 0) + w.age * (w.spd || WAKE_SPEED), fade = 1 - w.age / (w.life || WAKE_LIFE)
+        // peak can be set per-wavelet (raft ripples, card wakes); otherwise soft = the quiet
+        // open-water mouse wake and the default is the louder raft-corner ripple.
+        const ring = w.full ? 66 : RING_W
+        const peak = (w.full ? 1.0 : (w.peak != null ? w.peak : (w.soft ? 0.45 : 0.95))) * fade
         const g = vctx.createRadialGradient(w.x, w.y, Math.max(0, rad - ring), w.x, w.y, rad + ring)
         g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, `rgba(255,255,255,${peak})`); g.addColorStop(1, 'rgba(255,255,255,0)')
         vctx.fillStyle = g; wedge(vctx, w, rad + ring); vctx.fill()
@@ -442,7 +512,7 @@ export default function MazeBackground({ onSolve, pointerApi }) {
       mctx.globalCompositeOperation = 'source-atop'
       for (let i = 0; i < wake.length; i++) {
         const w = wake[i]; if (!!w.full !== wantFull) continue
-        const rad = w.age * (w.spd || WAKE_SPEED)
+        const rad = (w.r0 || 0) + w.age * (w.spd || WAKE_SPEED)
         const ring = w.full ? 66 : RING_W, inner = Math.max(0, rad - ring), outer = rad + ring
         const cg = mctx.createRadialGradient(w.x, w.y, inner, w.x, w.y, outer)
         const STOPS = 26, stops = specStops(STOPS, w.age, w.life || WAKE_LIFE)
@@ -523,6 +593,51 @@ export default function MazeBackground({ onSolve, pointerApi }) {
       target.globalAlpha = SHIMMER; target.drawImage(mask, 0, 0, W, H); target.globalAlpha = 1
     }
 
+    // The resting water: draw the ambient shimmer straight onto the back layer each frame.
+    // Kept low so it never competes with the content or the wake. Paused under reduced motion.
+    const AMBIENT_MAXA = 0.95 // ceiling on any one fleck
+    function drawAmbient() {
+      if (reduceMotion || !ambient.length) return
+      ctx.globalCompositeOperation = 'lighter'
+      const t = nowT
+      for (const p of ambient) {
+        // organic activation field: a few slow waves in different directions, so blobs of
+        // activation drift across the maze rather than a single gradient sweeping one way
+        const fv = Math.sin(p.x * 0.010 + t * 0.00042 + p.ph)
+          + Math.sin(p.y * 0.013 - t * 0.00050 + 1.7)
+          + Math.sin((p.x * 0.7 - p.y * 0.9) * 0.009 + t * 0.00034 + 4.1)
+        // threshold + power so only the field's peaks light up: sparse, drifting, not starry
+        const nn = (fv / 3 + 1) * 0.5 // 0..1
+        const drive = nn <= 0.28 ? 0 : Math.pow((nn - 0.28) / 0.72, 1.7)
+        const a = AMBIENT_MAXA * drive
+        if (a < 0.03) continue
+        const wx = Math.sin(t * p.wfx + p.wpx) * p.wamp
+        const wy = Math.sin(t * p.wfy + p.wpy) * p.wamp
+        if (p.pale) {
+          ctx.fillStyle = `rgba(246,247,255,${a.toFixed(3)})`
+        } else {
+          // colour moves as the fleck activates (tied to the same drifting field), so it sweeps
+          // the way a maze fleck does under the wake
+          ctx.fillStyle = nebulaColor(0.05 + 0.6 * (0.5 + 0.5 * Math.sin(fv - 1.2)) + 0.04 * p.hoff, a)
+        }
+        ctx.fillRect(p.x + wx, p.y + wy, p.sz, p.sz)
+      }
+      // micro-clusters glimmering together, in unison, for a little extra detail
+      for (const cl of ambientClusters) {
+        const env = Math.pow(0.5 + 0.5 * Math.sin(t * cl.sp + cl.ph), 4)
+        if (env < 0.03) continue
+        for (const d of cl.dots) {
+          const a = 0.95 * cl.amp * env
+          if (a < 0.03) continue
+          ctx.fillStyle = d.pale
+            ? `rgba(246,247,255,${a.toFixed(3)})`
+            : nebulaColor(0.05 + 0.6 * cl.u + d.uj, a)
+          ctx.fillRect(d.x, d.y, d.sz, d.sz)
+        }
+      }
+      ctx.globalCompositeOperation = 'source-over'
+    }
+
     function frame(now) {
       nowT = now
 
@@ -553,6 +668,8 @@ export default function MazeBackground({ onSolve, pointerApi }) {
 
       ctx.clearRect(0, 0, W, H)       // back layer (ambient, behind content)
       fgCtx.clearRect(0, 0, W, H)     // front layer (ball porthole, over content)
+
+      drawAmbient()
 
       let hasNonFull = false
       for (let i = 0; i < wake.length; i++) if (!wake[i].full) hasNonFull = true

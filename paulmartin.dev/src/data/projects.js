@@ -134,7 +134,7 @@ export const previousProjects = [
     org: META,
     role: 'Pathfinding Lead',
     year: '2024',
-    headline: 'A 3D homage to Galaga, flown around your living room.',
+    headline: 'A 3D homage to Galaga, in your living room',
     tags: ['AR', 'Orion', 'Eye Tracking', 'EMG Wristband', 'Spatial Audio'],
     blurb:
       'Built for Meta’s Orion AR glasses. A retro starfighter hangs in your actual room. You lean and turn to dodge, and fire with a finger tap the wristband feels before the cameras see it.',
@@ -166,7 +166,7 @@ export const previousProjects = [
     org: META,
     role: 'Pathfinding Lead',
     year: '2024',
-    headline: 'Pong in three dimensions, shared between two pairs of glasses.',
+    headline: 'Pong in 3D, shared between two pairs of glasses',
     tags: ['AR', 'Orion', 'Hand Tracking', 'Multiplayer', 'Shared Anchors'],
     blurb:
       'The classic game rebuilt as a cube you stand inside, seen from your paddle rather than from above. Both players look at a shared QR code to agree on an origin, and the court lands in the same place for each of them.',
@@ -197,7 +197,7 @@ export const previousProjects = [
     name: 'The 16 Spaces',
     org: MOONLIGHT,
     year: '2020',
-    headline: 'A sliding-tile puzzle wrapped around an auto-running platformer.',
+    headline: 'An auto-runner sliding-tile puzzle mashup',
     tags: ['Unity', 'C#', 'iOS', 'Android'],
     blurb:
       'Your character never stops running and you never control them directly. You control the level, sliding the tiles of the world around them to build the path they’re already on.',

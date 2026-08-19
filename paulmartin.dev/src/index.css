@@ -1,34 +1,31 @@
 :root {
-  --bg: #fbfaf8;
-  --surface: #ffffff;
-  --surface-2: #f4f2ee;
-  --ink: #18181b;
-  --muted: #63636d;
-  --hairline: rgba(20, 20, 28, 0.1);
-  --accent: #0e8fa8;
-  --accent-2: #d6356b;
-  --shadow: 0 1px 2px rgba(20, 20, 28, 0.04), 0 8px 24px rgba(20, 20, 28, 0.06);
-  /* the middle stop of the ball's own radial gradient in MazeBackground. Sampling the ball
-     as it renders puts its brightest pixels at hue 210-211, so this is the hue the eye
-     actually takes off it; on screen the maze layer composites the ball down to about a
-     third of this lightness, which is right for a dim field and wrong for header text. */
+  /* Galaxy, dark only: deep-space indigo base, off-white stars, and a blue/violet/pink nebula
+     accent range aligned to the maze's own wake spectrum. */
+  --space: #05030e;
+  --space-2: #0b0820;
+  --space-3: #150f2e;
+  --star: #f4f2ff;
+  --muted: #a49ecb;
+  --faint: #6b638f;
+  --blue: #4aa8ff;
+  --violet: #7a5cff;
+  --indigo: #3a2a7a;
+  --pink: #ff5c9e;
+  /* the middle stop of the ball's own radial gradient in MazeBackground (hue 210-211). */
   --ball: hsl(211, 100%, 62%);
+
+  /* Legacy aliases: existing components (cards, detail, solved, carousel, controller wordmark)
+     read these names, so mapping them onto the galaxy tokens recolors everything at once. */
+  --bg: var(--space);
+  --surface: var(--space-2);
+  --surface-2: var(--space-3);
+  --ink: var(--star);
+  --hairline: rgba(180, 170, 255, 0.12);
+  --accent: var(--blue);
+  --accent-2: var(--pink);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 40px rgba(0, 0, 0, 0.55);
   --sans: 'Hanken Grotesk Variable', system-ui, -apple-system, sans-serif;
   --mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b0b0f;
-    --surface: #141419;
-    --surface-2: #1b1b22;
-    --ink: #f1f1f4;
-    --muted: #9595a1;
-    --hairline: rgba(255, 255, 255, 0.11);
-    --accent: #38c5e0;
-    --accent-2: #ff5c86;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.4);
-  }
 }
 
 * {
@@ -37,6 +34,8 @@
 
 html {
   scroll-behavior: smooth;
+  /* light snapping: sections settle to center, but the snap never traps the scroll */
+  scroll-snap-type: y proximity;
 }
 
 /* The intro plays over a black field with nothing to scroll to yet, so the scrollbar just
@@ -332,10 +331,8 @@ html.maze-locked body {
 
 /* ---------- layout ---------- */
 main {
-  max-width: 1180px;
+  max-width: 1340px;
   margin: 0 auto;
-  /* the footer supplies its own top margin above the rule, so main's bottom
-     padding only needs to keep About off it, not restate the whole gap */
   padding: clamp(1.5rem, 4vw, 2.75rem) 1.5rem 1.5rem;
 }
 
@@ -349,12 +346,13 @@ main > .section:first-child {
 
 .section-label {
   font-family: var(--mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.22em;
+  font-size: clamp(1.05rem, 2vw, 1.5rem);
+  font-weight: 500;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--accent);
   text-align: center;
-  margin: 0 0 1.5rem;
+  margin: 0 0 clamp(1.6rem, 3vw, 2.6rem);
 }
 
 /* ---------- project cards ---------- */
@@ -375,19 +373,22 @@ main > .section:first-child {
   display: flex;
   flex-direction: column;
   color: var(--ink);
-  background: var(--surface);
+  /* slightly translucent so the water shows faintly behind the raft */
+  background: color-mix(in srgb, var(--surface) 84%, transparent);
   border: 1px solid var(--hairline);
   border-radius: 16px;
   overflow: hidden;
   box-shadow: var(--shadow);
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease;
+  backdrop-filter: blur(3px);
+  /* the raft's 3D transform is set inline by useRaft; keep the origin centered */
+  transform-origin: center center;
+  will-change: transform;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card:hover {
-  transform: translateY(-3px);
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--hairline));
+  border-color: color-mix(in srgb, var(--violet) 55%, var(--hairline));
+  box-shadow: var(--shadow), 0 0 26px color-mix(in srgb, var(--violet) 26%, transparent);
 }
 
 /* :not(.org-tag) — the chip is also a direct <a> child of .card-name, and it
@@ -740,6 +741,16 @@ main > .section:first-child {
   transition: color 0.18s ease;
 }
 
+/* the hidden maze controls (u/l/r/d) picked out of the contact text with a nebula gradient */
+.contact-value .hl {
+  font-weight: 700;
+  background: linear-gradient(120deg, var(--blue), var(--violet) 50%, var(--pink));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
 .contact-item:hover .contact-value {
   color: var(--accent);
 }
@@ -911,7 +922,7 @@ main > .section:first-child {
   width: 100vw;
   height: 100vh;
   pointer-events: none;
-  background: #030304;
+  background: #05030e;
 }
 
 /* "Wake" intro: a transparent canvas over everything (the maze background shows and stays
@@ -947,18 +958,7 @@ main > .section:first-child {
   background: transparent;
 }
 
-/* The Landing commits to the dark palette so its content reads over the near-black
-   maze, regardless of the visitor's system light/dark preference. */
 .landing {
-  --bg: #0b0b0f;
-  --surface: #141419;
-  --surface-2: #1b1b22;
-  --ink: #f1f1f4;
-  --muted: #9595a1;
-  --hairline: rgba(255, 255, 255, 0.11);
-  --accent: #38c5e0;
-  --accent-2: #ff5c86;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.4);
   position: relative;
   z-index: 1; /* content sits above .maze-bg */
   min-height: 100vh;
@@ -1056,6 +1056,224 @@ main > .section:first-child {
   color: var(--accent);
 }
 
+/* ---------- hero: the name as a raft ---------- */
+.hero {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.hero-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  will-change: transform, opacity;
+}
+
+.hero-name {
+  margin: 0;
+  font-size: clamp(2.6rem, 9vw, 6rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1; /* tight box so the shimmer overlay lines up with the glyphs */
+  /* a near-black fill inside the outline. Dim it further with ?nameFill=<0..1>. */
+  color: #111111;
+  opacity: var(--name-fill, 0.5);
+  user-select: none;
+}
+
+/* holds the name and its shimmer overlay in the same box */
+.hero-name-wrap {
+  display: inline-block;
+  position: relative;
+}
+
+/* the shimmering dot outline, sized and positioned exactly over the name */
+.name-shimmer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.chevron-dots {
+  position: absolute;
+  left: 50%;
+  bottom: 10vh; /* ~10% up from the bottom */
+  display: block;
+  opacity: 1;
+  transform: translateX(-50%);
+  transition: opacity 0.5s ease;
+  animation: chevron-bob 6s ease-in-out infinite;
+}
+
+.chevron-dots.is-gone {
+  opacity: 0;
+}
+
+@keyframes chevron-bob {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(5px); }
+}
+
+/* ---------- corner chrome (replaces the top bar): name over links, bottom-right ---------- */
+.corner {
+  position: fixed;
+  z-index: 30;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  pointer-events: none;
+}
+
+.corner.show {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.corner-stack {
+  right: clamp(1rem, 3vw, 2.2rem);
+  bottom: clamp(0.55rem, 1.6vw, 1rem);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  text-align: right;
+}
+
+.corner-name {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+  user-select: none;
+  color: var(--star);
+  /* the links are always visible; the name only appears once you have scrolled past the hero */
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.corner-name.in {
+  opacity: 1;
+  transform: none;
+}
+
+.corner-links {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
+
+.corner-links a {
+  color: var(--muted);
+  transition: color 0.18s ease;
+}
+
+.corner-links a:hover {
+  color: var(--star);
+}
+
+.corner-links .sep {
+  color: var(--hairline);
+}
+
+/* ---------- redesign section layout: one section per viewport, float in/out ---------- */
+.snap-section {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  scroll-snap-align: center;
+  padding: 6vh 0;
+}
+
+/* previous projects is one section holding two rows; it is taller than the viewport, so it snaps
+   to its top and you scroll through it, rather than centering like the viewport-sized sections */
+.previous-section {
+  position: relative;
+  z-index: 1;
+  scroll-snap-align: start;
+  padding: 10vh 0 12vh;
+}
+
+.section-inner {
+  width: 100%;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+}
+
+.section-inner--wide { max-width: 1560px; }
+.section-inner--mid { max-width: 1040px; }
+.section-inner--narrow { max-width: 720px; }
+
+/* floats up from below into center, drifts up and off as it leaves; driven by scroll in JS */
+.drift {
+  will-change: transform, opacity;
+}
+
+.cards-3 {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.75rem;
+}
+
+.cards-4 {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.cards-2 {
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* the reveal wrapper; the .card inside carries the 3D raft transform */
+.raft-wrap {
+  display: block;
+}
+
+/* the maze controller wordmark in the About section */
+.about-wordmark {
+  display: flex;
+  justify-content: center;
+  margin: clamp(2rem, 5vw, 3.25rem) 0 clamp(1.5rem, 4vw, 2.5rem);
+  transition: filter 0.2s ease;
+}
+
+.about-wordmark.pulsed {
+  filter: brightness(1.16);
+}
+
+/* space between the about text/wordmark and the contact links */
+.about .contact-list {
+  margin-top: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+@media (max-width: 1200px) {
+  .cards-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .cards,
+  .cards-3,
+  .cards-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 640px) {
   .cards {
     grid-template-columns: 1fr;
@@ -1065,6 +1283,14 @@ main > .section:first-child {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+    scroll-snap-type: none;
+  }
+  .drift {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+  .snap-section {
+    scroll-snap-align: none;
   }
   .landing:not(.entered) .brand {
     transform: none;
@@ -1076,6 +1302,13 @@ main > .section:first-child {
   }
   .carousel-track {
     transition: none;
+  }
+  .chevron-dots {
+    animation: none;
+  }
+  .corner {
+    transition: opacity 0.4s ease;
+    transform: none;
   }
   .brand-tld,
   .brand-word::before,
