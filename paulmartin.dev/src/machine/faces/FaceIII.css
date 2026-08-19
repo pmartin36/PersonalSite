@@ -1,0 +1,125 @@
+.face3-reels {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  padding-bottom: 2rem;
+}
+
+.face3-reel {
+  position: relative;
+  height: 15rem;
+  padding: 0;
+  border: 1px solid var(--m-brass);
+  border-radius: 4px;
+  background: var(--m-crevice);
+  overflow: hidden;
+  perspective: 1400px;
+  cursor: pointer;
+}
+
+.face3-reel__wheel {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.5s ease;
+}
+
+.face3-reel__slot {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+}
+
+.face3-reel__face {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--m-sandstone);
+}
+
+.face3-reel__still {
+  flex: 1;
+}
+
+.face3-reel__still img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.face3-reel__body {
+  padding: 0.5rem 0.75rem 0.75rem;
+}
+
+.face3-reel__name {
+  margin: 0 0 0.25rem;
+}
+
+.face3-reel__org {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--m-ochre);
+}
+
+.face3-reel__blurb {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.face3-clue {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.face3-clue-tint {
+  color: var(--m-accent);
+}
+
+.face3-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0.5rem;
+  z-index: 0;
+  background: var(--m-brass);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.face3-edge[data-edge='left'] {
+  left: 0;
+}
+
+.face3-edge[data-edge='right'] {
+  right: 0;
+}
+
+.face3-reel__still,
+.face3-reel__body {
+  position: relative;
+  z-index: 1;
+}
+
+.face3-seam-clue {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.face3-seam-clue--aligned {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .face3-reel__wheel {
+    transition: none;
+  }
+}
