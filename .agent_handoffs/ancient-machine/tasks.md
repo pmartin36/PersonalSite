@@ -443,3 +443,11 @@ STATUS: READY
   legacy /solved route no task in this run rewires. Same class as the RESUME_URL/contact-link defects.
   Tolerated because /solved is the de-emphasized legacy route (still in main.jsx, unrewired).
   OWNER: unassigned (no planned task extracts a shared solved-content component or removes /solved).
+- LOW — Unused reference asset ships in the production build: paulmartin.dev/public/machine/sandstone-ref.png
+  (1,062,308 bytes) is referenced NOWHERE in src/ (grep confirms zero hits) yet Vite copies it to
+  dist/machine/sandstone-ref.png (verified present, ~1.06 MB) on every build. It is a palette-grounding
+  reference only, not a shipped texture (stone stays procedural). Surfaced by b5-t1, which used it as a
+  reference but leaves it in public/; b5-t1's TOUCHES are FaceSurface.jsx/machine.css/asset doc, not
+  public/ cleanup, and research explicitly deferred the prune. Tolerated: dead weight, not a
+  correctness bug; no deliverable is relaxed by it. OWNER: unassigned (no planned task prunes unused
+  public/machine reference assets before release).
