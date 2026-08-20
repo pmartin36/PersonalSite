@@ -148,6 +148,8 @@ function MachineShell() {
         className={rootClass}
         data-reduced={reducedMotion ? '' : undefined}
       >
+        <div className="machine__holder machine__holder--left" aria-hidden="true" />
+        <div className="machine__holder machine__holder--right" aria-hidden="true" />
         <div className="machine__viewport">
           <div className="machine__drum" style={{ '--rot': rotationSteps }}>
             {FACES.map((id, i) => {
@@ -166,28 +168,32 @@ function MachineShell() {
                   style={{ '--face-index': i }}
                 >
                   <Face />
+                  <nav
+                    className="face-wayfinding"
+                    aria-label={`You are on Face ${id} of ${FACES.length}`}
+                  >
+                    {FACES.map((fid, fi) => (
+                      <button
+                        key={fid}
+                        type="button"
+                        className={[
+                          'face-pip',
+                          fi === i ? 'face-pip--lit' : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                        aria-label={`Go to Face ${fid}`}
+                        aria-current={fi === i ? 'true' : undefined}
+                        tabIndex={isActive ? 0 : -1}
+                        onClick={() => rotateTo(fi)}
+                      />
+                    ))}
+                  </nav>
                 </div>
               )
             })}
           </div>
         </div>
-        <nav className="machine__wayfinding" aria-label="Face navigation">
-          {FACES.map((id, i) => (
-            <button
-              key={id}
-              type="button"
-              className={[
-                'machine__pip',
-                i === currentFace ? 'machine__pip--lit' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              aria-label={`Go to Face ${id}`}
-              aria-current={i === currentFace ? 'true' : undefined}
-              onClick={() => rotateTo(i)}
-            />
-          ))}
-        </nav>
         <MuteToggle className="machine__mute" />
       </div>
     </MachineContext.Provider>

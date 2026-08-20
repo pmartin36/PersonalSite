@@ -1,35 +1,71 @@
+/* Face I is the name slab: the name carved dead-center, resume and contact
+   etched in a centered two-column row below it. Only the name is in normal
+   flow, so it centers on the face's midline; the actions are lifted out of
+   flow and pinned just below, keeping the name truly centered. */
+
 .face1-name {
-  margin: 0 0 1rem;
+  margin: 0;
   font-family: var(--mono, monospace);
-  font-size: 2rem;
-  color: var(--m-crevice);
+  font-weight: 700;
+  font-size: clamp(2.75rem, 8vw, 6.5rem);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-align: center;
+  /* Carved in, top-lit: the stroke fill is only slightly darker than the stone
+     so the surface reads through it; shadow gathers at the top inner wall of
+     each groove and a lit lip glows along the bottom, the way a real chiselled
+     letter catches light from above. */
+  color: rgba(70, 53, 30, 0.5);
+  text-shadow:
+    0 -2px 2px rgba(28, 20, 9, 0.5),
+    0 -1px 0 rgba(28, 20, 9, 0.35),
+    0 1px 0 rgba(250, 242, 219, 0.6),
+    0 2px 1px rgba(250, 242, 219, 0.3);
 }
 
-.face1-resume {
-  display: inline-flex;
-  gap: 0.35rem;
-  color: var(--m-ochre);
+.face1-actions {
+  position: absolute;
+  left: 50%;
+  top: 61%;
+  transform: translateX(-50%);
+  display: grid;
+  grid-auto-flow: column;
+  align-items: baseline;
+  gap: clamp(1.75rem, 5vw, 3.5rem);
+}
+
+.face1-action {
+  font-family: var(--mono, monospace);
+  font-size: clamp(0.95rem, 1.7vw, 1.3rem);
+  letter-spacing: 0.09em;
+  text-transform: lowercase;
   text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  /* Same carve, quieter than the name. */
+  color: rgba(74, 57, 32, 0.6);
+  text-shadow:
+    0 -1px 0 rgba(247, 238, 214, 0.5),
+    0 1px 1px rgba(30, 22, 10, 0.4);
+  transition: color 0.15s ease;
 }
 
-/* The clue wrapper's underline variant is neutralized here: only the tell
-   letter below carries the underline, not the whole word. */
+.face1-action:hover,
+.face1-action:focus-visible {
+  color: rgba(58, 44, 23, 0.9);
+  outline: none;
+}
+
+/* The whole word carries no underline; only the tell letter (the move-4 "u")
+   does, as a fine engraved mark. */
 .face1-resume__clue.clue--underline {
   text-decoration: none;
 }
 
 .face1-resume__tell {
   text-decoration: underline;
-  text-decoration-color: var(--m-brass);
-}
-
-.face1-contact {
-  display: block;
-  margin-top: 1.5rem;
-  padding: 0.5rem 1.25rem;
-  border: 1px solid var(--m-brass);
-  border-radius: 4px;
-  background: var(--m-buff);
-  color: var(--m-crevice);
-  cursor: pointer;
+  text-decoration-color: rgba(74, 57, 32, 0.85);
+  text-underline-offset: 2px;
 }

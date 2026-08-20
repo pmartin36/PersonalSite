@@ -1,9 +1,75 @@
 .machine {
+  /* Face box, and the pentagon apothem derived from it:
+     (faceHeight / 2) / tan(36deg) ~= 0.688 * faceHeight. The front face is
+     smaller than the viewport so the neighbouring faces tumble into view above
+     and below it, and a rim of the dark drum body shows on every side. */
+  --face-h: 80vh;
+  --face-w: 75vw;
+  --apothem: calc(var(--face-h) * 0.688);
   position: relative;
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  background: var(--m-crevice);
+  /* The device stands in sunlit jungle ruins. */
+  background-color: var(--m-crevice);
+  background-image: url('/machine/ruins-bg.jpeg');
+  background-size: cover;
+  background-position: center;
+}
+
+/* Ambient light over the whole scene: brighter up top, pooling into shadow at
+   the bottom, so the upper neighbour face reads lit and the lower one reads
+   occluded (AO), and the front face carries the same gradient of depth. */
+.machine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 249, 233, 0.12) 0%,
+    rgba(255, 249, 233, 0) 22%,
+    rgba(20, 14, 6, 0) 70%,
+    rgba(20, 14, 6, 0.32) 100%
+  );
+}
+
+/* Two stone brackets that grip the drum's left and right edges and run down to
+   the floor. Same stand-in stone as the device faces. Decorative; snug against
+   the drum sides so they never cover a face's content or its carved pips. */
+.machine__holder {
+  position: absolute;
+  /* The domed cap begins at the drum's vertical centre, then the shaft runs
+     straight down to the floor. */
+  top: calc(50% - 3.5vw);
+  bottom: 0;
+  width: 7vw;
+  z-index: 7;
+  pointer-events: none;
+  /* Rounded, domed top (radius = half the width). */
+  border-radius: 3.5vw 3.5vw 0 0;
+  background-color: var(--m-sandstone);
+  /* Bright over the cap, darkening steadily toward the base. */
+  background-image:
+    radial-gradient(70% 9vw at 50% 3.2vw, rgba(252, 244, 222, 0.85) 0%, rgba(252, 244, 222, 0) 70%),
+    linear-gradient(to top, #4f3c20 0%, var(--m-ochre) 16%, var(--m-buff) 42%, var(--m-sandstone) 72%, var(--m-sand-hi) 100%);
+  box-shadow:
+    inset 0 0 0 2px rgba(28, 20, 9, 0.45),
+    inset 8px 0 14px rgba(250, 242, 219, 0.22),
+    inset -13px 0 22px rgba(28, 20, 9, 0.4),
+    inset 0 -26px 34px rgba(20, 14, 6, 0.45),
+    0 0 0 1px rgba(0, 0, 0, 0.5),
+    0 16px 34px rgba(0, 0, 0, 0.5);
+}
+
+/* Flush against the drum edge, no gap, no overlap. */
+.machine__holder--left {
+  left: calc(50% - var(--face-w) / 2 - 7vw);
+}
+
+.machine__holder--right {
+  left: calc(50% + var(--face-w) / 2);
 }
 
 .machine__viewport {
@@ -11,19 +77,21 @@
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  perspective: 1200px;
+  perspective: 1400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .machine__drum {
   position: relative;
-  width: 100%;
-  height: 100%;
+  width: var(--face-w);
+  height: var(--face-h);
   transform-style: preserve-3d;
-  /* Push the whole drum back by the apothem so the front face lands on the
-     perspective plane (z=0) and renders 1:1. Without this, the face's
-     translateZ(69vh) sits it ~2x magnified under the 1200px perspective and
-     overflows the viewport, dropping top-anchored content above the fold. */
-  transform: translateZ(-69vh) rotateX(calc(var(--rot, 0) * -72deg));
+  /* Pull the drum back by the apothem so the front face lands on the
+     perspective plane (z=0) and renders 1:1, un-magnified. */
+  transform: translateZ(calc(-1 * var(--apothem)))
+    rotateX(calc(var(--rot, 0) * 72deg));
   transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
@@ -31,9 +99,8 @@
   position: absolute;
   inset: 0;
   backface-visibility: hidden;
-  /* Regular-pentagon apothem for a viewport-height face:
-     (faceHeight / 2) / tan(36deg) ~= 0.688 * faceHeight. */
-  transform: rotateX(calc(var(--face-index, 0) * 72deg)) translateZ(69vh);
+  transform: rotateX(calc(var(--face-index, 0) * -72deg))
+    translateZ(var(--apothem));
 }
 
 .machine__face > .face-surface {
@@ -84,27 +151,50 @@
   opacity: 1;
 }
 
-.machine__wayfinding {
-  position: fixed;
-  right: 1.5rem;
-  bottom: 1.5rem;
-  z-index: 10;
+/* Wayfinding is carved into each face's own stone, bottom-right corner, so it
+   tumbles with the drum. There is no floating UI. */
+.face-wayfinding {
+  position: absolute;
+  right: 1.6rem;
+  bottom: 1.3rem;
+  z-index: 2;
   display: flex;
-  gap: 0.5rem;
+  gap: 0.55rem;
+  align-items: center;
 }
 
-.machine__pip {
-  width: 0.75rem;
-  height: 0.75rem;
+/* Each pip is a recessed socket chiselled into the stone: dark interior, a lit
+   lower lip. */
+.face-pip {
+  width: 0.66rem;
+  height: 0.66rem;
   padding: 0;
-  border: 1px solid var(--m-brass);
+  border: none;
   border-radius: 50%;
-  background: transparent;
   cursor: pointer;
+  background: radial-gradient(
+    circle at 50% 34%,
+    rgba(28, 20, 9, 0.55),
+    rgba(28, 20, 9, 0.12)
+  );
+  box-shadow:
+    inset 0 1px 2px rgba(28, 20, 9, 0.7),
+    inset 0 -1px 0 rgba(250, 242, 219, 0.4),
+    0 1px 0 rgba(250, 242, 219, 0.3);
 }
 
-.machine__pip--lit {
-  background: var(--m-accent);
+/* This face's own marker: a brass stud seated in the socket. */
+.face-pip--lit {
+  background: radial-gradient(
+    circle at 50% 34%,
+    #edd199 0%,
+    var(--m-brass) 58%,
+    #7a5c22 100%
+  );
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.55),
+    inset 0 -1px 2px rgba(40, 28, 10, 0.6),
+    0 0 7px rgba(196, 143, 63, 0.55);
 }
 
 .machine__mute {

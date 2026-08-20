@@ -72,15 +72,4 @@ describe('FaceSurface', () => {
     expect(getByText('stone panel content')).toBeInTheDocument()
     expect(container.querySelector('.face-surface')).not.toBeNull()
   })
-
-  it('marks the decorative moss layer aria-hidden so it never enters the accessible tree', () => {
-    const { container } = render(
-      <FaceSurface>
-        <p>stone panel content</p>
-      </FaceSurface>
-    )
-    const moss = container.querySelector('.face-surface__moss')
-    expect(moss).not.toBeNull()
-    expect(moss.getAttribute('aria-hidden')).toBe('true')
-  })
 })

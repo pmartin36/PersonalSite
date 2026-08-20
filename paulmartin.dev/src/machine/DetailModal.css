@@ -1,6 +1,5 @@
-/* Overlay chrome only. Content inside .detail-modal__body reuses the
-   .detail-* / .tag / .card-year / .org-tag / .media-* rules already defined
-   in index.css, so this file never restyles content. */
+/* Detail overlay, themed to the machine: an obsidian panel over a warm-dark
+   backdrop, a close control at the page corner, and one seamless scroll. */
 
 .detail-modal__backdrop {
   position: fixed;
@@ -9,61 +8,74 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
-  background: rgba(5, 3, 14, 0.72);
-  backdrop-filter: blur(3px);
+  padding: clamp(1rem, 4vh, 2.5rem);
+  background: rgba(18, 12, 6, 0.78);
+  backdrop-filter: blur(4px);
 }
 
 .detail-modal__panel {
   position: relative;
-  width: min(720px, 100%);
+  width: min(760px, 100%);
   max-height: 90vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: var(--surface);
-  border: 1px solid var(--hairline);
   border-radius: 14px;
-  box-shadow: var(--shadow);
+  color: #d3cbba;
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 34%),
+    linear-gradient(160deg, #241d2e 0%, #15111c 46%, #0c0912 100%);
+  border: 1px solid rgba(176, 141, 63, 0.35);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
 }
 
+/* The X sits at the corner of the page, not the modal, and stays put while the
+   content scrolls (its containing block is the full-viewport backdrop). */
 .detail-modal__close {
-  position: absolute;
-  top: 0.9rem;
-  right: 0.9rem;
-  z-index: 1;
-  width: 2rem;
-  height: 2rem;
+  position: fixed;
+  top: 1.1rem;
+  right: 1.3rem;
+  z-index: 1001;
+  width: 2.4rem;
+  height: 2.4rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--hairline);
+  border: 1px solid rgba(213, 189, 132, 0.4);
   border-radius: 999px;
-  background: var(--surface);
-  color: var(--muted);
-  font-size: 1.2rem;
+  background: rgba(24, 15, 6, 0.6);
+  color: #e6dcc4;
+  font-size: 1.5rem;
   line-height: 1;
   cursor: pointer;
   transition:
-    color 0.18s ease,
-    border-color 0.18s ease;
+    color 0.16s ease,
+    border-color 0.16s ease,
+    background 0.16s ease;
 }
 
 .detail-modal__close:hover {
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--hairline));
+  color: #fff;
+  border-color: var(--m-brass);
+  background: rgba(40, 26, 10, 0.78);
 }
 
+/* One seamless scroll for the whole panel, with no scrollbar cutting into it. */
 .detail-modal__body {
   overflow-y: auto;
-  padding: 0 0 1.6rem;
-  border-radius: 14px;
+  scrollbar-width: none;
+  padding: 0 0 1.8rem;
+}
+
+.detail-modal__body::-webkit-scrollbar {
+  display: none;
 }
 
 .detail-modal__body .detail-media {
   margin: 0 0 0.5rem;
   border-radius: 0;
   border: none;
-  border-bottom: 1px solid var(--hairline);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .detail-modal__body .detail-title,
@@ -71,10 +83,43 @@
 .detail-modal__body .detail-meta,
 .detail-modal__body .detail-body,
 .detail-modal__body .detail-links {
-  padding-left: 1.75rem;
-  padding-right: 1.75rem;
+  padding-left: 1.9rem;
+  padding-right: 1.9rem;
 }
 
 .detail-modal__body .detail-title {
-  margin-top: 1.6rem;
+  margin-top: 1.7rem;
+  color: #ece6d8;
+}
+
+.detail-modal__body .detail-headline {
+  color: #b4ab98;
+}
+
+.detail-modal__body .detail-body p {
+  color: #c7bfae;
+}
+
+.detail-modal__body .detail-meta .card-year {
+  color: #8f8676;
+}
+
+.detail-modal__body .tag {
+  color: #a49b89;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.detail-modal__body .tag.role {
+  color: var(--m-accent);
+  border-color: rgba(196, 98, 45, 0.5);
+}
+
+.detail-modal__body .detail-link {
+  color: #e6dcc4;
+  border-color: rgba(213, 189, 132, 0.4);
+}
+
+.detail-modal__body .detail-link:hover {
+  color: #fff;
+  border-color: var(--m-brass);
 }

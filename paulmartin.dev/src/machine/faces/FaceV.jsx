@@ -95,8 +95,18 @@ export default function FaceV() {
         data-lock-progress={progress}
       >
         <div className="face5-slab__sealed">
-          <Clue order={1} className="face5-clue" />
-          <ArrowPad onPress={press} />
+          <div className="face5-seam" aria-hidden="true" />
+          <div className="face5-lock">
+            <ArrowPad onPress={press} />
+          </div>
+          <Clue order={1} className="face5-clue">
+            {({ orderGlyph, directionLetter }) => (
+              <>
+                {orderGlyph}
+                <span className="face5-clue__dir">{directionLetter}</span>
+              </>
+            )}
+          </Clue>
         </div>
         <div className="face5-slab__solved">
           <Celebration />

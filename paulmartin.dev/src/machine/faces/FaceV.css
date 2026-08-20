@@ -1,6 +1,7 @@
 .face5-slab {
   position: relative;
-  min-height: 320px;
+  width: 100%;
+  height: 100%;
   perspective: 1200px;
 }
 
@@ -15,7 +16,6 @@
   gap: 1.5rem;
   padding: 1.5rem;
   backface-visibility: hidden;
-  border: 1px solid var(--m-brass);
   border-radius: 4px;
   background: var(--m-sandstone);
   transform-style: preserve-3d;
@@ -37,25 +37,104 @@
   transform: rotateY(0deg);
 }
 
-.face5-clue {
-  font-size: 1.5rem;
-  color: var(--m-ochre);
-}
-
-.face5-pad {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.face5-pad__button {
-  width: 3rem;
-  height: 3rem;
+/* The single seam of the sealed slate: a fine gold line inset from the edge,
+   where the panel will part when the lock opens. */
+.face5-seam {
+  position: absolute;
+  inset: 6.5%;
   border: 1px solid var(--m-brass);
-  border-radius: 999px;
-  background: var(--m-buff);
-  color: var(--m-crevice);
-  font-size: 1.25rem;
+  border-radius: 5px;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.35),
+    0 1px 0 rgba(245, 232, 198, 0.3);
+  pointer-events: none;
+}
+
+.face5-lock {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* The arrow row; four square jewelled keys share it. */
+.face5-pad {
+  width: 38%;
+  display: flex;
+  gap: clamp(0.45rem, 1.4vw, 1.1rem);
+}
+
+/* Dark cherry-wood keys: a deep matte mahogany with a faint grain, raised off
+   the slate, pressing in on click. No shine, no bezel. */
+.face5-pad__button {
+  flex: 1 1 0;
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
+  font-size: clamp(1.4rem, 3vw, 2.3rem);
+  color: #e6c256;
+  background:
+    repeating-linear-gradient(
+      87deg,
+      rgba(0, 0, 0, 0.06) 0 2px,
+      rgba(0, 0, 0, 0) 2px 8px
+    ),
+    linear-gradient(180deg, #59261f 0%, #431a15 55%, #33120e 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(150, 92, 72, 0.35),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.5),
+    0 4px 0 #24100b,
+    0 7px 10px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease,
+    filter 0.12s ease;
+}
+
+.face5-pad__button:hover {
+  filter: brightness(1.1);
+}
+
+.face5-pad__button:active {
+  transform: translateY(4px);
+  box-shadow:
+    inset 0 1px 1px rgba(150, 92, 72, 0.3),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.5),
+    0 1px 0 #24100b,
+    0 2px 5px rgba(0, 0, 0, 0.45);
+}
+
+/* The move-1 clue, near the bottom of the slate just inside the seam, before
+   the face falls off into shadow: order digit, a half space, then the direction
+   LETTER (u). Metallic gold, raised. Never an arrow. */
+.face5-clue {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  text-align: center;
+  font-family: var(--mono, monospace);
+  font-size: 1.85rem;
+  font-weight: 700;
+  background: linear-gradient(
+    180deg,
+    #fbeeb2 0%,
+    #dcb14e 42%,
+    #a97c2c 58%,
+    #f0d888 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter:
+    drop-shadow(0 1px 0 rgba(255, 245, 210, 0.35))
+    drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
+}
+
+.face5-clue__dir {
+  margin-left: 0.1em;
 }
 
 .face5-celebration {
