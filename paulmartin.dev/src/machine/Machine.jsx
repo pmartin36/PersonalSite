@@ -25,7 +25,7 @@ const SNAP_MS = 600
 // III, IV, V and back to I) in a single continuous overshoot-and-settle. The
 // rubber-band comes from the back-out easing on .machine--intro-spin. Duration
 // mirrors that transition in CSS.
-const INTRO_SPIN_MS = 2000
+const INTRO_SPIN_MS = 1750
 // The drum first reaches Face I about here (before the overshoot settles); at
 // this point interaction is unlocked so a scroll or click can cancel the rebound
 // and navigate on, rather than waiting out the full settle.
@@ -86,7 +86,12 @@ function prefersReducedMotion() {
   )
 }
 
-const DEFAULT_MACHINE = { currentFace: 0, rotateTo: () => {}, faceCount: FACES.length }
+const DEFAULT_MACHINE = {
+  currentFace: 0,
+  rotateTo: () => {},
+  faceCount: FACES.length,
+  lockRotation: () => {},
+}
 const MachineContext = createContext(DEFAULT_MACHINE)
 
 export function useMachine() {
@@ -110,10 +115,16 @@ function MachineShell() {
   // rotateTo can cancel the settle without a stale closure.
   const introBusyRef = useRef(!reducedMotion)
   const introPhaseRef = useRef(reducedMotion ? 'done' : 'start')
+  // Set once Face V's lid opens: the drum can no longer be turned until the
+  // puzzle is woken back up.
+  const lockedRef = useRef(false)
+  const lockRotation = useCallback((locked) => {
+    lockedRef.current = locked
+  }, [])
 
   const rotateTo = useCallback(
     (index) => {
-      if (introBusyRef.current) return
+      if (introBusyRef.current || lockedRef.current) return
       // Past the run-up but the opening spin may still be settling its overshoot;
       // this interaction cancels the rebound and takes over the normal transition.
       if (introPhaseRef.current !== 'done') {
@@ -207,7 +218,7 @@ function MachineShell() {
     .filter(Boolean)
     .join(' ')
 
-  const contextValue = { currentFace, rotateTo, faceCount: FACES.length }
+  const contextValue = { currentFace, rotateTo, faceCount: FACES.length, lockRotation }
 
   return (
     <MachineContext.Provider value={contextValue}>

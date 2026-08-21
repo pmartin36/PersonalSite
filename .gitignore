@@ -38,3 +38,4 @@ plans/
 # Source media (local only). The encoded, size-optimized versions the site
 # actually serves live in paulmartin.dev/public/projects.
 Assets/
+paulmartin.dev/e2e/artifacts/

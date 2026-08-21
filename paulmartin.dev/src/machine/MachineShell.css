@@ -115,7 +115,7 @@
 /* Opening spin: a back-out ease carries the drum round to Face I in one motion,
    overshooting a touch at the end and rubber-banding back onto it (no stall). */
 .machine--intro-spin .machine__drum {
-  transition: transform 2s cubic-bezier(0.3, 1.1, 0.5, 1);
+  transition: transform 1.75s cubic-bezier(0.3, 1.1, 0.5, 1);
 }
 
 /* While the opening spin plays, the device takes no clicks (scroll is ignored in

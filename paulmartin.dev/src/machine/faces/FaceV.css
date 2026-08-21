@@ -7,62 +7,193 @@
     inset 0 0 0 2px rgba(28, 20, 9, 0.5),
     0 0 0 1px rgba(0, 0, 0, 0.55),
     0 12px 34px rgba(0, 0, 0, 0.5);
+  /* Let the lid fold up off the top edge, but still clip the sides and bottom so
+     it never spills over the drum's edges. */
+  overflow: visible;
+  clip-path: inset(-100vh 0 0 0);
 }
 
 .face5-slab {
   position: relative;
   width: 100%;
   height: 100%;
-  perspective: 1200px;
+  perspective: 1400px;
 }
 
-.face5-slab__sealed,
-.face5-slab__solved {
+/* The sunk chamber under the lid: a mid dark-brown floor well below the surface,
+   in shadow, like the Face IV tray. Revealed as the lid hinges up. */
+.face5-chamber {
+  position: absolute;
+  /* Matches the lid/seam bounds, so the chamber is revealed within the frame. */
+  top: 3.5%;
+  right: 6.5%;
+  bottom: 6.5%;
+  left: 6.5%;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Kept fully hidden behind the lid until it hinges open, so nothing bleeds
+     through the seam while the box is sealed. */
+  visibility: hidden;
+  border-radius: 5px;
+  background: #4a3620;
+  box-shadow:
+    inset 0 16px 30px rgba(0, 0, 0, 0.6),
+    inset 0 4px 8px rgba(0, 0, 0, 0.5),
+    inset 0 -5px 12px rgba(160, 122, 64, 0.14),
+    inset 0 0 0 2px rgba(20, 12, 6, 0.55);
+}
+
+/* A deeper rectangular pocket just big enough for the drive, cut into the floor:
+   darker still, with a hard inner rim so the drive reads as seated down in it. */
+.face5-alcove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.28rem, 0.8vw, 0.5rem);
+  border-radius: 6px;
+  background: #1c1206;
+  box-shadow:
+    inset 0 6px 12px rgba(0, 0, 0, 0.75),
+    inset 0 2px 4px rgba(0, 0, 0, 0.7),
+    inset 0 -2px 3px rgba(120, 92, 46, 0.18),
+    inset 0 0 0 1.5px rgba(8, 5, 2, 0.8),
+    0 1px 0 rgba(120, 92, 46, 0.2);
+}
+
+/* The prize: a small USB drive lying in the pocket. A silver connector, a dark
+   plastic body, and a red LED that blinks. */
+.face5-device {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6));
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease;
+}
+
+.face5-device:hover,
+.face5-device:focus-visible {
+  filter: drop-shadow(0 5px 9px rgba(0, 0, 0, 0.6));
+  outline: none;
+}
+
+.face5-device__cap {
+  width: clamp(1rem, 2.6vw, 1.5rem);
+  height: clamp(1.5rem, 3.8vw, 2.2rem);
+  border-radius: 2px 1px 1px 2px;
+  background: linear-gradient(180deg, #e8ecef 0%, #a9b0b6 46%, #d2d7db 54%, #7f868c 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(60, 66, 72, 0.6),
+    inset 0 2px 2px rgba(255, 255, 255, 0.5),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.35);
+}
+
+.face5-device__body {
+  position: relative;
+  width: clamp(3rem, 8vw, 4.6rem);
+  height: clamp(1.9rem, 4.8vw, 2.8rem);
+  margin-left: -2px;
+  border-radius: 3px 8px 8px 3px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 30%),
+    linear-gradient(180deg, #2a2f36 0%, #171a1f 55%, #0d0f12 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.7),
+    0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.face5-device__led {
+  position: absolute;
+  top: 50%;
+  right: clamp(0.5rem, 1.4vw, 0.8rem);
+  width: clamp(0.42rem, 1vw, 0.6rem);
+  height: clamp(0.42rem, 1vw, 0.6rem);
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #ff8a7a, #e11d12 60%, #7a0b06);
+  animation: face5-blink 0.85s steps(1, end) infinite;
+}
+
+@keyframes face5-blink {
+  0%,
+  55% {
+    opacity: 1;
+    box-shadow:
+      0 0 4px 1px rgba(240, 40, 30, 0.85),
+      0 0 9px 2px rgba(240, 40, 30, 0.5);
+  }
+  56%,
+  100% {
+    opacity: 0.28;
+    box-shadow: 0 0 2px rgba(240, 40, 30, 0.25);
+  }
+}
+
+/* The sealed lid: the flat sandstone slate, hinged at its top edge. It carries
+   the seam, the pad, and the clue, and lifts up and back to reveal the chamber. */
+.face5-lid {
+  position: absolute;
+  /* The lid is the seamed panel itself: it sits on the seam line and hinges
+     from its top edge, so the fold lines up with the seam. */
+  top: 3.5%;
+  right: 6.5%;
+  bottom: 6.5%;
+  left: 6.5%;
+  z-index: 2;
+  transform-style: preserve-3d;
+  transform-origin: top center;
+  transition: transform 1.5s cubic-bezier(0.45, 0.05, 0.25, 1);
+}
+
+/* Two-sided slab: the sealed sandstone face, and its raw underside behind it.
+   Each is culled when it faces away, so the hinge shows the sealed face when
+   shut and the underside once it swings up and over. */
+.face5-lid__face,
+.face5-lid__underside {
   position: absolute;
   inset: 0;
+  border-radius: 5px;
+  backface-visibility: hidden;
+}
+
+.face5-lid__face {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 1.5rem;
-  padding: 1.5rem;
-  backface-visibility: hidden;
-  border-radius: 4px;
-  background: var(--m-sandstone);
-  transform-style: preserve-3d;
-  transition: transform 0.6s ease;
-}
-
-.face5-slab__solved {
-  transform: rotateY(180deg);
-  background: var(--m-crevice);
-  color: var(--m-sandstone);
-  overflow-y: auto;
-}
-
-.face5-slab--opened .face5-slab__sealed {
-  transform: rotateY(-180deg);
-}
-
-.face5-slab--opened .face5-slab__solved {
-  transform: rotateY(0deg);
-}
-
-/* The single seam of the sealed slate: a fine gold line inset from the edge,
-   where the panel will part when the lock opens. */
-.face5-seam {
-  position: absolute;
-  /* Top edge lifted to the line where the surface sheen used to fade out; the
-     other three sides stay at the slate's inset. */
-  top: 3.5%;
-  right: 6.5%;
-  bottom: 6.5%;
-  left: 6.5%;
+  padding: 1.2rem;
   border: 1px solid #83611f;
-  border-radius: 5px;
   box-shadow:
     inset 0 1px 2px rgba(0, 0, 0, 0.4),
     0 1px 0 rgba(210, 190, 140, 0.22);
+  background: var(--m-sandstone);
+}
+
+/* The chiselled inner side of the slab: a darker, rougher stone with a deep rim,
+   so once the lid hinges up it reads clearly as a raised lid, not a faint seam. */
+.face5-lid__underside {
+  transform: rotateX(180deg);
+  background: linear-gradient(180deg, #8a6f3e 0%, #6a5330 55%, #4a3620 100%);
+  /* No border or rim: its bottom edge fades into the chamber below instead of
+     cutting a hard seam across the opening. */
+  box-shadow: inset 0 6px 16px rgba(0, 0, 0, 0.45);
+}
+
+.face5-slab[data-stage='open'] .face5-chamber {
+  visibility: visible;
+}
+
+.face5-slab[data-stage='open'] .face5-lid {
+  /* Folds up just past vertical to show the underside as a raised lid. */
+  transform: rotateX(108deg);
   pointer-events: none;
 }
 
@@ -121,11 +252,8 @@
     0 2px 5px rgba(0, 0, 0, 0.45);
 }
 
-/* The move-1 clue, near the bottom of the slate just inside the seam, before
-   the face falls off into shadow: order digit, a half space, then the direction
-   LETTER (u). Metallic gold, raised. Never an arrow. */
-/* A shallow pocket carved into the slate holding the clue, like the sunk tray on
-   Face IV: a touch darker than the stone, a dark inner rim, a lit lower lip. */
+/* A shallow pocket carved into the slate holding the move-1 clue, like the sunk
+   tray on Face IV: a touch darker than the stone, a dark inner rim, a lit lip. */
 .face5-clue-box {
   position: absolute;
   left: 50%;
@@ -171,60 +299,270 @@
   text-transform: uppercase;
 }
 
+/* The full-screen ignition: a white flash bursts from the drive and fills the
+   viewport, then the black solved screen fades in over it. */
+.face5-ignite {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+
+/* The two black eyelids that make up the black screen. They fade in over the
+   flash, then split apart on Wake up. */
+.face5-ignite__eyelid {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: #000;
+  opacity: 0;
+  animation: face5-screen 1.05s ease 0.35s forwards;
+}
+
+.face5-ignite__eyelid--top {
+  top: 0;
+}
+
+.face5-ignite__eyelid--bottom {
+  bottom: 0;
+}
+
+/* Wake up: drop the flash, blink the text away fast, then part the eyelids
+   up and down to reveal the drum, like opening your eyes. */
+.face5-ignite--waking {
+  pointer-events: none;
+}
+
+.face5-ignite--waking .face5-ignite__flash {
+  display: none;
+}
+
+.face5-ignite--waking .face5-ignite__screen {
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.face5-ignite--waking .face5-ignite__eyelid {
+  transition:
+    transform 0.6s cubic-bezier(0.5, 0, 0.3, 1) 0.22s,
+    border-radius 0.6s ease 0.22s;
+}
+
+/* The inner edge curves up toward the corners as the lids retract, so the drum
+   is revealed through a lens-shaped opening, like eyes. */
+.face5-ignite--waking .face5-ignite__eyelid--top {
+  transform: translateY(-100%);
+  border-radius: 0 0 50% 50% / 0 0 130px 130px;
+}
+
+.face5-ignite--waking .face5-ignite__eyelid--bottom {
+  transform: translateY(100%);
+  border-radius: 50% 50% 0 0 / 130px 130px 0 0;
+}
+
+/* An animatable radius so the white grows as a soft-edged ring from the drive
+   and fully covers the screen, instead of a hard disc scaled past the edges. */
+@property --face5-r {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+.face5-ignite__flash {
+  position: fixed;
+  inset: 0;
+  --face5-r: 0px;
+  background: radial-gradient(
+    circle at var(--fx, 50%) var(--fy, 50%),
+    #fff 0%,
+    #fff var(--face5-r),
+    rgba(255, 255, 255, 0) calc(var(--face5-r) + 110px)
+  );
+  animation: face5-flash 0.26s ease-out forwards;
+}
+
+@keyframes face5-flash {
+  from {
+    --face5-r: 0px;
+  }
+  to {
+    --face5-r: 125vmax;
+  }
+}
+
+.face5-ignite__screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  padding: 2rem;
+  overflow-y: auto;
+  /* Transparent: the black comes from the eyelids behind. This layer only holds
+     the centred text, which sits above them. */
+  color: var(--m-sand-hi);
+}
+
+@keyframes face5-screen {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* The content settles in a beat after the screen has gone black. */
+.face5-ignite__screen > * {
+  opacity: 0;
+  animation: face5-screen-content 0.5s ease 1.6s forwards;
+}
+
+@keyframes face5-screen-content {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.face5-ignite__wake {
+  padding: 0.55rem 1.4rem;
+  border: 1px solid rgba(213, 189, 132, 0.4);
+  border-radius: 999px;
+  background: none;
+  color: var(--m-sand-hi);
+  font-family: var(--mono, monospace);
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  cursor: pointer;
+  transition:
+    color 0.16s ease,
+    border-color 0.16s ease,
+    background 0.16s ease;
+}
+
+.face5-ignite__wake:hover,
+.face5-ignite__wake:focus-visible {
+  color: #fff8ea;
+  border-color: rgba(240, 216, 136, 0.85);
+  background: rgba(240, 216, 136, 0.08);
+  outline: none;
+}
+
+/* The dream filter's SVG lives in the overlay but paints nothing itself. */
+.face5-dream-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+/* Celebration, on the black screen. A scrolling horizontal sine warps each row
+   of the text left and right, continuously, for a slow dreamlike ripple. */
 .face5-celebration {
-  max-width: 32rem;
+  max-width: 34rem;
   text-align: center;
-}
-
-.face5-celebration__title {
-  margin: 0 0 0.75rem;
-}
-
-.face5-celebration__lede,
-.face5-celebration__cta {
-  margin: 0 0 0.75rem;
-}
-
-.face5-celebration__cta a {
-  color: var(--m-sandstone);
-}
-
-.face5-celebration__list ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.face5-celebration__name {
-  font-weight: 600;
-}
-
-.face5-celebration__note {
-  margin-left: 0.5rem;
-  opacity: 0.8;
+  color: var(--m-sand-hi);
+  filter: url(#face5-dream);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .face5-slab__sealed,
-  .face5-slab__solved {
+  .face5-celebration {
+    filter: none;
+  }
+}
+
+.face5-celebration__title {
+  margin: 0 0 0rem;
+  font-size: clamp(1.5rem, 4vw, 2.3rem);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #f4e8ca;
+}
+
+.face5-celebration__lede,
+.face5-celebration__body,
+.face5-celebration__cta {
+  line-height: 1.5;
+}
+
+.face5-celebration__lede {
+  margin: 0 0 1.15rem;
+}
+
+.face5-celebration__body {
+  margin: 0 0 0.35rem;
+  font-size: 0.98rem;
+  color: rgba(226, 214, 184, 0.82);
+}
+
+.face5-celebration__cta {
+  margin: 0;
+}
+
+.face5-celebration__cta {
+  font-family: var(--mono, monospace);
+  font-size: 1.1rem;
+}
+
+.face5-celebration__cta a {
+  color: #f0d888;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(240, 216, 136, 0.4);
+  transition:
+    color 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.face5-celebration__cta a:hover {
+  color: #fff5d6;
+  border-color: rgba(255, 245, 214, 0.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .face5-lid {
     transition: opacity 0.3s ease;
+  }
+
+  .face5-slab[data-stage='open'] .face5-lid {
     transform: none;
-  }
-
-  .face5-slab__sealed {
-    opacity: 1;
-  }
-
-  .face5-slab__solved {
     opacity: 0;
-    position: absolute;
+    pointer-events: none;
   }
 
-  .face5-slab--opened .face5-slab__sealed {
+  .face5-device__led {
+    animation: none;
+  }
+
+  .face5-ignite__flash {
+    display: none;
+  }
+
+  .face5-ignite__eyelid {
+    opacity: 1;
+    animation: none;
+  }
+
+  /* No slide: the eyelids just wink out and the text is already static. */
+  .face5-ignite--waking .face5-ignite__eyelid {
+    transition: none;
+    transform: none;
     opacity: 0;
   }
 
-  .face5-slab--opened .face5-slab__solved {
+  .face5-ignite--waking .face5-ignite__screen {
+    transition: none;
+  }
+
+  .face5-ignite__screen > * {
     opacity: 1;
+    transform: none;
+    animation: none;
   }
 }
