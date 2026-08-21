@@ -88,7 +88,7 @@ export default function FaceV() {
   }
 
   return (
-    <FaceSurface aria-label="Face V">
+    <FaceSurface className="face5-surface" aria-label="Face V">
       <div
         className={`face5-slab${solved ? ' face5-slab--opened' : ''}`}
         data-solved={solved ? 'true' : 'false'}
@@ -99,14 +99,16 @@ export default function FaceV() {
           <div className="face5-lock">
             <ArrowPad onPress={press} />
           </div>
-          <Clue order={1} className="face5-clue">
-            {({ orderGlyph, directionLetter }) => (
-              <>
-                {orderGlyph}
-                <span className="face5-clue__dir">{directionLetter}</span>
-              </>
-            )}
-          </Clue>
+          <div className="face5-clue-box" aria-hidden="true">
+            <Clue order={1} className="face5-clue">
+              {({ orderGlyph, directionLetter }) => (
+                <>
+                  {orderGlyph}
+                  <span className="face5-clue__dir">{directionLetter}</span>
+                </>
+              )}
+            </Clue>
+          </div>
         </div>
         <div className="face5-slab__solved">
           <Celebration />

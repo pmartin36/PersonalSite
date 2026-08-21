@@ -135,7 +135,7 @@ export const previousProjects = [
     role: 'Pathfinding Lead',
     year: '2024',
     headline: 'A 3D homage to Galaga, in your living room',
-    tags: ['AR', 'Orion', 'Eye Tracking', 'EMG Wristband', 'Spatial Audio'],
+    tags: ['AR', 'Orion', 'Eye Tracking', 'EMG Wristband'],
     blurb:
       'Built for Meta’s Orion AR glasses. A retro starfighter hangs in your actual room. You lean and turn to dodge, and fire with a finger tap the wristband feels before the cameras see it.',
     thumb: still(
@@ -167,9 +167,9 @@ export const previousProjects = [
     role: 'Pathfinding Lead',
     year: '2024',
     headline: 'Pong in 3D, shared between two pairs of glasses',
-    tags: ['AR', 'Orion', 'Hand Tracking', 'Multiplayer', 'Shared Anchors'],
+    tags: ['AR', 'Orion', 'Hand Tracking', 'Multiplayer'],
     blurb:
-      'The classic game rebuilt as a cube you stand inside, seen from your paddle rather than from above. Both players look at a shared QR code to agree on an origin, and the court lands in the same place for each of them.',
+      'The classic game brought into the room in front of you, with your hand as the paddle. Both players look at a shared QR code to agree on an origin, and the court lands in the same place for each of them.',
     thumb: still(
       'pong',
       'Seen through Orion: nested green and yellow rounded-square outlines forming a 3D Pong court in a living room, with a QR code on the table below and the player’s hands raised',
@@ -181,8 +181,8 @@ export const previousProjects = [
       title: 'The Verge plays 3D Pong on Orion',
     },
     body: [
-      'A 3D take on Pong for Meta’s Orion AR glasses. I led the pathfinding team of five that took it from nothing to a fleshed-out concept. The court is a cube in the middle of the room and you see it from your paddle’s position rather than from overhead, which changes the game. Depth is something you have to read, and the ball arrives rather than crosses.',
-      'Your paddle is your hand, with no controller involved. Two pairs of glasses also have to believe the court is in the same physical place, or the game quietly falls apart, so both players look at a shared QR code to fix a common origin and the cube lands in the same spot in the actual room for each of them. You can also play remotely against a friend.',
+      'A 3D take on Pong for Meta’s Orion AR glasses. I led the pathfinding team of five that took it from nothing to a fleshed-out concept. It brings the classic game into your space: the court sits in the room in front of you, and you control your paddle by moving your hand, no controller involved.',
+      'Two pairs of glasses also have to believe the court is in the same physical place, or the game quietly falls apart, so both players look at a shared QR code to fix a common origin and the court lands in the same spot in the actual room for each of them. You can also play remotely against a friend.',
       'It became the demo people remembered, and the one Alex Heath played against Mark Zuckerberg. The Verge’s hands-on is above.',
     ],
     links: [
@@ -198,7 +198,7 @@ export const previousProjects = [
     org: MOONLIGHT,
     year: '2020',
     headline: 'An auto-runner sliding-tile puzzle mashup',
-    tags: ['Unity', 'C#', 'iOS', 'Android'],
+    tags: ['Unity', 'C#', 'iOS', 'Android', 'Puzzle', 'Runner'],
     blurb:
       'Your character never stops running and you never control them directly. You control the level, sliding the tiles of the world around them to build the path they’re already on.',
     thumb: still(
@@ -230,7 +230,7 @@ export const previousProjects = [
     org: MOONLIGHT,
     year: '2017',
     headline: 'Turn your shield to meet each color as it arrives.',
-    tags: ['Unity', 'C#', 'Android'],
+    tags: ['Unity', 'C#', 'Android', 'Reaction', 'Matching'],
     blurb:
       'Debris falls in from every direction and your shield is quartered into four colors. Rotate so the right quarter meets the right incoming piece, and keep doing it as the sky fills up.',
     thumb: still(

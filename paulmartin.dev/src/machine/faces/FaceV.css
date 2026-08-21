@@ -1,3 +1,14 @@
+/* The sealed slate reads as one flat, uniform stone: drop the top-lit sheen and
+   the pooled bottom shadow the shared surface carries, keeping only the bounding
+   edge and the drop shadow that lifts the face off the drum. */
+.face-surface.face5-surface {
+  background-image: none;
+  box-shadow:
+    inset 0 0 0 2px rgba(28, 20, 9, 0.5),
+    0 0 0 1px rgba(0, 0, 0, 0.55),
+    0 12px 34px rgba(0, 0, 0, 0.5);
+}
+
 .face5-slab {
   position: relative;
   width: 100%;
@@ -41,12 +52,17 @@
    where the panel will part when the lock opens. */
 .face5-seam {
   position: absolute;
-  inset: 6.5%;
-  border: 1px solid var(--m-brass);
+  /* Top edge lifted to the line where the surface sheen used to fade out; the
+     other three sides stay at the slate's inset. */
+  top: 3.5%;
+  right: 6.5%;
+  bottom: 6.5%;
+  left: 6.5%;
+  border: 1px solid #83611f;
   border-radius: 5px;
   box-shadow:
-    inset 0 1px 2px rgba(0, 0, 0, 0.35),
-    0 1px 0 rgba(245, 232, 198, 0.3);
+    inset 0 1px 2px rgba(0, 0, 0, 0.4),
+    0 1px 0 rgba(210, 190, 140, 0.22);
   pointer-events: none;
 }
 
@@ -108,15 +124,32 @@
 /* The move-1 clue, near the bottom of the slate just inside the seam, before
    the face falls off into shadow: order digit, a half space, then the direction
    LETTER (u). Metallic gold, raised. Never an arrow. */
-.face5-clue {
+/* A shallow pocket carved into the slate holding the clue, like the sunk tray on
+   Face IV: a touch darker than the stone, a dark inner rim, a lit lower lip. */
+.face5-clue-box {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  text-align: center;
+  left: 50%;
+  bottom: 0.6%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.12em 0.6em;
+  border-radius: 6px;
+  background: #6f5930;
+  box-shadow:
+    inset 0 3px 6px rgba(0, 0, 0, 0.5),
+    inset 0 1px 2px rgba(0, 0, 0, 0.45),
+    inset 0 -2px 3px rgba(150, 116, 60, 0.25),
+    inset 0 0 0 1.5px rgba(16, 10, 5, 0.5);
+}
+
+.face5-clue {
+  display: inline-block;
   font-family: var(--mono, monospace);
   font-size: 1.85rem;
   font-weight: 700;
+  line-height: 1;
   background: linear-gradient(
     180deg,
     #fbeeb2 0%,
@@ -135,6 +168,7 @@
 
 .face5-clue__dir {
   margin-left: 0.1em;
+  text-transform: uppercase;
 }
 
 .face5-celebration {

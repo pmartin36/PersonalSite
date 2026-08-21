@@ -27,13 +27,14 @@ function Segments({ lit }) {
 
 // The clue split across the three backs: left card = the two left bars, middle
 // card = a plus with the order digit above it, right card = the two bottom
-// bars. Together they read the move-3 clue.
+// bars. The bars f+e+d draw an L (Left); the middle digit is the order. Together
+// they read the move-6 clue.
 function ClueBack({ index }) {
   if (index === 0) return <Segments lit={['f', 'e']} />
   if (index === 2) return <Segments lit={['d']} />
   return (
     <div className="face2-mid" aria-hidden="true">
-      <Clue order={3} variant="seven-seg" className="face2-mid__num">
+      <Clue order={6} variant="seven-seg" className="face2-mid__num">
         {({ orderGlyph }) => <span>{orderGlyph}</span>}
       </Clue>
       <span className="face2-mid__plus" />

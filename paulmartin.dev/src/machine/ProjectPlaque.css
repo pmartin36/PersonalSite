@@ -1,0 +1,130 @@
+/* Polished obsidian project card, in the machine palette. */
+.plaque {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 6px;
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 34%),
+    linear-gradient(160deg, #241d2e 0%, #15111c 46%, #0c0912 100%);
+  border: 1px solid #080610;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 10px 22px rgba(0, 0, 0, 0.6);
+}
+
+.plaque__media {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: #0a0810;
+}
+
+.plaque__still,
+.plaque__still img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.plaque__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.7rem 0.95rem 0.85rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.plaque__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.plaque__name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #ece6d8;
+}
+
+.plaque__open {
+  position: relative;
+  z-index: 3;
+  margin: -0.4rem -0.65rem;
+  padding: 0.4rem 0.65rem;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.16s ease;
+}
+
+.plaque__open:hover,
+.plaque__open:focus-visible {
+  color: #fff;
+  outline: none;
+}
+
+.plaque__year {
+  font-family: var(--mono, monospace);
+  font-size: 0.68rem;
+  color: #8f8676;
+}
+
+.plaque__headline {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: #d4ccbc;
+}
+
+.plaque__blurb {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #9b9280;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
+/* The colored-clue tell: one gilded character. Two of these across the reels,
+   the same gold, pair into the move (a gold digit + a gold direction letter). */
+.plaque__clue {
+  color: #e8c14e;
+  font-weight: 700;
+  text-shadow: 0 0 7px rgba(232, 193, 78, 0.45);
+}
+
+.plaque__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+}
+
+.plaque__tag {
+  font-family: var(--mono, monospace);
+  font-size: 0.64rem;
+  color: #a49b89;
+  padding: 0.12rem 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+}

@@ -207,6 +207,14 @@
   justify-content: center;
 }
 
+/* Only the plate facing the viewer takes clicks. The turned-away plate never
+   intercepts, so the front's title and See-details links can't be hit while the
+   card is showing its clue back (and vice versa). */
+.face2-flip[data-flipped='true'] .face2-plate--front,
+.face2-flip[data-flipped='false'] .face2-plate--back {
+  pointer-events: none;
+}
+
 /* Click the top or bottom quarter of a plate to turn it. Invisible, sitting
    above the plate content but below the See-details link. */
 .face2-turn {

@@ -1,125 +1,225 @@
+/* Face III: "Past Projects" etched above three stone reels set into the slab,
+   little slots between them. Each reel is a 3-sided wheel showing one face plus
+   a sliver of the next/previous; project faces are obsidian cards, blank faces
+   are bare stone. */
+
+.face3 {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.75rem, 2vh, 1.5rem);
+}
+
+.face3-title {
+  margin: 0;
+  text-align: center;
+  font-family: var(--mono, monospace);
+  font-size: clamp(1rem, 2.1vw, 1.55rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  /* Carved into the stone, top-lit. */
+  color: rgba(52, 38, 18, 0.6);
+  text-shadow:
+    0 -1px 1px rgba(22, 15, 7, 0.5),
+    0 1px 0 rgba(224, 202, 150, 0.5);
+}
+
 .face3-reels {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.5rem;
-  padding-bottom: 2rem;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1rem, 3vw, 2.4rem);
 }
 
 .face3-reel {
+  --reel-win-h: 58vh;
+  --reel-face-h: 46vh;
+  /* Hexagon apothem: (faceHeight / 2) / tan(30deg) ~= 0.866 * faceHeight. */
+  --reel-apothem: calc(var(--reel-face-h) * 0.866);
+  flex: 1 1 0;
+  max-width: 24rem;
+}
+
+/* The slot cut into the slab: the current face centred with the next/previous
+   angled into the space above and below, so the window reads like the device. */
+.face3-reel__window {
   position: relative;
-  height: 15rem;
-  padding: 0;
-  border: 1px solid var(--m-brass);
-  border-radius: 4px;
-  background: var(--m-crevice);
+  height: var(--reel-win-h);
+  perspective: 1300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
-  perspective: 1400px;
+  border-radius: 6px;
+  /* Dark brown interior, seen at the reel seams; the stone faces sit in front. */
+  background: #2a1e11;
+  box-shadow:
+    inset 0 0 0 1px rgba(14, 9, 4, 0.85),
+    inset 0 2px 0 rgba(213, 189, 132, 0.12),
+    inset 7px 0 11px -7px rgba(10, 6, 3, 0.5),
+    inset -7px 0 11px -7px rgba(10, 6, 3, 0.5);
   cursor: pointer;
 }
 
-.face3-reel__wheel {
+/* Depth: the slivers recede into darkness. The top face catches a little light
+   then fades to a moderate dark; the bottom falls off deeper. The front card
+   (the clear middle band) is untouched. */
+.face3-reel__window::after {
+  content: '';
   position: absolute;
   inset: 0;
-  transform-style: preserve-3d;
-  transition: transform 0.5s ease;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: 6px;
+  /* Clear across the front face. Past each seam the neighbour stays mostly lit,
+     then shifts abruptly into a quick darkening that lands at the same final
+     darkness on both edges; the top holds its light a little longer. */
+  background: linear-gradient(
+    to bottom,
+    rgba(8, 5, 2, 0.76) 0%,
+    rgba(8, 5, 2, 0.5) 4%,
+    rgba(8, 5, 2, 0) 7.5%,
+    rgba(8, 5, 2, 0) 89.7%,
+    rgba(8, 5, 2, 0.1) 90.3%,
+    rgba(8, 5, 2, 0.55) 95%,
+    rgba(8, 5, 2, 0.76) 100%
+  );
 }
 
-.face3-reel__slot {
+.face3-reel__wheel {
+  position: relative;
+  /* A touch narrower than the slot so the dark interior shows down each side. */
+  width: 95%;
+  height: var(--reel-face-h);
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.5, 0.05, 0.2, 1);
+}
+
+/* Each reel face is a stone tile. A project face mounts the obsidian card on it,
+   inset a touch so the stone shows behind and around the card; a bare face is
+   just this stone. */
+.face3-reel__face {
   position: absolute;
   inset: 0;
   backface-visibility: hidden;
-}
-
-.face3-reel__face {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+  overflow: hidden;
+  border-radius: 6px;
+  padding: 3px 5px;
+  /* Flat, uniform stone with a symmetric thin edge, so faces tile and their
+     seams match up cleanly rather than one appearing to slip under the next. */
   background: var(--m-sandstone);
+  box-shadow: inset 0 0 0 1px rgba(28, 20, 9, 0.16);
 }
 
-.face3-reel__still {
-  flex: 1;
-}
-
-.face3-reel__still img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.face3-reel__body {
-  padding: 0.5rem 0.75rem 0.75rem;
-}
-
-.face3-reel__name {
-  margin: 0 0 0.25rem;
-}
-
-.face3-reel__org {
-  display: block;
-  margin-bottom: 0.25rem;
-  color: var(--m-ochre);
-}
-
-.face3-reel__blurb {
-  margin: 0;
-  font-size: 0.85rem;
-}
-
-.face3-clue {
+/* Hint 1 half-glyphs: an etched character clipped to one half, riding a face
+   edge (over the card) so it meets its partner across the gap. Only the winning
+   alignment lines two halves into a clean number / letter. */
+.face3-seam {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-.face3-clue-tint {
-  color: var(--m-accent);
-}
-
-.face3-edge {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 0.5rem;
-  z-index: 0;
-  background: var(--m-brass);
-  opacity: 0.4;
+  top: 50%;
+  z-index: 3;
   pointer-events: none;
+  font-family: var(--mono, monospace);
+  font-weight: 700;
+  /* Tall: the glyph stands about 40% of the face height. */
+  font-size: calc(var(--reel-face-h) * 0.57);
+  line-height: 1;
+  text-transform: uppercase;
+  /* Subtractive: a faint black that just deepens the shadow of whatever it sits
+     on (stone or card), like a shallow carve, rather than painting a colour. */
+  color: rgba(12, 8, 3, 0.16);
+  mix-blend-mode: multiply;
 }
 
-.face3-edge[data-edge='left'] {
-  left: 0;
-}
-
-.face3-edge[data-edge='right'] {
-  right: 0;
-}
-
-.face3-reel__still,
-.face3-reel__body {
-  position: relative;
-  z-index: 1;
-}
-
-.face3-seam-clue {
+/* Onward call-to-action on the bare reel faces: MORE PROJECTS ON across the
+   three reels, carved big, with the GitHub mark (a link) under the middle word. */
+.face3-cta {
   position: absolute;
-  bottom: 0.5rem;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.face3-cta__word {
+  position: absolute;
   left: 50%;
-  transform: translateX(-50%);
-  font-size: 1rem;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--mono, monospace);
+  font-weight: 800;
+  font-size: clamp(1.9rem, 7.2vh, 3.9rem);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  /* Carved, top-lit, like the name and title etchings. */
+  color: rgba(66, 49, 27, 0.55);
+  text-shadow:
+    0 -1px 1px rgba(28, 20, 9, 0.42),
+    0 1px 0 rgba(250, 242, 219, 0.55);
 }
 
-.face3-seam-clue--aligned {
-  opacity: 1;
+.face3-cta__logo-link {
+  position: absolute;
+  left: 50%;
+  top: 80%;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.34em;
+  text-decoration: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .face3-reel__wheel {
-    transition: none;
-  }
+.face3-cta__logo-mark {
+  width: clamp(1.6rem, 5vh, 2.6rem);
+  height: auto;
+  display: block;
+  filter:
+    drop-shadow(0 1px 0 rgba(250, 242, 219, 0.5))
+    drop-shadow(0 -1px 1px rgba(28, 20, 9, 0.3));
+}
+
+.face3-cta__logo-mark path {
+  fill: rgba(70, 53, 30, 0.52);
+  transition: fill 0.15s ease;
+}
+
+.face3-cta__logo-word {
+  font-family: var(--mono, monospace);
+  font-weight: 700;
+  font-size: clamp(1.2rem, 3.7vh, 2rem);
+  letter-spacing: -0.01em;
+  color: rgba(70, 53, 30, 0.52);
+  text-shadow:
+    0 -1px 1px rgba(28, 20, 9, 0.4),
+    0 1px 0 rgba(250, 242, 219, 0.55);
+  transition: color 0.15s ease;
+}
+
+.face3-cta__logo-link:hover .face3-cta__logo-mark path,
+.face3-cta__logo-link:focus-visible .face3-cta__logo-mark path {
+  fill: rgba(52, 38, 18, 0.82);
+}
+
+.face3-cta__logo-link:hover .face3-cta__logo-word,
+.face3-cta__logo-link:focus-visible .face3-cta__logo-word {
+  color: rgba(52, 38, 18, 0.82);
+}
+
+/* Left reel's right edge: the glyph's outer-left ~35% peeks past the edge, the
+   middle ~30% hidden across the gap. */
+.face3-seam--right {
+  right: 0;
+  transform: translate(65%, -50%);
+  clip-path: inset(0 65% 0 0);
+}
+
+/* Right reel's left edge: the glyph's outer-right ~35% peeks past the edge. */
+.face3-seam--left {
+  left: 0;
+  transform: translate(-65%, -50%);
+  clip-path: inset(0 0 0 65%);
 }

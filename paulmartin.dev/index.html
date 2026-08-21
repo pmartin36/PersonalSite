@@ -14,6 +14,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="theme-color" content="#050508" />
+    <!-- The scene background: fetch it early so the opening spin doesn't wait on
+         a cold-load decode. -->
+    <link rel="preload" as="image" href="/machine/ruins-bg.jpeg" />
   </head>
   <body>
     <div id="root"></div>

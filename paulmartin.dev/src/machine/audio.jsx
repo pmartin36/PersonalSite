@@ -150,7 +150,20 @@ export function MuteToggle({ className, ...rest }) {
       }}
       {...rest}
     >
-      {muted ? '🔇' : '🔊'}
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 9v6h4l5 5V4L7 9H3z" />
+        {muted ? (
+          <g className="machine-audio-toggle__x">
+            <line x1="15.5" y1="9" x2="21" y2="14.5" />
+            <line x1="21" y1="9" x2="15.5" y2="14.5" />
+          </g>
+        ) : (
+          <g className="machine-audio-toggle__waves">
+            <path d="M15.5 8.8a4 4 0 0 1 0 6.4" />
+            <path d="M18 6.3a7.6 7.6 0 0 1 0 11.4" />
+          </g>
+        )}
+      </svg>
     </button>
   )
 }

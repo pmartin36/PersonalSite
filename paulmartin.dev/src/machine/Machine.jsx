@@ -21,7 +21,36 @@ const FACE_COMPONENTS = [FaceI, FaceII, FaceIII, FaceIV, FaceV]
 // Mirrors MachineShell.css's .machine__drum transition-duration, so the
 // on-settle snap fires when the tumble transform has actually finished.
 const SNAP_MS = 600
-const SHAKE_MS = 700
+// Opening spin: the drum holds on Face I, then makes one full turn (through II,
+// III, IV, V and back to I) in a single continuous overshoot-and-settle. The
+// rubber-band comes from the back-out easing on .machine--intro-spin. Duration
+// mirrors that transition in CSS.
+const INTRO_SPIN_MS = 2000
+// The spin only kicks once the scene can animate smoothly (fonts + background
+// decoded, layout settled); on a cold load we hold on Face I until then, capped
+// so a slow asset can never stall the opening.
+const INTRO_HOLD_CAP_MS = 800
+
+// Decode the background up front so its first paint doesn't jank the opening
+// spin. Resolves (never rejects) once it is ready or immediately if it can't.
+const MACHINE_BG_URL = '/machine/ruins-bg.jpeg'
+function decodeBackground() {
+  if (typeof Image === 'undefined') return Promise.resolve()
+  const img = new Image()
+  img.src = MACHINE_BG_URL
+  return img.decode ? img.decode().catch(() => {}) : Promise.resolve()
+}
+
+function scenePainted() {
+  const fonts =
+    typeof document !== 'undefined' && document.fonts
+      ? document.fonts.ready
+      : Promise.resolve()
+  return Promise.race([
+    Promise.all([fonts, decodeBackground()]),
+    new Promise((resolve) => setTimeout(resolve, INTRO_HOLD_CAP_MS)),
+  ])
+}
 
 export function wrapIndex(i, count = FACES.length) {
   return ((i % count) + count) % count
@@ -62,17 +91,23 @@ export function useMachine() {
 
 function MachineShell() {
   const { play } = useAudio()
+  const reducedMotion = useRef(prefersReducedMotion()).current
+  // The drum opens on Face I (the name) and holds there; under motion the opening
+  // spin kicks once the scene is ready and makes one full turn back to Face I.
   const [currentFace, setCurrentFace] = useState(0)
   const [rotationSteps, setRotationSteps] = useState(0)
-  const [introActive, setIntroActive] = useState(false)
-  const reducedMotion = useRef(prefersReducedMotion()).current
+  const [introPhase, setIntroPhase] = useState(reducedMotion ? 'done' : 'start')
   const snapTimer = useRef(null)
   const didIntro = useRef(false)
   const rootRef = useRef(null)
   const currentFaceRef = useRef(currentFace)
+  // True while the opening spin plays; scroll and clicks are ignored until it
+  // lands so nothing fights the animation.
+  const introBusyRef = useRef(!reducedMotion)
 
   const rotateTo = useCallback(
     (index) => {
+      if (introBusyRef.current) return
       const target = wrapIndex(index)
       const from = currentFaceRef.current
       currentFaceRef.current = target
@@ -103,29 +138,38 @@ function MachineShell() {
 
   useScrollNav(rootRef, { onStep: handleStep })
 
-  // Fires once on mount: a settling thunk + shake under motion, nothing
-  // under reduced motion (rests statically on Face I, no settle). Guarded by
-  // a ref (not state) so StrictMode's mount/cleanup/mount only plays it once.
+  // Fires once on mount under motion: hold on Face I until the scene is ready to
+  // animate (fonts + background decoded, layout settled), then make one full turn
+  // through II -> III -> IV -> V and back to Face I, overshooting and settling.
+  // Holding until ready keeps a cold load from janking the spin. Scroll and
+  // clicks are locked out until it lands. Reduced motion rests on Face I with no
+  // spin. Guarded by a ref (not state) so StrictMode's mount/cleanup/mount only
+  // runs it once.
   useEffect(() => {
     if (didIntro.current) return
     didIntro.current = true
     if (reducedMotion) return
 
-    setIntroActive(true)
-    play('thunk')
-    const shakeTimer = setTimeout(() => setIntroActive(false), SHAKE_MS)
-    const skip = () => {
-      clearTimeout(shakeTimer)
-      setIntroActive(false)
-    }
-    window.addEventListener('pointerdown', skip, { once: true })
-    window.addEventListener('keydown', skip, { once: true })
-
-    return () => {
-      clearTimeout(shakeTimer)
-      window.removeEventListener('pointerdown', skip)
-      window.removeEventListener('keydown', skip)
-    }
+    scenePainted().then(() => {
+      // Two frames so the held Face I has actually painted before the transform
+      // kicks; then one full turn, the easing overshoots and rubber-bands back.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIntroPhase('spin')
+          setRotationSteps(FACES.length)
+          play('grind')
+          setTimeout(() => {
+            setIntroPhase('done')
+            introBusyRef.current = false
+            play('snap')
+          }, INTRO_SPIN_MS)
+        })
+      })
+    })
+    // The scheduled work is deliberately not cancelled on cleanup: under
+    // StrictMode the mount/cleanup/mount cycle would otherwise cancel the only
+    // scheduled run (didIntro then blocks a re-schedule). It only sets persistent
+    // state and is harmless once run.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -134,7 +178,8 @@ function MachineShell() {
   const rootClass = [
     'machine',
     reducedMotion ? 'machine--reduced' : '',
-    introActive ? 'machine--intro' : '',
+    introPhase === 'spin' ? 'machine--intro-spin' : '',
+    introPhase !== 'done' ? 'machine--intro-busy' : '',
   ]
     .filter(Boolean)
     .join(' ')

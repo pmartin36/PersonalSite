@@ -1,97 +1,245 @@
+/* Face IV: a sliding-tile About/Contact puzzle. A ~5% sandstone frame stays at
+   the surface; inside it a tray is sunk, and the tiles are raised blocks flush
+   with the frame. The gap and the gutters reveal the sunk floor, where the
+   move-2 clue is carved. */
+
+.face4-tray {
+  position: relative;
+  /* Bound by height with a true 3:2 ratio so the 3x2 grid gives square cells.
+     Height was the limiting dimension, so binding it keeps the ratio exact and
+     uses most of the vertical space; width follows and is capped as a safety. */
+  height: 96%;
+  aspect-ratio: 3 / 2;
+  max-width: 98%;
+  border-radius: 7px;
+  /* The sunk floor: a mid dark-brown, well below the frame, in shadow. */
+  background: #4a3620;
+  box-shadow:
+    inset 0 12px 22px rgba(0, 0, 0, 0.55),
+    inset 0 3px 6px rgba(0, 0, 0, 0.45),
+    inset 0 -4px 10px rgba(160, 122, 64, 0.15),
+    inset 0 0 0 2px rgba(20, 12, 6, 0.5);
+}
+
+/* The floor carries the two carved clue pieces, behind the tiles: the tally
+   over the row-1 col-1/2 seam, the letter over the row-2 col-2/3 seam. Each is
+   revealed as the tile covering it slides away. */
 .face4-backplate {
   position: absolute;
   inset: 0;
-  z-index: 0;
-  background: var(--m-crevice);
+  border-radius: 7px;
 }
 
 .face4-clue {
-  position: static;
-  display: contents;
+  position: absolute;
+  inset: 0;
 }
 
+/* The tally sits on the seam between row 1 columns 1 and 2. */
 .face4-clue__order {
   position: absolute;
   left: 33.33%;
   top: 25%;
-  display: flex;
-  gap: 0.2rem;
   transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: flex-end;
 }
 
-.face4-tally__stroke {
-  width: 2px;
-  height: 1.5rem;
-  background: var(--m-brass);
+/* An arcane tally: jagged hand-chiselled strokes, only a little darker than the
+   floor, with a faint warm lip so it reads as carved rather than drawn. */
+.face4-tally {
+  display: block;
+  width: 6.6rem;
+  height: 5.1rem;
+  filter: drop-shadow(0 0.5px 0 rgba(164, 128, 70, 0.3));
 }
 
+.face4-tally__path {
+  fill: none;
+  stroke: #2e2110;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The direction, as the LETTER (r), on the seam between row 2 columns 2 and 3.
+   Carved into the floor, only a little darker than it. Never an arrow. */
 .face4-clue__direction {
   position: absolute;
   left: 66.66%;
   top: 75%;
   transform: translate(-50%, -50%);
-  font-size: 2rem;
-  color: var(--m-brass);
+  font-family: var(--mono, monospace);
+  font-size: 4.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #2e2110;
+  text-shadow:
+    0 -0.5px 0 rgba(0, 0, 0, 0.35),
+    0 1px 0 rgba(164, 128, 70, 0.32);
 }
 
 .face4-grid {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: 2px;
+  /* Clip front faces at the tray edge, so bottom-row blocks show no side. */
+  overflow: hidden;
+  border-radius: 7px;
 }
 
+/* Each tile is one cell, positioned by transform so a change of cell glides
+   smoothly into place. */
 .face4-cell {
-  position: relative;
-  min-height: 6rem;
-  background: var(--m-sandstone);
-  border: 1px solid var(--m-brass);
-  transition: transform 0.3s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 33.3333%;
+  height: 50%;
+  transition: transform 0.42s cubic-bezier(0.45, 0.05, 0.2, 1);
 }
 
-.face4-cell--gap {
-  background: transparent;
-  border-color: transparent;
-}
-
+/* A raised stone block, flush with the frame surface, dropping a shadow into
+   the recess so it reads as standing proud of the sunk floor. */
 .face4-tile {
+  position: absolute;
+  inset: 0;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  padding: 0.5rem 0.75rem;
-  border: none;
-  background: none;
-  color: var(--m-crevice);
-  text-align: left;
-  cursor: pointer;
-}
-
-.face4-tile--about {
-  gap: 0.25rem;
-}
-
-.face4-tile__label {
-  font-weight: bold;
-}
-
-.face4-tile__copy {
-  font-size: 0.8rem;
-}
-
-.face4-tile--contact {
   align-items: center;
   justify-content: center;
-  font-weight: bold;
+  overflow: hidden;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
   text-decoration: none;
-  color: var(--m-ochre);
+  background: var(--m-sandstone);
+  /* Flat top, flush with the frame: just a lit top edge and a fine dark seam.
+     No drop shadow, so tiles never float above the surrounding stone. The
+     block's front face is drawn separately, only where the gap exposes it. */
+  box-shadow:
+    inset 0 0 0 1px rgba(8, 5, 2, 0.5),
+    inset 0 2px 0 rgba(255, 247, 224, 0.5);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .face4-cell {
-    transition: none;
-  }
+/* The block's front face: always drawn just under the top face; the tile in the
+   row below (or the clipped tray edge) covers it, so it's only seen where the
+   gap exposes it, revealed and hidden by real occlusion as tiles slide. */
+.face4-cell::after {
+  content: '';
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  top: 100%;
+  height: 0.6rem;
+  background: linear-gradient(to bottom, #7a5c30 0%, #543f1e 100%);
+  box-shadow: 0 4px 7px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+/* Shared engraving: fill a touch darker than the stone, a shadow biting in at
+   the top of each stroke and a lit lip along the bottom. */
+.face4-about {
+  color: rgba(62, 46, 24, 0.62);
+  text-shadow:
+    0 -1px 1px rgba(24, 17, 8, 0.35),
+    0 1px 0 rgba(250, 242, 219, 0.5);
+}
+
+/* About spans two tiles: the inner block is two tiles wide, each tile shows its
+   half, so "Ab|out" and the paragraph only read when the tiles are adjacent. */
+.face4-tile--about {
+  align-items: stretch;
+}
+
+.face4-about {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 200%;
+  padding: 7% 7.5%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  text-align: center;
+}
+
+.face4-tile--left .face4-about {
+  left: 0;
+}
+
+.face4-tile--right .face4-about {
+  left: -100%;
+}
+
+.face4-about__heading {
+  font-family: var(--mono, monospace);
+  font-size: clamp(1.5rem, 4.5vw, 2.8rem);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.face4-about__body {
+  font-size: clamp(0.72rem, 1.5vw, 1rem);
+  line-height: 1.42;
+  max-width: 90%;
+}
+
+/* A giant icon carved into the tile: a translucent recess so the stone reads
+   through it, a dark top wall and a lit lower lip for depth. Decorative only, so
+   clicking it slides the tile. */
+/* A small engraved icon stacked above the value; the pair is the link, sized to
+   just the icon+text (not the whole tile) and centred a hair below middle, so
+   only it reacts and the surrounding tile still slides. */
+.face4-contact {
+  position: absolute;
+  left: 50%;
+  top: 53%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.face4-contact__icon {
+  /* A fixed size (the link now shrink-wraps, so a percentage has no definite
+     height to resolve against). */
+  height: clamp(3rem, 7.4vh, 4.8rem);
+  width: auto;
+  /* Carved into the stone like the rest of the lettering on this face: a warm
+     brown recess, a dark top inner wall, a lit lower lip. */
+  filter:
+    drop-shadow(0 -1px 1px rgba(24, 17, 8, 0.4))
+    drop-shadow(0 1.5px 0 rgba(250, 242, 219, 0.5));
+}
+
+.face4-contact__icon path {
+  fill: rgba(62, 46, 24, 0.62);
+  transition: fill 0.16s ease;
+}
+
+.face4-contact__value {
+  max-width: 92%;
+  font-family: var(--mono, monospace);
+  font-size: clamp(0.72rem, 1.55vw, 1rem);
+  white-space: nowrap;
+  color: rgba(56, 42, 21, 0.75);
+  text-shadow:
+    0 -1px 1px rgba(24, 17, 8, 0.4),
+    0 1px 0 rgba(250, 242, 219, 0.62);
+  transition: color 0.16s ease;
+}
+
+/* Hover deepens the carve of both the icon and the value, the same engraving
+   highlight used on the Face I actions and the Face III GitHub link. */
+.face4-contact:hover .face4-contact__value,
+.face4-contact:focus-visible .face4-contact__value {
+  color: rgba(52, 38, 18, 0.82);
+}
+
+.face4-contact:hover .face4-contact__icon path,
+.face4-contact:focus-visible .face4-contact__icon path {
+  fill: rgba(52, 38, 18, 0.82);
 }

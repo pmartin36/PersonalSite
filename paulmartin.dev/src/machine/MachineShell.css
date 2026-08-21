@@ -45,7 +45,8 @@
   top: calc(50% - 3.5vw);
   bottom: 0;
   width: 7vw;
-  z-index: 7;
+  /* Behind the drum, in front of the jungle background. */
+  z-index: 1;
   pointer-events: none;
   /* Rounded, domed top (radius = half the width). */
   border-radius: 3.5vw 3.5vw 0 0;
@@ -78,6 +79,9 @@
   height: 100vh;
   overflow: hidden;
   perspective: 1400px;
+  /* Above the holders, so the drum passes in front of them when a face swings
+     into their column. */
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -108,29 +112,23 @@
   height: 100%;
 }
 
-.machine--intro .machine__viewport {
-  animation: machine-shake 0.7s ease;
+/* Opening spin: a back-out ease carries the drum round to Face I in one motion,
+   overshooting a touch at the end and rubber-banding back onto it (no stall). */
+.machine--intro-spin .machine__drum {
+  transition: transform 2s cubic-bezier(0.3, 1.1, 0.5, 1);
 }
 
-@keyframes machine-shake {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  20% {
-    transform: translate3d(-6px, 0, 0);
-  }
-  40% {
-    transform: translate3d(5px, 0, 0);
-  }
-  60% {
-    transform: translate3d(-3px, 0, 0);
-  }
-  80% {
-    transform: translate3d(2px, 0, 0);
-  }
-  100% {
-    transform: translate3d(0, 0, 0);
-  }
+/* While the opening spin plays, the device takes no clicks (scroll is ignored in
+   JS), so nothing fights the animation. */
+.machine--intro-busy .machine__viewport {
+  pointer-events: none;
+}
+
+/* Promote the drum to its own layer for the opening turn (set during the hold,
+   before it kicks) so the transform runs on the compositor and survives the
+   cold-load main-thread work. */
+.machine--intro-busy .machine__drum {
+  will-change: transform;
 }
 
 /* Reduced motion: flatten the drum and crossfade the active face instead of
@@ -199,7 +197,48 @@
 
 .machine__mute {
   position: fixed;
-  left: 1.5rem;
-  bottom: 1.5rem;
+  top: 10px;
+  right: 10px;
   z-index: 10;
+}
+
+/* A plain white speaker, tucked into the top-right corner; an X crosses it out
+   when muted. A soft shadow keeps the white readable over the jungle. */
+.machine-audio-toggle {
+  width: 2.28rem;
+  height: 2.28rem;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.85;
+  transition: opacity 0.15s ease;
+}
+
+.machine-audio-toggle:hover,
+.machine-audio-toggle:focus-visible {
+  opacity: 1;
+  outline: none;
+}
+
+.machine-audio-toggle svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+
+.machine-audio-toggle path {
+  fill: #fff;
+}
+
+.machine-audio-toggle__x line,
+.machine-audio-toggle__waves path {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-linecap: round;
 }

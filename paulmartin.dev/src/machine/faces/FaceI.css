@@ -62,6 +62,9 @@
    does, as a fine engraved mark. */
 .face1-resume__clue.clue--underline {
   text-decoration: none;
+  /* Take the action's colour, not the clue's crevice tone, so resume brightens
+     on hover exactly like contact. */
+  color: inherit;
 }
 
 .face1-resume__tell {
