@@ -75,6 +75,16 @@ export default function ProjectPlaque({ project, onOpen, tints }) {
             </span>
           ))}
         </div>
+        <button
+          type="button"
+          className="plaque__details"
+          onClick={(event) => {
+            event.stopPropagation()
+            onOpen(project)
+          }}
+        >
+          See details
+        </button>
       </div>
     </div>
   )

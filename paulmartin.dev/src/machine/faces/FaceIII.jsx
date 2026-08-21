@@ -76,8 +76,9 @@ const SEAM_GLYPHS = [
   { left: ['w', 'x', 'v'], right: ['8', SEAM_NUM, '3'] },
   // reel 2: left edges complete the number, right edges start the letter.
   { left: ['6', '2', SEAM_NUM], right: ['k', 'n', SEAM_DIR] },
-  // reel 3: left edges complete the letter; right edges are outer decoration.
-  { left: ['h', SEAM_DIR, 'm'], right: ['s', 'z', 'y'] },
+  // reel 3: left edges complete the letter (on the blank "ON" face); right edges
+  // are outer decoration.
+  { left: ['h', 'm', SEAM_DIR], right: ['s', 'z', 'y'] },
 ]
 
 // One etched half-glyph at a face edge: `half` is which half of the character is
@@ -175,7 +176,7 @@ function Reel({ faces, reelIndex, position, onSpin, onOpen }) {
         <div
           className="face3-reel__wheel"
           style={{
-            transform: `translateZ(calc(-1 * var(--reel-apothem))) rotateX(${-60 * position}deg)`,
+            transform: `translateZ(calc(-1 * var(--reel-apothem))) rotateX(${60 * position}deg)`,
           }}
         >
           {wheelFaces.map((project, i) => {
@@ -186,7 +187,7 @@ function Reel({ faces, reelIndex, position, onSpin, onOpen }) {
                 key={i}
                 className="face3-reel__face"
                 style={{
-                  transform: `rotateX(${60 * i}deg) translateZ(var(--reel-apothem))`,
+                  transform: `rotateX(${-60 * i}deg) translateZ(var(--reel-apothem))`,
                 }}
               >
                 {project ? (
