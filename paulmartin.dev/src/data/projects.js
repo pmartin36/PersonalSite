@@ -255,6 +255,57 @@ export const previousProjects = [
       },
     ],
   },
+  {
+    slug: 'jam-games',
+    name: 'Jam Games',
+    year: '2018',
+    headline: 'A run of small games built against a jam clock.',
+    tags: ['Game Jam', 'Ludum Dare', 'Unity'],
+    blurb:
+      'A handful of games made over a weekend each: a warehouse where you stack boxes faster than they arrive, a Ludum Dare about surviving your own game jam, and a puzzle where you have to be standing on the exit at the moment it fires.',
+    thumb: still(
+      'jam-games',
+      'A three-way diagonal split of three jam games: Exit Code 0, The Making Of, and Too Many Boxes',
+    ),
+    hero: still(
+      'jam-games',
+      'A three-way diagonal split of three jam games: Exit Code 0, The Making Of, and Too Many Boxes',
+    ),
+    body: [
+      'A set of games built under a jam clock, most over a single weekend. Too Many Boxes (Ludum Dare 42) is a warehouse where boxes arrive faster than you can stack them and the floor fills up. The Making Of (Ludum Dare 43) is a game about making a game: you split your hours across code, music, and art while keeping yourself rested, and your well-being at the buzzer counts toward the score. Exit Code 0 is a mouse-only puzzle with a simple catch, you have to be standing on the exit at the instant the exit command runs.',
+      'They are all up on itch, playable in the browser.',
+    ],
+    links: [{ label: 'itch.io', href: 'https://silvae.itch.io/' }],
+  },
+  {
+    slug: 'nuclear-reactor',
+    name: 'Nuclear Reactor Simulator',
+    role: 'Graphics Lead',
+    year: '2012',
+    headline: 'Operate a reactor console by hand, driven by a real physics model.',
+    tags: ['Kinect', 'Simulation', 'Physics', 'Graphics'],
+    blurb:
+      'Stand at a nuclear reactor console and run the plant with your hands, tracked by a Kinect. A mathematical model of the reactor drives every gauge and readout, so it behaves like the real thing rather than a set of props.',
+    thumb: still(
+      'nuclear-reactor',
+      'A nuclear reactor control panel: analog gauges, four temperature readouts, a SCRAM button, and rod and pump control switches',
+    ),
+    hero: {
+      kind: 'youtube',
+      id: 'uIEPfK537U8',
+      title: 'Nuclear Reactor Simulator using Microsoft Kinect (KReS)',
+    },
+    body: [
+      'A nuclear reactor control room you operate by hand. A Kinect tracks you at the console so you reach out to throw switches, raise and lower the control rods, and hit SCRAM, which puts you inside the room rather than behind a mouse. I was the graphics lead on the project.',
+      'Under the panel is a mathematical model of the reactor: power, temperatures, and steam are computed from the physics rather than faked, so the gauges respond the way a real plant would as you push it.',
+    ],
+    links: [
+      {
+        label: 'Watch on YouTube',
+        href: 'https://www.youtube.com/watch?v=uIEPfK537U8',
+      },
+    ],
+  },
 ]
 
 const bySlug = {}

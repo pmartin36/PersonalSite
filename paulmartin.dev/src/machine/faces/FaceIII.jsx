@@ -9,12 +9,12 @@ import { getProject } from '../../data/projects.js'
 import './FaceIII.css'
 
 // Three reels, each a 3-sided wheel (project | project | blank). Every reel's
-// third face is bare stone; reel 3 is entirely blank, held open for future
-// past projects.
+// third face is bare stone, where the "More projects on GitHub" call-to-action
+// reads.
 const REELS = [
   [getProject('stargazer'), getProject('pong'), null],
   [getProject('the-16-spaces'), getProject('solar-express'), null],
-  [null, null, null],
+  [getProject('jam-games'), getProject('nuclear-reactor'), null],
 ]
 
 // Face III carries two of the lock's moves. Move 5 is Hint 1 (the seam-glyph
