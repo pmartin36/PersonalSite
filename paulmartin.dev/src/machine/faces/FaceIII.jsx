@@ -12,10 +12,15 @@ import './FaceIII.css'
 // third face is bare stone, where the "More projects on GitHub" call-to-action
 // reads.
 const REELS = [
-  [getProject('stargazer'), getProject('pong'), null],
+  [getProject('pong'), getProject('stargazer'), null],
   [getProject('the-16-spaces'), getProject('solar-express'), null],
-  [getProject('jam-games'), getProject('nuclear-reactor'), null],
+  [getProject('nuclear-reactor'), getProject('jam-games'), null],
 ]
+
+// Start each reel on the face that should be showing first. Reels 1 and 3 are
+// stored with their two projects swapped, so they open on index 1 (Stargazer,
+// Jam Games); reel 2 opens on index 0.
+const START_POSITIONS = [1, 0, 1]
 
 // Face III carries two of the lock's moves. Move 5 is Hint 1 (the seam-glyph
 // match); the OTHER Face III move is Hint 2, the colored-character clue: a gold
@@ -213,7 +218,7 @@ function Reel({ faces, reelIndex, position, onSpin, onOpen }) {
 export default function FaceIII() {
   const { play } = useAudio()
   // Accumulating step per reel; the visible face is position mod 3.
-  const [positions, setPositions] = useState([0, 0, 0])
+  const [positions, setPositions] = useState(START_POSITIONS)
   const [modalProject, setModalProject] = useState(null)
 
   function spin(reelIndex, dir = 1) {
