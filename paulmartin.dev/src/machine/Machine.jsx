@@ -26,6 +26,10 @@ const SNAP_MS = 600
 // rubber-band comes from the back-out easing on .machine--intro-spin. Duration
 // mirrors that transition in CSS.
 const INTRO_SPIN_MS = 2000
+// The drum first reaches Face I about here (before the overshoot settles); at
+// this point interaction is unlocked so a scroll or click can cancel the rebound
+// and navigate on, rather than waiting out the full settle.
+const INTRO_REACH_MS = Math.round(INTRO_SPIN_MS * 0.68)
 // The spin only kicks once the scene can animate smoothly (fonts + background
 // decoded, layout settled); on a cold load we hold on Face I until then, capped
 // so a slow asset can never stall the opening.
@@ -101,13 +105,21 @@ function MachineShell() {
   const didIntro = useRef(false)
   const rootRef = useRef(null)
   const currentFaceRef = useRef(currentFace)
-  // True while the opening spin plays; scroll and clicks are ignored until it
-  // lands so nothing fights the animation.
+  // True until the opening spin first reaches Face I; scroll and clicks are
+  // ignored until then so nothing fights the run-up. A ref mirrors introPhase so
+  // rotateTo can cancel the settle without a stale closure.
   const introBusyRef = useRef(!reducedMotion)
+  const introPhaseRef = useRef(reducedMotion ? 'done' : 'start')
 
   const rotateTo = useCallback(
     (index) => {
       if (introBusyRef.current) return
+      // Past the run-up but the opening spin may still be settling its overshoot;
+      // this interaction cancels the rebound and takes over the normal transition.
+      if (introPhaseRef.current !== 'done') {
+        introPhaseRef.current = 'done'
+        setIntroPhase('done')
+      }
       const target = wrapIndex(index)
       const from = currentFaceRef.current
       currentFaceRef.current = target
@@ -155,10 +167,21 @@ function MachineShell() {
       // kicks; then one full turn, the easing overshoots and rubber-bands back.
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
+          introPhaseRef.current = 'spin'
           setIntroPhase('spin')
           setRotationSteps(FACES.length)
           play('grind')
+          // Reached Face I: unlock interaction while the overshoot settles.
           setTimeout(() => {
+            if (introPhaseRef.current !== 'spin') return
+            introPhaseRef.current = 'reached'
+            setIntroPhase('reached')
+            introBusyRef.current = false
+          }, INTRO_REACH_MS)
+          // Settle complete (unless the user already cancelled it).
+          setTimeout(() => {
+            if (introPhaseRef.current === 'done') return
+            introPhaseRef.current = 'done'
             setIntroPhase('done')
             introBusyRef.current = false
             play('snap')
@@ -178,8 +201,8 @@ function MachineShell() {
   const rootClass = [
     'machine',
     reducedMotion ? 'machine--reduced' : '',
-    introPhase === 'spin' ? 'machine--intro-spin' : '',
-    introPhase !== 'done' ? 'machine--intro-busy' : '',
+    introPhase === 'spin' || introPhase === 'reached' ? 'machine--intro-spin' : '',
+    introPhase === 'start' || introPhase === 'spin' ? 'machine--intro-busy' : '',
   ]
     .filter(Boolean)
     .join(' ')
