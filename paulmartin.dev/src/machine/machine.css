@@ -47,7 +47,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--mono, monospace);
+  font-family: var(--display, serif);
   color: var(--m-crevice);
 }
 

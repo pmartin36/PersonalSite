@@ -264,20 +264,24 @@
   justify-content: center;
   padding: 0.12em 0.6em;
   border-radius: 6px;
-  background: #6f5930;
+  /* Match the sunk trays elsewhere (Face IV floor): the same dark-brown stone,
+     a deep top shadow, a warm lit lip, and a dark rim. */
+  background: #4a3620;
   box-shadow:
-    inset 0 3px 6px rgba(0, 0, 0, 0.5),
-    inset 0 1px 2px rgba(0, 0, 0, 0.45),
-    inset 0 -2px 3px rgba(150, 116, 60, 0.25),
-    inset 0 0 0 1.5px rgba(16, 10, 5, 0.5);
+    inset 0 6px 12px rgba(0, 0, 0, 0.55),
+    inset 0 2px 4px rgba(0, 0, 0, 0.45),
+    inset 0 -3px 7px rgba(160, 122, 64, 0.16),
+    inset 0 0 0 2px rgba(20, 12, 6, 0.5);
 }
 
 .face5-clue {
   display: inline-block;
-  font-family: var(--mono, monospace);
+  font-family: var(--display, serif);
   font-size: 1.85rem;
   font-weight: 700;
   line-height: 1;
+  /* Eczar's caps ride high in the line box; nudge down to sit centred in the tray. */
+  transform: translateY(0.07em);
   background: linear-gradient(
     180deg,
     #fbeeb2 0%,
@@ -479,6 +483,7 @@
 }
 
 .face5-celebration__title {
+  font-family: var(--display, serif);
   margin: 0 0 0rem;
   font-size: clamp(1.5rem, 4vw, 2.3rem);
   text-transform: uppercase;

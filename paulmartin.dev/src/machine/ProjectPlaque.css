@@ -7,8 +7,8 @@
   border-radius: 6px;
   background:
     linear-gradient(150deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 34%),
-    linear-gradient(160deg, #241d2e 0%, #15111c 46%, #0c0912 100%);
-  border: 1px solid #080610;
+    linear-gradient(160deg, #1d1d20 0%, #141416 46%, #0a0a0c 100%);
+  border: 1px solid #060607;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.09),
     inset 0 0 0 1px rgba(255, 255, 255, 0.04),
@@ -20,7 +20,7 @@
   aspect-ratio: 16 / 9;
   flex-shrink: 0;
   overflow: hidden;
-  background: #0a0810;
+  background: #0a0a0c;
 }
 
 .plaque__still,
@@ -121,7 +121,7 @@
 }
 
 .plaque__tag {
-  font-family: var(--mono, monospace);
+  font-family: var(--sans, sans-serif);
   font-size: 0.64rem;
   color: #a49b89;
   padding: 0.12rem 0.45rem;
@@ -137,7 +137,7 @@
   padding: 0.2rem 0;
   border: none;
   background: none;
-  font-family: var(--mono, monospace);
+  font-family: var(--sans, sans-serif);
   font-size: 0.78rem;
   color: #e6c778;
   cursor: pointer;

@@ -5,12 +5,14 @@
 
 .face1-name {
   margin: 0;
-  font-family: var(--mono, monospace);
+  font-family: var(--display, serif);
   font-weight: 700;
   font-size: clamp(2.75rem, 8vw, 6.5rem);
   letter-spacing: 0.04em;
   line-height: 1;
   text-align: center;
+  /* Optically centred: the name reads a hair left of true centre, so nudge right. */
+  transform: translateX(12px);
   /* Carved in, top-lit: the stroke fill is only slightly darker than the stone
      so the surface reads through it; shadow gathers at the top inner wall of
      each groove and a lit lip glows along the bottom, the way a real chiselled
@@ -26,7 +28,7 @@
 .face1-actions {
   position: absolute;
   left: 50%;
-  top: 61%;
+  top: 56.5%;
   transform: translateX(-50%);
   display: grid;
   grid-auto-flow: column;
@@ -35,8 +37,8 @@
 }
 
 .face1-action {
-  font-family: var(--mono, monospace);
-  font-size: clamp(0.95rem, 1.7vw, 1.3rem);
+  font-family: var(--display, serif);
+  font-size: clamp(1.16rem, 2.06vw, 1.57rem);
   letter-spacing: 0.09em;
   text-transform: lowercase;
   text-decoration: none;
@@ -61,6 +63,8 @@
 /* The whole word carries no underline; only the tell letter (the move-4 "u")
    does, as a fine engraved mark. */
 .face1-resume__clue.clue--underline {
+  /* The base .clue sets mono; keep resume in the engraving face like contact. */
+  font-family: var(--display, serif);
   text-decoration: none;
   /* Take the action's colour, not the clue's crevice tone, so resume brightens
      on hover exactly like contact. */

@@ -11,6 +11,8 @@
     "assert:machine": "node e2e/assert-machine.mjs"
   },
   "dependencies": {
+    "@fontsource-variable/eczar": "^5.3.0",
+    "@fontsource-variable/figtree": "^5.3.0",
     "@fontsource-variable/hanken-grotesk": "^5.3.0",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "react": "^19.1.0",
