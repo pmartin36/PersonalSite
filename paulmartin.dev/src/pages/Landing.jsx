@@ -173,12 +173,12 @@ export default function Landing() {
               </a>
               <a
                 className="contact-item"
-                href="https://bsky.app/profile/made4me.bsky.social"
+                href="https://bsky.app/profile/paulmartindev.bsky.social"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 <span className="contact-kind">Bluesky</span>
-                <span className="contact-value">@ma<span className="hl">d</span>e4me.bsky.socia<span className="hl">l</span></span>
+                <span className="contact-value">@paulmartin<span className="hl">d</span>ev.bsky.socia<span className="hl">l</span></span>
               </a>
               <a
                 className="contact-item"
