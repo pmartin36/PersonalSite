@@ -87,12 +87,12 @@
   left: calc(50% - var(--face-w) / 2 - 7vw + var(--holder-inset));
   --holder-side-grad: linear-gradient(
     to left,
-    rgba(8, 5, 2, 0.98) 0%,
-    rgba(10, 7, 3, 0.9) 12%,
-    rgba(13, 9, 4, 0.6) 26%,
-    rgba(16, 11, 5, 0.28) 40%,
-    rgba(18, 12, 5, 0.1) 52%,
-    rgba(20, 14, 6, 0) 66%
+    rgba(12, 8, 3, 0.66) 0%,
+    rgba(12, 8, 3, 0.62) 20%,
+    rgba(14, 9, 4, 0.45) 34%,
+    rgba(16, 11, 5, 0.24) 46%,
+    rgba(18, 12, 5, 0.09) 56%,
+    rgba(20, 14, 6, 0) 68%
   );
   --holder-side-shadow: inset 8px 0 14px rgba(250, 242, 219, 0.22);
 }
@@ -101,12 +101,12 @@
   left: calc(50% + var(--face-w) / 2 - var(--holder-inset));
   --holder-side-grad: linear-gradient(
     to right,
-    rgba(8, 5, 2, 0.98) 0%,
-    rgba(10, 7, 3, 0.9) 12%,
-    rgba(13, 9, 4, 0.6) 26%,
-    rgba(16, 11, 5, 0.28) 40%,
-    rgba(18, 12, 5, 0.1) 52%,
-    rgba(20, 14, 6, 0) 66%
+    rgba(12, 8, 3, 0.66) 0%,
+    rgba(12, 8, 3, 0.62) 20%,
+    rgba(14, 9, 4, 0.45) 34%,
+    rgba(16, 11, 5, 0.24) 46%,
+    rgba(18, 12, 5, 0.09) 56%,
+    rgba(20, 14, 6, 0) 68%
   );
   --holder-side-shadow: inset -8px 0 14px rgba(250, 242, 219, 0.22);
 }

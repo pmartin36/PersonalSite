@@ -36,12 +36,13 @@
      carved depth. Only inset shadows: outer shadows bled across the shared 3D
      edge onto the neighbouring face (visible through Face V's raised lid). */
   box-shadow:
-    /* Soft, painterly edge instead of a crisp 2px line: a blurred dark vignette
-       that falls off into the stone (no hard geometric stroke), plus the lit top
-       lip and pooled bottom shadow. */
-    inset 0 0 16px 2px rgba(28, 20, 9, 0.42),
-    inset 0 5px 7px rgba(250, 242, 219, 0.24),
-    inset 0 -16px 28px rgba(28, 20, 9, 0.4);
+    /* The edge recedes into SHADOW (a strong, soft dark falloff) rather than a
+       crisp 2px line - so the fold reads as a dark crease, and the stone's own
+       boundary sits inside that shadow instead of as a bright hard rim. No mask:
+       fading to transparent would let the scene show through the drum. */
+    inset 0 0 11px 2px rgba(58, 32, 10, 0.82),
+    inset 0 6px 8px rgba(250, 242, 219, 0.2),
+    inset 0 -18px 30px rgba(46, 28, 10, 0.42);
 }
 
 .face-surface__content {
