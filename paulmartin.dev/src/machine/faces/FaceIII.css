@@ -18,11 +18,7 @@
   font-size: clamp(1.12rem, 2.45vw, 1.82rem);
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  /* Carved into the stone, top-lit. */
-  color: rgba(52, 38, 18, 0.6);
-  text-shadow:
-    0 -1px 1px rgba(22, 15, 7, 0.5),
-    0 1px 0 rgba(224, 202, 150, 0.5);
+  /* Carved look comes from the shared .machine-carve class on the element. */
 }
 
 .face3-reels {
@@ -154,11 +150,7 @@
   letter-spacing: 0.02em;
   text-transform: uppercase;
   white-space: nowrap;
-  /* Carved, top-lit, like the name and title etchings. */
-  color: rgba(66, 49, 27, 0.55);
-  text-shadow:
-    0 -1px 1px rgba(28, 20, 9, 0.42),
-    0 1px 0 rgba(250, 242, 219, 0.55);
+  /* Carved look comes from the shared .machine-carve class on the element. */
 }
 
 .face3-cta__logo-link {

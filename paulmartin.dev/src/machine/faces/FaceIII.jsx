@@ -118,7 +118,7 @@ const GITHUB_HREF = 'https://github.com/pmartin36'
 function BlankFaceContent({ reelIndex }) {
   return (
     <div className="face3-cta">
-      <span className="face3-cta__word" aria-hidden="true">
+      <span className="face3-cta__word machine-carve" aria-hidden="true">
         {REEL_CTA[reelIndex]}
       </span>
       {reelIndex === 1 && (
@@ -231,7 +231,7 @@ export default function FaceIII() {
   return (
     <FaceSurface aria-label="Face III">
       <div className="face3">
-        <p className="face3-title">Past Projects</p>
+        <p className="face3-title machine-carve">Past Projects</p>
         <div className="face3-reels">
           {REELS.map((faces, i) => (
             <Reel

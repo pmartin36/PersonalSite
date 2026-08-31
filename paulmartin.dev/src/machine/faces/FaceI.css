@@ -11,18 +11,33 @@
   letter-spacing: 0.04em;
   line-height: 1;
   text-align: center;
-  /* Optically centred: the name reads a hair left of true centre, so nudge right. */
-  transform: translateX(12px);
-  /* Carved in, top-lit: the stroke fill is only slightly darker than the stone
-     so the surface reads through it; shadow gathers at the top inner wall of
-     each groove and a lit lip glows along the bottom, the way a real chiselled
-     letter catches light from above. */
-  color: rgba(70, 53, 30, 0.5);
-  text-shadow:
-    0 -2px 2px rgba(28, 20, 9, 0.5),
-    0 -1px 0 rgba(28, 20, 9, 0.35),
-    0 1px 0 rgba(250, 242, 219, 0.6),
-    0 2px 1px rgba(250, 242, 219, 0.3);
+  /* Optically centred to match the SVG carve's translate(12,0). */
+  position: relative;
+  left: 12px;
+  /* The whole visible name is the SVG carve. The <h1> paints NOTHING - it is here
+     for layout and screen readers only. It must carry no text-shadow: a text-shadow
+     on transparent text renders the shadow's full glyph silhouette THROUGH the
+     invisible letter, flooding it (that was the grey washing over the carve). */
+  color: transparent;
+}
+
+/* The carved name: full-face SVG holding the sandstone image clipped to the
+   letters and darkened by subtraction, plus the lip/core/wall bevel layers. Sits
+   above the stone background; no pointer events. */
+.face1-carve {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Carve text. Font-size is set as a presentation attribute in user units (the
+   SVG has a viewBox, so it scales with the face); only family/weight live here. */
+.face1-carve__text {
+  font-family: var(--display, serif);
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .face1-actions {
@@ -46,17 +61,14 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  /* Same carve, quieter than the name. */
-  color: rgba(74, 57, 32, 0.6);
-  text-shadow:
-    0 -1px 0 rgba(247, 238, 214, 0.5),
-    0 1px 1px rgba(30, 22, 10, 0.4);
-  transition: color 0.15s ease;
+  /* Base carve comes from the shared .machine-carve class on the element; hover
+     just deepens it. */
+  transition: color 0.15s ease, text-shadow 0.15s ease;
 }
 
 .face1-action:hover,
 .face1-action:focus-visible {
-  color: rgba(58, 44, 23, 0.9);
+  color: rgba(48, 32, 12, 0.88);
   outline: none;
 }
 

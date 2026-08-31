@@ -6,7 +6,7 @@ import './FaceIV.css'
 
 const EMAIL_HREF = 'mailto:p@ulmartin.me'
 const LINKEDIN_HREF = 'https://www.linkedin.com/in/paul-martin-b8547616/'
-const BLUESKY_HREF = 'https://bsky.app/profile/made4me.bsky.social'
+const BLUESKY_HREF = 'https://bsky.app/profile/paulmartindev.bsky.social'
 
 // The old site's About copy. Both About tiles render this whole block, each
 // showing its half, so the two only read as one when they sit side by side.
@@ -52,7 +52,7 @@ const INITIAL_TILES = [
   null,
   { id: 'email', kind: 'contact', label: 'Email', icon: 'envelope', value: 'p@ulmartin.me', href: EMAIL_HREF },
   { id: 'linkedin', kind: 'contact', label: 'LinkedIn', icon: 'linkedin', value: 'Paul Martin', href: LINKEDIN_HREF },
-  { id: 'bluesky', kind: 'contact', label: 'Bluesky', icon: 'bluesky', value: '@made4me.bsky.social', href: BLUESKY_HREF },
+  { id: 'bluesky', kind: 'contact', label: 'Bluesky', icon: 'bluesky', value: '@paulmartindev.bsky.social', href: BLUESKY_HREF },
 ]
 
 // Stable render order so the DOM never reorders on a slide (only each tile's
@@ -84,6 +84,7 @@ function AboutTile({ half, onClick }) {
       onClick={onClick}
     >
       <span className="face4-about">
+        <span className="face4-about__frame" aria-hidden="true" />
         <span className="face4-about__heading">About Me</span>
         <span className="face4-about__body">{ABOUT_TEXT}</span>
       </span>

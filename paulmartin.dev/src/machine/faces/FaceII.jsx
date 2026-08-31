@@ -180,7 +180,7 @@ export default function FaceII() {
   return (
     <FaceSurface aria-label="Face II">
       <div className="face2">
-        <p className="face2-title">Current Projects</p>
+        <p className="face2-title machine-carve">Current Projects</p>
         <div className="face2-hollow">
           <div className="face2-interior" aria-hidden="true">
             <span className="face2-int face2-int--top" />

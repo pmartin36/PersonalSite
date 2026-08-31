@@ -1,11 +1,20 @@
 .machine {
-  /* Face box, and the pentagon apothem derived from it:
-     (faceHeight / 2) / tan(36deg) ~= 0.688 * faceHeight. The front face is
-     smaller than the viewport so the neighbouring faces tumble into view above
-     and below it, and a rim of the dark drum body shows on every side. */
-  --face-h: 80vh;
-  --face-w: 75vw;
+  /* Face box locked to a fixed 1.82:1 aspect (a standard widescreen ratio) so
+     there is one definite canvas at every window size (art is authored to
+     1.82:1). The largest 1.82:1 box that fits within 75% of the width and 80% of
+     the height; the whole 3D rig scales with it and the jungle fills the
+     leftover margin, so every viewer sees the same composition, only larger or
+     smaller.
+     Pentagon apothem derived from the face: (faceHeight / 2) / tan(36deg) ~=
+     0.688 * faceHeight. The front face is smaller than the viewport so the
+     neighbouring faces tumble into view above and below it, and a rim of the
+     dark drum body shows on every side. */
+  --face-h: min(80vh, 75vw / 1.82);
+  --face-w: calc(var(--face-h) * 1.82);
   --apothem: calc(var(--face-h) * 0.688);
+  /* How far each holder is tucked behind the drum's side edge, so it reads as
+     seated partway into the drum rather than flush against the face. */
+  --holder-inset: 2vw;
   position: relative;
   width: 100%;
   height: 100vh;
@@ -51,26 +60,55 @@
   /* Rounded, domed top (radius = half the width). */
   border-radius: 3.5vw 3.5vw 0 0;
   background-color: var(--m-sandstone);
-  /* Bright over the cap, darkening steadily toward the base. */
+  /* Per-side inside->outside shading on top (dark at the drum edge, faded out by
+     the midpoint) so it also darkens the inner half of the cap; then the cap
+     highlight, which survives at centre where the shading has faded to zero;
+     then the base tone, bright over the cap and darkening toward the floor. */
   background-image:
+    var(--holder-side-grad, linear-gradient(to left, transparent, transparent)),
     radial-gradient(70% 9vw at 50% 3.2vw, rgba(252, 244, 222, 0.85) 0%, rgba(252, 244, 222, 0) 70%),
     linear-gradient(to top, #4f3c20 0%, var(--m-ochre) 16%, var(--m-buff) 42%, var(--m-sandstone) 72%, var(--m-sand-hi) 100%);
+  /* Non-directional lighting shared by both holders: rim outline, bottom AO,
+     outer contact drop. The left/right edge shading is set per side below, so
+     the drum-facing edge is the dark one on each. */
   box-shadow:
+    var(--holder-side-shadow),
     inset 0 0 0 2px rgba(28, 20, 9, 0.45),
-    inset 8px 0 14px rgba(250, 242, 219, 0.22),
-    inset -13px 0 22px rgba(28, 20, 9, 0.4),
     inset 0 -26px 34px rgba(20, 14, 6, 0.45),
     0 0 0 1px rgba(0, 0, 0, 0.5),
     0 16px 34px rgba(0, 0, 0, 0.5);
 }
 
-/* Flush against the drum edge, no gap, no overlap. */
+/* Tucked behind the drum edge by --holder-inset, so the face overlaps and
+   occludes their inner edge. The drum-facing edge (right on the left holder,
+   left on the right holder) gets a hard, dark contact shadow; the outer edge
+   catches the light. */
 .machine__holder--left {
-  left: calc(50% - var(--face-w) / 2 - 7vw);
+  left: calc(50% - var(--face-w) / 2 - 7vw + var(--holder-inset));
+  --holder-side-grad: linear-gradient(
+    to left,
+    rgba(8, 5, 2, 0.98) 0%,
+    rgba(10, 7, 3, 0.9) 12%,
+    rgba(13, 9, 4, 0.6) 26%,
+    rgba(16, 11, 5, 0.28) 40%,
+    rgba(18, 12, 5, 0.1) 52%,
+    rgba(20, 14, 6, 0) 66%
+  );
+  --holder-side-shadow: inset 8px 0 14px rgba(250, 242, 219, 0.22);
 }
 
 .machine__holder--right {
-  left: calc(50% + var(--face-w) / 2);
+  left: calc(50% + var(--face-w) / 2 - var(--holder-inset));
+  --holder-side-grad: linear-gradient(
+    to right,
+    rgba(8, 5, 2, 0.98) 0%,
+    rgba(10, 7, 3, 0.9) 12%,
+    rgba(13, 9, 4, 0.6) 26%,
+    rgba(16, 11, 5, 0.28) 40%,
+    rgba(18, 12, 5, 0.1) 52%,
+    rgba(20, 14, 6, 0) 66%
+  );
+  --holder-side-shadow: inset -8px 0 14px rgba(250, 242, 219, 0.22);
 }
 
 .machine__viewport {
@@ -78,7 +116,10 @@
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  perspective: 1400px;
+  /* Scales with the rig (was a fixed 1400px, which drifted the foreshortening
+     between window sizes). 1.85 keeps the same gentle foreshortening the fixed
+     1400px gave on a maximised 1080p window, so adjacent faces stay readable. */
+  perspective: calc(var(--face-h) * 1.85);
   /* Above the holders, so the drum passes in front of them when a face swings
      into their column. */
   z-index: 2;

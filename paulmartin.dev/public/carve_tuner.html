@@ -1,0 +1,154 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Carve tuner</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Eczar:wght@700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#1e1712; color:#e8e0d0; font-family:system-ui,sans-serif; padding:20px; }
+  .stage { position:relative; width:1100px; max-width:100%; margin:0 auto 20px; border-radius:8px; overflow:hidden; }
+  .stage img { width:100%; display:block; }
+  svg.overlay { position:absolute; inset:0; width:100%; height:100%; }
+  .name { font-family:'Eczar',serif; font-weight:700; }
+  .panel { max-width:1100px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:14px 34px; }
+  .ctrl { display:grid; grid-template-columns:170px 1fr 70px; align-items:center; gap:10px; font-size:13px; }
+  .ctrl input[type=range] { width:100%; }
+  .ctrl input[type=color] { width:100%; height:26px; }
+  .val { font-variant-numeric:tabular-nums; text-align:right; color:#c8b98f; }
+  .out { max-width:1100px; margin:22px auto 0; background:#2a221a; padding:16px; border-radius:8px; font:13px/1.6 ui-monospace,monospace; white-space:pre-wrap; }
+  .swatch { display:inline-block; width:22px; height:22px; border-radius:4px; vertical-align:middle; border:1px solid #0006; margin-left:6px; }
+  h2 { grid-column:1/-1; font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:#9a8c6c; margin-top:6px; }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <img src="/machine/Test_asset_0001_sandstone.png">
+    <svg class="overlay" id="ov" preserveAspectRatio="none">
+      <defs>
+        <filter id="sink" color-interpolation-filters="sRGB">
+          <feComponentTransfer>
+            <feFuncR id="fr" type="linear" slope="1" intercept="-0.33"/>
+            <feFuncG id="fg" type="linear" slope="1" intercept="-0.35"/>
+            <feFuncB id="fb" type="linear" slope="1" intercept="-0.27"/>
+          </feComponentTransfer>
+        </filter>
+
+        <!-- LIP: a band along the bottom edge of every stroke. Take the glyph
+             alpha, shift a copy UP, subtract it (composite "out") = the lower
+             edge band. Optional dark core just above the lit band. -->
+        <filter id="lip" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+          <feOffset id="lipUp" in="SourceAlpha" dx="0" dy="-6" result="up"/>
+          <feComposite in="SourceAlpha" in2="up" operator="out" result="band"/>
+          <feGaussianBlur id="lipBlur" in="band" stdDeviation="0" result="soft"/>
+          <feFlood id="lipFlood" flood-color="#eccb8e" flood-opacity="1" result="col"/>
+          <feComposite in="col" in2="soft" operator="in"/>
+        </filter>
+
+        <!-- CORE shadow: a darker band sitting just above the lit lip (the deepest
+             part of the groove), abrupt. glyph minus a bigger up-shift, minus the
+             lip band, leaves a thin dark line above the lip. -->
+        <filter id="core" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+          <feOffset id="coreUp" in="SourceAlpha" dx="0" dy="-13" result="up2"/>
+          <feComposite in="SourceAlpha" in2="up2" operator="out" result="wide"/>
+          <feOffset id="coreCut" in="SourceAlpha" dx="0" dy="-6" result="cut"/>
+          <feComposite in="wide" in2="cut" operator="out" result="ring"/>
+          <feFlood id="coreFlood" flood-color="#150a02" flood-opacity="0.9" result="col2"/>
+          <feComposite in="col2" in2="ring" operator="in"/>
+        </filter>
+
+        <clipPath id="clip">
+          <text id="tclip" class="name" x="50%" y="50%" text-anchor="middle" dominant-baseline="central">Paul Martin</text>
+        </clipPath>
+      </defs>
+
+      <!-- 1. dark upper wall (offset up, peeks above) -->
+      <text id="twall" class="name" x="50%" y="50%" text-anchor="middle" dominant-baseline="central" fill="rgba(18,11,3,0.9)">Paul Martin</text>
+      <!-- 2. floor: subtracted stone clipped to letters -->
+      <image id="floor" href="/machine/Test_asset_0001_sandstone.png" x="0" y="0" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" clip-path="url(#clip)" filter="url(#sink)"/>
+      <!-- 3. dark core line above the lip -->
+      <text id="tcore" class="name" x="50%" y="50%" text-anchor="middle" dominant-baseline="central" fill="#000" filter="url(#core)">Paul Martin</text>
+      <!-- 4. lit lower lip on every bottom edge -->
+      <text id="tlip" class="name" x="50%" y="50%" text-anchor="middle" dominant-baseline="central" fill="#000" filter="url(#lip)">Paul Martin</text>
+    </svg>
+  </div>
+
+  <div class="panel">
+    <h2>Content</h2>
+    <div class="ctrl"><label>Text</label><input type="text" id="txt" value="Paul Martin" style="width:100%;padding:5px 8px;background:#3a3026;border:1px solid #0006;border-radius:4px;color:#e8e0d0;font-size:14px"><span class="val"></span></div>
+    <div class="ctrl"><label>Font size (px)</label><input type="range" id="rSize" min="40" max="300" step="1" value="135"><span class="val" id="vSize">135</span></div>
+
+    <h2>Base (per-channel subtraction — warmth &amp; darkness)</h2>
+    <div class="ctrl"><label>Red −</label><input type="range" id="rR" min="0" max="0.75" step="0.01" value="0.33"><span class="val" id="vR">0.33</span></div>
+    <div class="ctrl"><label>Green −</label><input type="range" id="rG" min="0" max="0.75" step="0.01" value="0.35"><span class="val" id="vG">0.35</span></div>
+    <div class="ctrl"><label>Blue −</label><input type="range" id="rB" min="0" max="0.75" step="0.01" value="0.27"><span class="val" id="vB">0.27</span></div>
+
+    <h2>Lip (lit edge on every bottom stroke)</h2>
+    <div class="ctrl"><label>Lip width (px)</label><input type="range" id="rLipW" min="1" max="14" step="0.5" value="6"><span class="val" id="vLipW">6</span></div>
+    <div class="ctrl"><label>Softness (0 = sharp)</label><input type="range" id="rLipSoft" min="0" max="5" step="0.1" value="0"><span class="val" id="vLipSoft">0.0</span></div>
+    <div class="ctrl"><label>Gold</label><input type="color" id="cGold" value="#eccb8e"><span class="val" id="vGold">#eccb8e</span></div>
+    <div class="ctrl"><label>Strength</label><input type="range" id="rLipOp" min="0" max="1" step="0.02" value="1"><span class="val" id="vLipOp">1.00</span></div>
+
+    <h2>Core shadow (deep line above the lip)</h2>
+    <div class="ctrl"><label>Enabled</label><input type="range" id="rCoreOp" min="0" max="1" step="0.02" value="0.9"><span class="val" id="vCoreOp">0.90</span></div>
+    <div class="ctrl"><label>Colour</label><input type="color" id="cCore" value="#150a02"><span class="val" id="vCore">#150a02</span></div>
+    <div class="ctrl"><label>Position (px)</label><input type="range" id="rCorePos" min="4" max="22" step="0.5" value="13"><span class="val" id="vCorePos">13</span></div>
+
+    <h2>Wall (upper shadow)</h2>
+    <div class="ctrl"><label>Wall width ↑ (px)</label><input type="range" id="rWo" min="0" max="10" step="0.5" value="4.5"><span class="val" id="vWo">4.5</span></div>
+    <div class="ctrl"><label>Darkness</label><input type="range" id="rWall" min="0" max="1" step="0.02" value="0.9"><span class="val" id="vWall">0.90</span></div>
+  </div>
+
+  <div class="out" id="out"></div>
+
+<script>
+  const $ = id => document.getElementById(id)
+  const STONE = [214, 178, 122]
+  const clamp = v => Math.max(0, Math.min(255, Math.round(v)))
+  const hex = ([r,g,b]) => '#' + [r,g,b].map(v=>clamp(v).toString(16).padStart(2,'0')).join('')
+
+  const TEXTS = ['tclip','twall','tcore','tlip']
+  function update() {
+    const txt=$('txt').value || ' ', size=+$('rSize').value
+    for (const id of TEXTS) { const t=$(id); t.textContent=txt; t.setAttribute('font-size', size) }
+    $('vSize').textContent=size
+
+    const R=+$('rR').value, G=+$('rG').value, B=+$('rB').value
+    const lipW=+$('rLipW').value, lipSoft=+$('rLipSoft').value, gold=$('cGold').value, lipOp=+$('rLipOp').value
+    const coreOp=+$('rCoreOp').value, coreCol=$('cCore').value, corePos=+$('rCorePos').value
+    const Wo=+$('rWo').value, wall=+$('rWall').value
+
+    $('fr').setAttribute('intercept',(-R).toFixed(2)); $('fg').setAttribute('intercept',(-G).toFixed(2)); $('fb').setAttribute('intercept',(-B).toFixed(2))
+
+    $('lipUp').setAttribute('dy', -lipW)
+    $('lipBlur').setAttribute('stdDeviation', lipSoft)
+    $('lipFlood').setAttribute('flood-color', gold); $('lipFlood').setAttribute('flood-opacity', lipOp)
+
+    $('coreUp').setAttribute('dy', -corePos)
+    $('coreCut').setAttribute('dy', -lipW)
+    $('coreFlood').setAttribute('flood-color', coreCol); $('coreFlood').setAttribute('flood-opacity', coreOp)
+
+    $('twall').setAttribute('transform', `translate(0,${-Wo})`)
+    $('twall').setAttribute('fill', `rgba(18,11,3,${wall})`)
+
+    for (const [id,v] of [['vR',R],['vG',G],['vB',B]]) $(id).textContent=v.toFixed(2)
+    $('vLipW').textContent=lipW; $('vLipSoft').textContent=lipSoft.toFixed(1); $('vGold').textContent=gold; $('vLipOp').textContent=lipOp.toFixed(2)
+    $('vCoreOp').textContent=coreOp.toFixed(2); $('vCore').textContent=coreCol; $('vCorePos').textContent=corePos
+    $('vWo').textContent=Wo; $('vWall').textContent=wall.toFixed(2)
+
+    const base=[STONE[0]-R*255,STONE[1]-G*255,STONE[2]-B*255], baseHex=hex(base)
+    $('out').innerHTML =
+`BASE on sample stone ${hex(STONE)}  →  ${baseHex}  <span class="swatch" style="background:${baseHex}"></span>
+
+Paste this back to me (offsets are at font-size ${size}px — em values port to any size):
+  base:  R ${(-R).toFixed(2)}  G ${(-G).toFixed(2)}  B ${(-B).toFixed(2)}
+  lip:   width ${lipW}px (${(lipW/size).toFixed(3)}em)  soft ${lipSoft.toFixed(1)}  gold ${gold}  strength ${lipOp.toFixed(2)}
+  core:  pos ${corePos}px (${(corePos/size).toFixed(3)}em)  colour ${coreCol}  strength ${coreOp.toFixed(2)}
+  wall:  width ${Wo}px (${(Wo/size).toFixed(3)}em)  darkness ${wall.toFixed(2)}`
+  }
+  document.querySelectorAll('input').forEach(el => el.addEventListener('input', update))
+  document.fonts.ready.then(update)
+  update()
+</script>
+</body>
+</html>
