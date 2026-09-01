@@ -83,7 +83,7 @@ export default function FaceI() {
         </text>
         {/* 2. floor: the subtracted stone, clipped to the letters */}
         <image
-          href="/machine/face_attempt_2.png"
+          href="/machine/test_asset_with_leaves2.png"
           x="0"
           y="0"
           width="1820"

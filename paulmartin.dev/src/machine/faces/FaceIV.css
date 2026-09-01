@@ -21,7 +21,7 @@
        over 8px (2x the hard edge). Cleaner than a blurred box-shadow. */
     linear-gradient(to bottom, rgba(30, 18, 7, 0.62) 0, rgba(30, 18, 7, 0.62) 4.6px, rgba(30, 18, 7, 0) 13.8px),
     linear-gradient(rgb(206, 192, 168), rgb(206, 192, 168)),
-    url('/machine/face_attempt_2.png') center / cover no-repeat;
+    url('/machine/test_asset_with_leaves2.png') center / cover no-repeat;
   background-blend-mode: normal, multiply, normal;
   /* The cut edge, matching the text carve rather than a soft fake shadow: a crisp
      dark upper wall dropping into the recess, a lit gold lower lip catching the

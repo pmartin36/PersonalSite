@@ -45,7 +45,7 @@
        2x the hard edge (matching the Face IV tray). */
     linear-gradient(to bottom, rgba(30, 18, 7, 0.62) 0, rgba(30, 18, 7, 0.62) 5.3px, rgba(30, 18, 7, 0) 16px),
     linear-gradient(rgb(206, 192, 168), rgb(206, 192, 168)),
-    url('/machine/face_attempt_2.png') 50% 35% / 114.94% 111.11% no-repeat;
+    url('/machine/test_asset_with_leaves2.png') 50% 35% / 114.94% 111.11% no-repeat;
   background-blend-mode: normal, multiply, normal;
   /* Lit lower lip + a hard rim; the top wall is the background gradient above. */
   box-shadow:
@@ -189,7 +189,7 @@
      lid is inset 6.5% L/R, 3.5% top / 6.5% bottom, so the image is scaled to the
      full face (100/87 = 114.94% wide, 100/90 = 111.11% tall) and positioned to
      line the face's texture origin up with the lid (50% 35%). */
-  background: url('/machine/face_attempt_2.png') 50% 35% / 114.94% 111.11% no-repeat;
+  background: url('/machine/test_asset_with_leaves2.png') 50% 35% / 114.94% 111.11% no-repeat;
 }
 
 /* The chiselled inner side of the slab: a darker, rougher stone with a deep rim,
@@ -201,7 +201,7 @@
      toward the bottom, so it reads as stone in shade, not a flat gradient. */
   background:
     linear-gradient(180deg, rgba(38, 25, 10, 0.34) 0%, rgba(16, 9, 3, 0.6) 100%),
-    url('/machine/face_attempt_2.png') 50% 35% / 114.94% 111.11% no-repeat;
+    url('/machine/test_asset_with_leaves2.png') 50% 35% / 114.94% 111.11% no-repeat;
   /* No border or rim: its bottom edge fades into the chamber below instead of
      cutting a hard seam across the opening. */
   box-shadow: inset 0 6px 16px rgba(0, 0, 0, 0.45);

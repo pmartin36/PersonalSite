@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Face layer debug</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Eczar:wght@400;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#1e1712; color:#e8e0d0; font-family:system-ui,sans-serif; padding:24px; }
+  h1 { font-size:15px; text-transform:uppercase; letter-spacing:.08em; color:#9a8c6c; margin-bottom:16px; }
+  .stage {
+    position:relative; width:1100px; max-width:100%; aspect-ratio:1820/1000;
+    margin:0 auto 20px; border-radius:7px; overflow:hidden; isolation:isolate;
+    background:#c9ab7d;
+  }
+  .stage img { position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .layer-off { display:none !important; }
+  /* resume / contact, carved (matches the app's .machine-carve) */
+  .actions {
+    position:absolute; left:50%; top:56.5%; transform:translateX(-50%);
+    display:grid; grid-auto-flow:column; gap:40px; z-index:5;
+    font-family:'Eczar',serif; font-weight:400;
+  }
+  .act {
+    font-size:22px; letter-spacing:0.09em; text-transform:lowercase;
+    color:rgba(64,44,18,0.66);
+    text-shadow: 0 0.06em 0.01em rgba(250,226,164,0.7), 0 -0.035em 0 rgba(22,13,4,0.42);
+  }
+  .tell { text-decoration:underline; text-decoration-color:rgba(74,57,32,0.85); text-underline-offset:2px; }
+  /* the warm carved-stone edge, painted over everything */
+  .edge {
+    position:absolute; inset:0; pointer-events:none; border-radius:7px;
+    box-shadow:
+      inset 0 0 11px 2px rgba(58, 32, 10, 0.82),
+      inset 0 6px 8px rgba(250, 242, 219, 0.2),
+      inset 0 -18px 30px rgba(46, 28, 10, 0.42);
+  }
+  .carve { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  .carve text { font-family:'Eczar',serif; font-weight:700; letter-spacing:0.04em; }
+
+  .panel { max-width:1100px; margin:0 auto; display:flex; flex-wrap:wrap; gap:18px 34px; align-items:center; }
+  fieldset { border:1px solid #4a3f30; border-radius:8px; padding:10px 16px; }
+  legend { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#9a8c6c; padding:0 6px; }
+  label { display:inline-flex; align-items:center; gap:6px; font-size:14px; margin-right:14px; cursor:pointer; user-select:none; }
+  .out { max-width:1100px; margin:16px auto 0; background:#2a221a; padding:12px 16px; border-radius:8px; font:13px ui-monospace,monospace; color:#c8b98f; }
+</style>
+</head>
+<body>
+  <h1>Face layer debug &mdash; Face 1 with toggleable stone / leaves / vines</h1>
+
+  <div class="stage">
+    <img id="base"   src="/machine/face1.png">
+    <img id="vines"  src="/machine/vines.png">
+    <img id="leaves" src="/machine/just_leaves.png">
+
+    <svg class="carve" id="carve" viewBox="0 0 1820 1000" aria-hidden="true">
+      <defs>
+        <filter id="sink" color-interpolation-filters="sRGB">
+          <feComponentTransfer>
+            <feFuncR type="linear" slope="1" intercept="-0.33"/>
+            <feFuncG type="linear" slope="1" intercept="-0.35"/>
+            <feFuncB type="linear" slope="1" intercept="-0.27"/>
+          </feComponentTransfer>
+        </filter>
+        <filter id="lip" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+          <feOffset in="SourceAlpha" dx="0" dy="-7" result="up"/>
+          <feComposite in="SourceAlpha" in2="up" operator="out" result="band"/>
+          <feGaussianBlur in="band" stdDeviation="1.4" result="soft"/>
+          <feFlood flood-color="#f2c77d" flood-opacity="0.74" result="col"/>
+          <feComposite in="col" in2="soft" operator="in"/>
+        </filter>
+        <filter id="core" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+          <feOffset in="SourceAlpha" dx="0" dy="-15" result="up2"/>
+          <feComposite in="SourceAlpha" in2="up2" operator="out" result="wide"/>
+          <feOffset in="SourceAlpha" dx="0" dy="-7" result="cut"/>
+          <feComposite in="wide" in2="cut" operator="out" result="ring"/>
+          <feFlood flood-color="#150a02" flood-opacity="0.28" result="col2"/>
+          <feComposite in="col2" in2="ring" operator="in"/>
+        </filter>
+        <clipPath id="clip">
+          <text font-size="158" x="910" y="500" transform="translate(18,0)" text-anchor="middle" dominant-baseline="central">Paul Martin</text>
+        </clipPath>
+      </defs>
+      <text font-size="158" x="910" y="500" transform="translate(18,-5.3)" text-anchor="middle" dominant-baseline="central" fill="rgba(18,11,3,0.9)">Paul Martin</text>
+      <image id="carveImg" href="/machine/face1.png" x="0" y="0" width="1820" height="1000" preserveAspectRatio="xMidYMid slice" clip-path="url(#clip)" filter="url(#sink)"/>
+      <text font-size="158" x="910" y="500" transform="translate(18,0)" text-anchor="middle" dominant-baseline="central" fill="#000" filter="url(#core)">Paul Martin</text>
+      <text font-size="158" x="910" y="500" transform="translate(18,0)" text-anchor="middle" dominant-baseline="central" fill="#000" filter="url(#lip)">Paul Martin</text>
+    </svg>
+
+    <div class="actions" id="actions">
+      <span class="act">res<span class="tell">u</span>me</span>
+      <span class="act">contact</span>
+    </div>
+
+    <div class="edge" id="edge"></div>
+  </div>
+
+  <div class="panel">
+    <fieldset>
+      <legend>Stone base</legend>
+      <label><input type="radio" name="base" value="face1.png" checked> Face 1</label>
+      <label><input type="radio" name="base" value="face2.png"> Face 2</label>
+      <label><input type="radio" name="base" value="face3.png"> Face 3</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Overlays</legend>
+      <label><input type="checkbox" id="tLeaves" checked> Leaves</label>
+      <label><input type="checkbox" id="tVines" checked> Vines</label>
+      <label><input type="radio" name="order" value="vl" checked> Vines behind leaves</label>
+      <label><input type="radio" name="order" value="lv"> Leaves behind vines</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Face 1 treatment</legend>
+      <label><input type="checkbox" id="tName" checked> Carved name</label>
+      <label><input type="checkbox" id="tEdge" checked> Warm edge</label>
+    </fieldset>
+  </div>
+
+  <div class="out" id="out"></div>
+
+<script>
+  const $ = id => document.getElementById(id)
+  const stage = document.querySelector('.stage')
+  const base = $('base'), vines = $('vines'), leaves = $('leaves'), carve = $('carve'), edge = $('edge')
+
+  function update() {
+    const baseVal = document.querySelector('input[name=base]:checked').value
+    base.src = '/machine/' + baseVal
+    $('carveImg').setAttribute('href', '/machine/' + baseVal)
+
+    const onLeaves = $('tLeaves').checked, onVines = $('tVines').checked
+    leaves.classList.toggle('layer-off', !onLeaves)
+    vines.classList.toggle('layer-off', !onVines)
+    carve.classList.toggle('layer-off', !$('tName').checked)
+    $('actions').classList.toggle('layer-off', !$('tName').checked)
+    edge.classList.toggle('layer-off', !$('tEdge').checked)
+
+    // stacking: base, then the two overlays in the chosen order, then carve, then edge
+    const order = document.querySelector('input[name=order]:checked').value
+    if (order === 'vl') { stage.appendChild(vines); stage.appendChild(leaves) }
+    else { stage.appendChild(leaves); stage.appendChild(vines) }
+    stage.appendChild(carve); stage.appendChild($('actions')); stage.appendChild(edge)
+
+    const parts = [baseVal.replace('.png','')]
+    if (onVines) parts.push('vines'); if (onLeaves) parts.push('leaves')
+    $('out').textContent = 'base ' + parts.join(' + ') +
+      (($('tName').checked ? '  · name' : '') + ($('tEdge').checked ? '  · edge' : ''))
+  }
+  document.querySelectorAll('input').forEach(el => el.addEventListener('change', update))
+  document.fonts.ready.then(update)
+  update()
+</script>
+</body>
+</html>
