@@ -102,6 +102,13 @@ describe('AudioProvider / useAudio defaults', () => {
     expect(() => ref.current.playTurn(0)).not.toThrow()
     expect(() => ref.current.playIntroSpin()).not.toThrow()
     expect(() => ref.current.playArtifactBurst()).not.toThrow()
+    expect(() => ref.current.playLidOpen()).not.toThrow()
+    expect(() => ref.current.playPowerup()).not.toThrow()
+    expect(() => ref.current.startGears()).not.toThrow()
+    expect(() => ref.current.stopGears()).not.toThrow()
+    expect(() => ref.current.playMuteClick()).not.toThrow()
+    expect(() => ref.current.playDetailOpen()).not.toThrow()
+    expect(() => ref.current.playDetailClose()).not.toThrow()
   })
 })
 
@@ -309,6 +316,34 @@ describe('sample playback (turn / intro / jungle)', () => {
     // Muting stops the loop.
     fireEvent.click(screen.getByRole('button', { name: /mute audio/i }))
     expect(loopNode.stop).toHaveBeenCalled()
+  })
+
+  it('playIntroSpin(offset) starts the sample partway in (reveal mid-spin, not replay)', async () => {
+    const ref = renderArmedUnmuted()
+    await waitFor(() => {
+      ref.current.playIntroSpin(0.5)
+      const src = mock.state.nodes.find(
+        (n) => n.buffer && n.start.mock.calls.some((c) => c[1] === 0.5)
+      )
+      expect(src).toBeTruthy()
+    })
+  })
+
+  it('startGears loops the idle bed and stopGears ends it', async () => {
+    const ref = renderArmedUnmuted()
+    // Wait until samples are decoded (the jungle bed loop is running).
+    await waitFor(() => expect(mock.state.nodes.some((n) => n.loop === true)).toBe(true))
+    const before = mock.state.nodes.filter((n) => n.loop === true).length
+    act(() => ref.current.startGears())
+    let gears
+    await waitFor(() => {
+      const loops = mock.state.nodes.filter((n) => n.loop === true)
+      expect(loops.length).toBe(before + 1)
+      gears = loops[loops.length - 1]
+    })
+    expect(gears.start).toHaveBeenCalled()
+    act(() => ref.current.stopGears())
+    expect(gears.stop).toHaveBeenCalled()
   })
 
   it('ignition cuts the jungle bed and Wake up (exit) resumes it', async () => {

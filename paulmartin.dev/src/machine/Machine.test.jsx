@@ -6,7 +6,9 @@ import Machine, { wrapIndex, stepDelta, faceIndex, FACES } from './Machine.jsx'
 const { mockPlay, mockPlayTurn, mockPlayIntroSpin } = vi.hoisted(() => ({
   mockPlay: vi.fn(),
   mockPlayTurn: vi.fn(),
-  mockPlayIntroSpin: vi.fn(),
+  // Returns a truthy node like the real playIntroSpin, so the shell's play-once
+  // guard trips on the first successful call.
+  mockPlayIntroSpin: vi.fn(() => ({})),
 }))
 
 // The shell's own rotateTo/intro audio routing is under test here, not
@@ -18,6 +20,15 @@ vi.mock('./audio.jsx', () => ({
     play: mockPlay,
     playTurn: mockPlayTurn,
     playIntroSpin: mockPlayIntroSpin,
+    // FaceV (rendered inside Machine) reaches for these; no-ops here since audio
+    // is covered by audio.test.jsx.
+    playArtifactBurst: () => {},
+    playLidOpen: () => {},
+    playPowerup: () => {},
+    startGears: () => {},
+    stopGears: () => {},
+    enterIgnition: () => {},
+    exitIgnition: () => {},
     muted: false,
     armed: true,
     toggleMute: () => {},

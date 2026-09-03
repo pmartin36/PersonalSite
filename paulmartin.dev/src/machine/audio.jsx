@@ -76,6 +76,15 @@ export const SAMPLES = {
   intro_spin: 'machine/sfx/intro_spin.mp3',
   jungle_loop: 'machine/sfx/jungle_loop.mp3',
   artifact_burst: 'machine/sfx/artifact_burst.mp3',
+  // Face V lid-reveal: the stone lid grinding open, the power-up that fires at
+  // 50% open, and the idle watch-gear bed that starts there and loops.
+  lid_open: 'machine/sfx/lid_open.mp3',
+  lid_powerup: 'machine/sfx/lid_powerup.mp3',
+  gears_loop: 'machine/sfx/gears_loop.mp3',
+  // Light UI stone taps: mute click, detail-panel open, detail-panel close.
+  ui_tap: 'machine/sfx/ui_tap.mp3',
+  ui_open: 'machine/sfx/ui_open.mp3',
+  ui_close: 'machine/sfx/ui_close.mp3',
 }
 
 // Sample levels. The jungle bed sits well under the effects.
@@ -85,12 +94,26 @@ const JUNGLE_GAIN = 0.225
 // The artifact detonation (crystal core exploding, ears ringing) on ignition.
 // Left just under unity so it stacks with the jungle bed without clipping.
 const BURST_GAIN = 0.92
+// Lid reveal: the grind is the action (prominent), the power-up sits just under
+// it, and the idle gear bed sits low like the jungle.
+const LID_GAIN = 0.9
+const POWERUP_GAIN = 0.7
+const GEARS_GAIN = 0.3
+// Light UI accents. Kept low so they never dominate.
+const UI_GAIN = 0.5
 
 const DEFAULT_AUDIO = {
   play: () => {},
   playTurn: () => {},
   playIntroSpin: () => {},
   playArtifactBurst: () => {},
+  playLidOpen: () => {},
+  playPowerup: () => {},
+  startGears: () => {},
+  stopGears: () => {},
+  playMuteClick: () => {},
+  playDetailOpen: () => {},
+  playDetailClose: () => {},
   enterIgnition: () => {},
   exitIgnition: () => {},
   muted: true,
@@ -110,7 +133,7 @@ export function AudioProvider({ children }) {
   const [ignited, setIgnited] = useState(false)
   // ctx: the live AudioContext. buffers: decoded sample cache keyed by SAMPLES
   // name. jungle: the running ambience { src, g } or null.
-  const s = useRef({ ctx: null, buffers: {}, jungle: null, master: null }).current
+  const s = useRef({ ctx: null, buffers: {}, jungle: null, gears: null, master: null }).current
   // Mirrors `muted` for async callbacks (sample-load completion) that would
   // otherwise capture a stale value.
   const mutedRef = useRef(muted)
@@ -122,7 +145,7 @@ export function AudioProvider({ children }) {
   // the { src, g } so a loop (the jungle bed) can be stopped later. A missing
   // ctx or buffer is a silent no-op so audio never throws.
   const playBuffer = useCallback(
-    (buffer, { gain = 1, loop = false } = {}) => {
+    (buffer, { gain = 1, loop = false, offset = 0, bypassMaster = false } = {}) => {
       if (!s.ctx || !buffer) return null
       const src = s.ctx.createBufferSource()
       src.buffer = buffer
@@ -130,8 +153,13 @@ export function AudioProvider({ children }) {
       const g = s.ctx.createGain()
       if (g.gain) g.gain.value = gain
       src.connect(g)
-      g.connect(s.master || s.ctx.destination)
-      src.start(s.ctx.currentTime)
+      // bypassMaster routes straight to the destination, so the mute click is still
+      // heard as the master gain ducks everything else to 0.
+      g.connect(bypassMaster ? s.ctx.destination : (s.master || s.ctx.destination))
+      // offset starts playback partway into the sample (used to reveal the intro
+      // spin at the animation's current position when unmuted mid-spin).
+      const off = offset > 0 && offset < (buffer.duration || Infinity) ? offset : 0
+      src.start(s.ctx.currentTime, off)
       return { src, g }
     },
     [s],
@@ -260,9 +288,13 @@ export function AudioProvider({ children }) {
   )
 
   // One-shot opening-spin sample (includes its own reverb/rubber-band tail).
-  const playIntroSpin = useCallback(() => {
-    if (!armed || muted || !s.ctx) return
-    playBuffer(s.buffers.intro_spin, { gain: INTRO_GAIN })
+  // `offset` starts it partway in, to reveal it at the animation's current
+  // position when the user unmutes mid-spin (rather than replaying from the top).
+  // Returns the source node (or null if it couldn't start, e.g. sample not yet
+  // decoded) so the caller can tell whether it actually played.
+  const playIntroSpin = useCallback((offset = 0) => {
+    if (!armed || muted || !s.ctx) return null
+    return playBuffer(s.buffers.intro_spin, { gain: INTRO_GAIN, offset })
   }, [armed, muted, s, playBuffer])
 
   // One-shot artifact detonation on Face V ignition (the crystal core explodes
@@ -272,12 +304,74 @@ export function AudioProvider({ children }) {
     playBuffer(s.buffers.artifact_burst, { gain: BURST_GAIN })
   }, [armed, muted, s, playBuffer])
 
+  // Face V lid reveal. playLidOpen fires when the lid starts hinging (the stone
+  // grind + ascending melody). playPowerup fires at ~50% open. startGears begins
+  // the idle watch-gear loop there; stopGears ends it (lid re-seals / ignition).
+  const playLidOpen = useCallback(() => {
+    if (!armed || muted || !s.ctx) return null
+    return playBuffer(s.buffers.lid_open, { gain: LID_GAIN })
+  }, [armed, muted, s, playBuffer])
+
+  const playPowerup = useCallback(() => {
+    if (!armed || muted || !s.ctx) return null
+    return playBuffer(s.buffers.lid_powerup, { gain: POWERUP_GAIN })
+  }, [armed, muted, s, playBuffer])
+
+  const startGears = useCallback(() => {
+    if (s.gears || !s.ctx) return
+    const buffer = s.buffers.gears_loop
+    if (!buffer) return
+    s.gears = playBuffer(buffer, { gain: GEARS_GAIN, loop: true })
+    // Fade in so the bed swells rather than pops when the device wakes.
+    const g = s.gears && s.gears.g
+    if (g && g.gain && typeof g.gain.setValueAtTime === 'function') {
+      const now = s.ctx.currentTime
+      g.gain.setValueAtTime(0.0001, now)
+      if (typeof g.gain.linearRampToValueAtTime === 'function') {
+        g.gain.linearRampToValueAtTime(GEARS_GAIN, now + 0.5)
+      } else {
+        g.gain.value = GEARS_GAIN
+      }
+    }
+  }, [s, playBuffer])
+
+  const stopGears = useCallback(() => {
+    if (!s.gears) return
+    try {
+      s.gears.src.stop()
+    } catch {
+      // already stopped / not started
+    }
+    s.gears = null
+  }, [s])
+
   // The ignition takeover: the jungle bed cuts out under the detonation (ears
   // ringing, fade to black) and ramps back in on Wake up. The burst one-shot is
   // unaffected, it's already playing. Kept separate from mute: the mute toggle
   // still owns the master gain; this only suppresses the ambience.
   const enterIgnition = useCallback(() => setIgnited(true), [])
   const exitIgnition = useCallback(() => setIgnited(false), [])
+
+  // The mute click: played the instant you mute, routed AROUND the master gain so
+  // it is heard even as the master ducks everything to 0. Only armed is required
+  // (not unmuted) since it is the sound of muting; unmuting stays silent (the
+  // caller only fires this on the mute transition).
+  const playMuteClick = useCallback(() => {
+    if (!armed || !s.ctx) return
+    playBuffer(s.buffers.ui_tap, { gain: UI_GAIN, bypassMaster: true })
+  }, [armed, s, playBuffer])
+
+  // Detail-panel open / close taps. Gated like the other one-shots: silent while
+  // muted, through the master.
+  const playDetailOpen = useCallback(() => {
+    if (!armed || muted || !s.ctx) return
+    playBuffer(s.buffers.ui_open, { gain: UI_GAIN })
+  }, [armed, muted, s, playBuffer])
+
+  const playDetailClose = useCallback(() => {
+    if (!armed || muted || !s.ctx) return
+    playBuffer(s.buffers.ui_close, { gain: UI_GAIN })
+  }, [armed, muted, s, playBuffer])
 
   // Master gain follows mute so EVERYTHING (synths, one-shot samples, and the
   // bed) is silenced the instant you mute, not just newly-triggered sounds. A
@@ -301,7 +395,7 @@ export function AudioProvider({ children }) {
     else stopJungle()
   }, [armed, muted, ignited, startJungle, stopJungle])
 
-  const value = { play, playTurn, playIntroSpin, playArtifactBurst, enterIgnition, exitIgnition, muted, armed, toggleMute, mute, unmute, arm }
+  const value = { play, playTurn, playIntroSpin, playArtifactBurst, playLidOpen, playPowerup, startGears, stopGears, playMuteClick, playDetailOpen, playDetailClose, enterIgnition, exitIgnition, muted, armed, toggleMute, mute, unmute, arm }
 
   return (
     <MachineAudioContext.Provider value={value}>
@@ -315,7 +409,7 @@ export function useAudio() {
 }
 
 export function MuteToggle({ className, ...rest }) {
-  const { muted, arm, toggleMute } = useAudio()
+  const { muted, arm, toggleMute, playMuteClick } = useAudio()
   const label = muted ? 'Unmute audio' : 'Mute audio'
   return (
     <button
@@ -324,6 +418,8 @@ export function MuteToggle({ className, ...rest }) {
       aria-label={label}
       onClick={() => {
         arm()
+        // Click only when muting (muted currently false); unmuting stays silent.
+        if (!muted) playMuteClick()
         toggleMute()
       }}
       {...rest}

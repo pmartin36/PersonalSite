@@ -96,13 +96,18 @@ export function useMachine() {
 }
 
 function MachineShell() {
-  const { playTurn, playIntroSpin } = useAudio()
+  const { playTurn, playIntroSpin, muted, armed } = useAudio()
   const reducedMotion = useRef(prefersReducedMotion()).current
   // The drum opens on Face I (the name) and holds there; under motion the opening
   // spin kicks once the scene is ready and makes one full turn back to Face I.
   const [currentFace, setCurrentFace] = useState(0)
   const [rotationSteps, setRotationSteps] = useState(0)
   const [introPhase, setIntroPhase] = useState(reducedMotion ? 'done' : 'start')
+  // The scene is held hidden until its assets are ready (the carved-name font and
+  // the background), then revealed all at once, so the stone never appears in a
+  // fallback font or before the jungle has decoded. With both preloaded this wait
+  // is imperceptible; it is capped in scenePainted so a slow asset can't stall it.
+  const [revealed, setRevealed] = useState(false)
   const didIntro = useRef(false)
   const rootRef = useRef(null)
   const currentFaceRef = useRef(currentFace)
@@ -117,6 +122,13 @@ function MachineShell() {
   const lockRotation = useCallback((locked) => {
     lockedRef.current = locked
   }, [])
+  // Wall-clock start of the opening spin, and a one-shot guard so its sound plays
+  // at most once. The intro spin is muted by default; the sound is not fired at
+  // spin-start but when audio is first armed-and-unmuted during the spin window,
+  // started at the animation's elapsed offset so it is revealed at its current
+  // position rather than replayed from the top.
+  const spinStartRef = useRef(null)
+  const introSpinAudioRef = useRef(false)
 
   const rotateTo = useCallback(
     (index, { silent = false } = {}) => {
@@ -168,20 +180,24 @@ function MachineShell() {
   useEffect(() => {
     if (didIntro.current) return
     didIntro.current = true
-    if (reducedMotion) return
 
     scenePainted().then(() => {
+      // Assets are ready: reveal the whole face at once, already carved. Under
+      // reduced motion it simply rests on Face I; there is no spin.
+      setRevealed(true)
+      if (reducedMotion) return
       // Two frames so the held Face I has actually painted before the transform
       // kicks; then one full turn, the easing overshoots and rubber-bands back.
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
+          spinStartRef.current =
+            typeof performance !== 'undefined' ? performance.now() : Date.now()
           introPhaseRef.current = 'spin'
           setIntroPhase('spin')
           setRotationSteps(FACES.length)
-          // The opening-spin sample covers the whole run-up, overshoot and
-          // landing (it goes silent after the rubber-band), so it stands in for
-          // both the old intro grind and the settle snap below.
-          playIntroSpin()
+          // The opening-spin sample (whole run-up, overshoot and landing; it goes
+          // silent after the rubber-band) is played by the effect below, offset to
+          // the spin's elapsed time, so unmuting mid-spin reveals it in place.
           // Reached Face I: unlock interaction while the overshoot settles.
           setTimeout(() => {
             if (introPhaseRef.current !== 'spin') return
@@ -206,8 +222,25 @@ function MachineShell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Play the opening-spin sound the first time audio is armed AND unmuted while
+  // the spin is still under way, started at the spin's elapsed offset so it is
+  // revealed at its current position (not replayed). If the user is already
+  // unmuted when the spin kicks, elapsed is ~0 and it plays from the top. Fires
+  // at most once; a no-op under reduced motion (there is no spin).
+  useEffect(() => {
+    if (introSpinAudioRef.current) return
+    if (!armed || muted) return
+    if (introPhase !== 'spin' && introPhase !== 'reached') return
+    if (spinStartRef.current == null) return
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
+    const elapsed = (now - spinStartRef.current) / 1000
+    if (elapsed >= INTRO_SPIN_MS / 1000) return // spin window already closed
+    if (playIntroSpin(elapsed)) introSpinAudioRef.current = true
+  }, [armed, muted, introPhase, playIntroSpin])
+
   const rootClass = [
     'machine',
+    revealed ? '' : 'machine--hidden',
     reducedMotion ? 'machine--reduced' : '',
     introPhase === 'spin' || introPhase === 'reached' ? 'machine--intro-spin' : '',
     introPhase === 'start' || introPhase === 'spin' ? 'machine--intro-busy' : '',

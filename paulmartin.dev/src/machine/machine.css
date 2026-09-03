@@ -18,10 +18,21 @@
   /* Own stacking context so the carved text's multiply blend composites against
      this face's stone only, not through to the 3D scene behind it. */
   isolation: isolate;
-  /* Base layer: the artist's painted sandstone (with moss baked into the image),
-     authored to the 1.82:1 face box so it fills one face with no tiling. A soft
-     top-lit sheen and a grounded lower edge ride over it for carved depth, kept
-     quiet so they never compete with the etching. */
+}
+
+/* The stone panel itself. It carries the sandstone, the sheen/ground gradients and
+   the inset edge shadow, and takes the chipped-silhouette clip (jagged left/right
+   free ends, straight top/bottom folds). It sits UNDER the face content so a moving
+   part - Face V's folding lid - is never trimmed by the edge clip; only the stone
+   is clipped, and the jungle shows through the side notches. */
+.face-surface__base {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  /* The artist's painted sandstone (with moss baked into the image), authored to
+     the 1.82:1 face box so it fills one face with no tiling. A soft top-lit sheen
+     and a grounded lower edge ride over it for carved depth, kept quiet so they
+     never compete with the etching. */
   background-color: var(--m-sandstone);
   background-image:
     radial-gradient(140% 100% at 50% -12%, rgba(233, 216, 176, 0.32) 0%, rgba(189, 160, 103, 0) 46%),
@@ -31,15 +42,11 @@
   background-position: center;
   background-repeat: no-repeat;
   background-blend-mode: soft-light, multiply, normal;
-  /* A crisp dark edge on all four sides so the whole face reads as one bounded
-     stone panel, a lit lip along the top and pooled shadow along the bottom for
-     carved depth. Only inset shadows: outer shadows bled across the shared 3D
-     edge onto the neighbouring face (visible through Face V's raised lid). */
+  /* A dark edge so the whole face reads as one bounded stone panel, a lit lip along
+     the top and pooled shadow along the bottom for carved depth. Only inset
+     shadows: outer shadows bled across the shared 3D edge onto the neighbouring
+     face. The side edges recede into this shadow, which follows the chipped clip. */
   box-shadow:
-    /* The edge recedes into SHADOW (a strong, soft dark falloff) rather than a
-       crisp 2px line - so the fold reads as a dark crease, and the stone's own
-       boundary sits inside that shadow instead of as a bright hard rim. No mask:
-       fading to transparent would let the scene show through the drum. */
     inset 0 0 11px 2px rgba(58, 32, 10, 0.82),
     inset 0 6px 8px rgba(250, 242, 219, 0.2),
     inset 0 -18px 30px rgba(46, 28, 10, 0.42);

@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { getProject } from '../data/projects'
+import { useAudio } from './audio.jsx'
 import ProjectMedia from '../components/ProjectMedia'
 import OrgTag from '../components/OrgTag'
 import './DetailModal.css'
@@ -48,6 +49,21 @@ export default function DetailModal({ project: projectProp, slug, onClose }) {
   const project = projectProp ?? (slug ? getProject(slug) : undefined)
   const panelRef = useRef(null)
   const titleId = 'detail-modal-title'
+  const { playDetailOpen, playDetailClose } = useAudio()
+  const openedRef = useRef(false)
+  // A close that plays the dismiss tap first, then closes (covers X, backdrop, Escape).
+  const handleClose = useCallback(() => {
+    playDetailClose()
+    onClose?.()
+  }, [playDetailClose, onClose])
+
+  // Play the open tap once, when the panel first opens.
+  useEffect(() => {
+    if (project && !openedRef.current) {
+      openedRef.current = true
+      playDetailOpen()
+    }
+  }, [project, playDetailOpen])
 
   useEffect(() => {
     if (!project) return undefined
@@ -59,7 +75,7 @@ export default function DetailModal({ project: projectProp, slug, onClose }) {
 
     function handleKeyDown(event) {
       if (event.key === 'Escape') {
-        onClose?.()
+        handleClose()
         return
       }
       if (event.key !== 'Tab') return
@@ -88,7 +104,7 @@ export default function DetailModal({ project: projectProp, slug, onClose }) {
       document.removeEventListener('keydown', handleKeyDown)
       opener?.focus()
     }
-  }, [project, onClose])
+  }, [project, handleClose])
 
   if (!project) return null
 
@@ -96,7 +112,7 @@ export default function DetailModal({ project: projectProp, slug, onClose }) {
     <div
       className="detail-modal__backdrop"
       data-testid="detail-modal-backdrop"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         ref={panelRef}
@@ -110,7 +126,7 @@ export default function DetailModal({ project: projectProp, slug, onClose }) {
           type="button"
           className="detail-modal__close"
           aria-label="Close"
-          onClick={onClose}
+          onClick={handleClose}
         >
           &times;
         </button>

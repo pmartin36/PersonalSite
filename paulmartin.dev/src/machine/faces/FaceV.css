@@ -2,14 +2,16 @@
    the same stone as the rest of the drum). Only the drop shadow that lifts the
    face off the drum is customised here. */
 .face-surface.face5-surface {
-  box-shadow:
-    inset 0 0 0 2px rgba(28, 20, 9, 0.5),
-    0 0 0 1px rgba(0, 0, 0, 0.55),
-    0 12px 34px rgba(0, 0, 0, 0.5);
-  /* Let the lid fold up off the top edge, but still clip the sides and bottom so
-     it never spills over the drum's edges. */
+  /* Only the drop shadow that lifts the face off the drum. No rectangular rim or
+     hairline: those drew straight along the box edge, cutting across the chipped
+     stone silhouette (the base layer already carries the warm edge shadow). */
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
+  /* Let the lid fold up off the top and spill past the left/right edges as its
+     corners swing forward (they read over the holders/scene and are clipped by the
+     viewport at the window edge). Only the bottom is held at the edge: it is a
+     shared fold, where the drop shadow must not bleed onto the neighbouring face. */
   overflow: visible;
-  clip-path: inset(-100vh 0 0 0);
+  clip-path: inset(-100vh -100vw 0 -100vw);
 }
 
 .face5-slab {

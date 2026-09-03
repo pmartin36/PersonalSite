@@ -1,7 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import '@fontsource-variable/eczar'
 import '@fontsource-variable/figtree'
 import '@fontsource-variable/jetbrains-mono'
 import Machine from './machine/Machine.jsx'

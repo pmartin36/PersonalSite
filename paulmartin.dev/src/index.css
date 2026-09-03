@@ -1,3 +1,15 @@
+/* Eczar (the carved-name font) served from a stable path so index.html can preload
+   it. Declared here rather than via the Fontsource package import so the preload
+   and the @font-face reference the same file, and the stone can paint already
+   carved. Latin only (the content is latin); variable weight 400-800. */
+@font-face {
+  font-family: 'Eczar Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400 800;
+  src: url('/fonts/eczar-latin-var.woff2') format('woff2-variations');
+}
+
 :root {
   /* Galaxy, dark only: deep-space indigo base, off-white stars, and a blue/violet/pink nebula
      accent range aligned to the maze's own wake spectrum. */

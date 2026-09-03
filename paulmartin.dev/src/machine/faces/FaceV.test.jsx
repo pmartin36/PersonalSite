@@ -9,6 +9,10 @@ import { DIRECTION_GLYPH } from '../Clue.jsx'
 vi.mock('../audio.jsx', () => ({
   useAudio: () => ({
     playArtifactBurst: () => {},
+    playLidOpen: () => {},
+    playPowerup: () => {},
+    startGears: () => {},
+    stopGears: () => {},
     enterIgnition: () => {},
     exitIgnition: () => {},
     muted: false,

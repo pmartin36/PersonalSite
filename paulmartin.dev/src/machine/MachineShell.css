@@ -24,6 +24,17 @@
   background-image: url('/machine/ruins-bg.jpeg');
   background-size: cover;
   background-position: center;
+  /* Held hidden until the font and background are ready, then faded in whole (see
+     .machine--hidden). The fade is brief; with both assets preloaded the hidden
+     state usually lasts a frame or two. */
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+/* Pre-reveal: the scene is laid out (so the opening spin can prime) but not shown,
+   so nothing paints in a fallback font or before the jungle has decoded. */
+.machine--hidden {
+  opacity: 0;
 }
 
 /* Ambient light over the whole scene: brighter up top, pooling into shadow at

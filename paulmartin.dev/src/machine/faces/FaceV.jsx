@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import FaceSurface from '../FaceSurface.jsx'
 import Clue, { DIRECTION_GLYPH } from '../Clue.jsx'
@@ -55,7 +55,7 @@ function Device({ onIgnite }) {
 function Celebration() {
   return (
     <div className="face5-celebration">
-      <h2 className="face5-celebration__title">A bright flash</h2>
+      <h2 className="face5-celebration__title">What was that?!</h2>
       <p className="face5-celebration__lede">You've been knocked unconscious.</p>
       <p className="face5-celebration__body">
         If you've enjoyed this little puzzle portfolio, shoot me a message.
@@ -136,8 +136,21 @@ function Ignition({ origin, onWake, waking }) {
   )
 }
 
+// The lid hinges open over 1.5s (FaceV.css); the power-up and idle gears kick in
+// at the halfway point.
+const LID_OPEN_MS = 1500
+const POWERUP_AT_MS = LID_OPEN_MS / 2
+
 export default function FaceV() {
-  const { playArtifactBurst, enterIgnition, exitIgnition } = useAudio()
+  const {
+    playArtifactBurst,
+    playLidOpen,
+    playPowerup,
+    startGears,
+    stopGears,
+    enterIgnition,
+    exitIgnition,
+  } = useAudio()
   const { rotateTo, lockRotation } = useMachine()
   const [progress, setProgress] = useState(0)
   // 'sealed' -> lid closed, entering the code. 'open' -> lid hinged up, drive
@@ -149,6 +162,9 @@ export default function FaceV() {
   const [igniting, setIgniting] = useState(false)
   const [waking, setWaking] = useState(false)
   const originRef = useRef({ x: 0, y: 0 })
+  // Pending "50% open" trigger for the power-up + idle gears, so it can be
+  // cancelled if the drive is taken before the lid finishes opening.
+  const lidTimerRef = useRef(null)
 
   function press(direction) {
     if (stage !== 'sealed' || igniting) return
@@ -159,11 +175,24 @@ export default function FaceV() {
       if (next === SEQUENCE.length) {
         setStage('open')
         lockRotation(true)
+        // The lid grinds open (stone-on-stone + ascending melody). At 50% open the
+        // power-up fires and the idle watch-gears start and loop.
+        playLidOpen()
+        lidTimerRef.current = window.setTimeout(() => {
+          playPowerup()
+          startGears()
+        }, POWERUP_AT_MS)
       }
     } else {
       setProgress(0)
     }
   }
+
+  // Clean up the pending trigger and stop the gear loop if FaceV unmounts.
+  useEffect(() => () => {
+    clearTimeout(lidTimerRef.current)
+    stopGears()
+  }, [stopGears])
 
   function ignite(event) {
     const rect = event.currentTarget.getBoundingClientRect()
@@ -172,9 +201,11 @@ export default function FaceV() {
       y: rect.top + rect.height / 2,
     }
     setIgniting(true)
-    // The crystal detonates and the jungle bed cuts out under it (ears ringing,
-    // fade to black). enterIgnition silences the ambience; the burst one-shot
-    // still rings because it is already playing.
+    // The crystal detonates: cancel any pending lid trigger, kill the idle gears,
+    // and cut the jungle bed under it (ears ringing, fade to black). enterIgnition
+    // silences the ambience; the burst one-shot still rings (already playing).
+    clearTimeout(lidTimerRef.current)
+    stopGears()
     playArtifactBurst()
     enterIgnition()
     // Once the flash has whited out the screen, reset the box behind it: reseal
