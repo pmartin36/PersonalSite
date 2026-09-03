@@ -137,7 +137,7 @@ function Ignition({ origin, onWake, waking }) {
 }
 
 export default function FaceV() {
-  const { play } = useAudio()
+  const { playArtifactBurst, enterIgnition, exitIgnition } = useAudio()
   const { rotateTo, lockRotation } = useMachine()
   const [progress, setProgress] = useState(0)
   // 'sealed' -> lid closed, entering the code. 'open' -> lid hinged up, drive
@@ -156,16 +156,12 @@ export default function FaceV() {
     if (direction === expected) {
       const next = progress + 1
       setProgress(next)
-      play('shake')
-      play('thunk')
       if (next === SEQUENCE.length) {
         setStage('open')
         lockRotation(true)
-        play('seam')
       }
     } else {
       setProgress(0)
-      play('deadThunk')
     }
   }
 
@@ -176,21 +172,28 @@ export default function FaceV() {
       y: rect.top + rect.height / 2,
     }
     setIgniting(true)
-    play('seam')
+    // The crystal detonates and the jungle bed cuts out under it (ears ringing,
+    // fade to black). enterIgnition silences the ambience; the burst one-shot
+    // still rings because it is already playing.
+    playArtifactBurst()
+    enterIgnition()
     // Once the flash has whited out the screen, reset the box behind it: reseal
     // the lid and turn the drum back to Face I, both hidden under the overlay.
+    // The reset turn is silent (not user-initiated) so no thunk leaks through.
     // Wake up then just lifts the overlay onto an already-reset box.
     window.setTimeout(() => {
       lockRotation(false)
-      rotateTo(faceIndex('I'))
+      rotateTo(faceIndex('I'), { silent: true })
       setStage('sealed')
       setProgress(0)
     }, 400)
   }
 
   function wake() {
-    // Fade the black overlay off to reveal the drum, then unmount it.
+    // Fade the black overlay off to reveal the drum, then unmount it, and ramp
+    // the jungle bed back in.
     setWaking(true)
+    exitIgnition()
     window.setTimeout(() => {
       setIgniting(false)
       setWaking(false)

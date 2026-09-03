@@ -18,9 +18,6 @@ import './MachineShell.css'
 export const FACES = ['I', 'II', 'III', 'IV', 'V']
 const FACE_COMPONENTS = [FaceI, FaceII, FaceIII, FaceIV, FaceV]
 
-// Mirrors MachineShell.css's .machine__drum transition-duration, so the
-// on-settle snap fires when the tumble transform has actually finished.
-const SNAP_MS = 600
 // Opening spin: the drum holds on Face I, then makes one full turn (through II,
 // III, IV, V and back to I) in a single continuous overshoot-and-settle. The
 // rubber-band comes from the back-out easing on .machine--intro-spin. Duration
@@ -99,14 +96,13 @@ export function useMachine() {
 }
 
 function MachineShell() {
-  const { play } = useAudio()
+  const { playTurn, playIntroSpin } = useAudio()
   const reducedMotion = useRef(prefersReducedMotion()).current
   // The drum opens on Face I (the name) and holds there; under motion the opening
   // spin kicks once the scene is ready and makes one full turn back to Face I.
   const [currentFace, setCurrentFace] = useState(0)
   const [rotationSteps, setRotationSteps] = useState(0)
   const [introPhase, setIntroPhase] = useState(reducedMotion ? 'done' : 'start')
-  const snapTimer = useRef(null)
   const didIntro = useRef(false)
   const rootRef = useRef(null)
   const currentFaceRef = useRef(currentFace)
@@ -123,7 +119,7 @@ function MachineShell() {
   }, [])
 
   const rotateTo = useCallback(
-    (index) => {
+    (index, { silent = false } = {}) => {
       if (introBusyRef.current || lockedRef.current) return
       // Past the run-up but the opening spin may still be settling its overshoot;
       // this interaction cancels the rebound and takes over the normal transition.
@@ -141,13 +137,14 @@ function MachineShell() {
       // StrictMode, doubling the drum's rotation.
       setRotationSteps((s) => s + stepDelta(from, target))
       setCurrentFace(target)
-      clearTimeout(snapTimer.current)
-      snapTimer.current = setTimeout(
-        () => play('snap'),
-        reducedMotion ? 0 : SNAP_MS,
-      )
+      // The turn sample for the destination face carries its own slide + landing
+      // thunk + note. Its slide builds over ~0.5s and the thunk lands at ~0.53s,
+      // so it plays from the START of the tumble: the grind rides the 0.6s CSS
+      // turn and the thunk lands right as the face settles. A silent turn (a
+      // non-user reset, e.g. after the Face V ignition) makes no sound.
+      if (!silent) playTurn(target)
     },
-    [play, reducedMotion],
+    [playTurn],
   )
 
   useEffect(() => {
@@ -181,7 +178,10 @@ function MachineShell() {
           introPhaseRef.current = 'spin'
           setIntroPhase('spin')
           setRotationSteps(FACES.length)
-          play('grind')
+          // The opening-spin sample covers the whole run-up, overshoot and
+          // landing (it goes silent after the rubber-band), so it stands in for
+          // both the old intro grind and the settle snap below.
+          playIntroSpin()
           // Reached Face I: unlock interaction while the overshoot settles.
           setTimeout(() => {
             if (introPhaseRef.current !== 'spin') return
@@ -195,7 +195,6 @@ function MachineShell() {
             introPhaseRef.current = 'done'
             setIntroPhase('done')
             introBusyRef.current = false
-            play('snap')
           }, INTRO_SPIN_MS)
         })
       })
@@ -206,8 +205,6 @@ function MachineShell() {
     // state and is harmless once run.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  useEffect(() => () => clearTimeout(snapTimer.current), [])
 
   const rootClass = [
     'machine',

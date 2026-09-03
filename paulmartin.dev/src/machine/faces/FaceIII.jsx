@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import FaceSurface from '../FaceSurface.jsx'
 import DetailModal from '../DetailModal.jsx'
 import ProjectPlaque from '../ProjectPlaque.jsx'
-import { useAudio } from '../audio.jsx'
 import { directionLetter } from '../Clue.jsx'
 import { MOVES } from '../model.js'
 import { getProject } from '../../data/projects.js'
@@ -216,7 +215,6 @@ function Reel({ faces, reelIndex, position, onSpin, onOpen }) {
 }
 
 export default function FaceIII() {
-  const { play } = useAudio()
   // Accumulating step per reel; the visible face is position mod 3.
   const [positions, setPositions] = useState(START_POSITIONS)
   const [modalProject, setModalProject] = useState(null)
@@ -225,7 +223,6 @@ export default function FaceIII() {
     setPositions((current) =>
       current.map((p, i) => (i === reelIndex ? p + dir : p)),
     )
-    play('grind')
   }
 
   return (

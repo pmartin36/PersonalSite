@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import FaceSurface from '../FaceSurface.jsx'
 import Clue from '../Clue.jsx'
-import { useAudio } from '../audio.jsx'
 import './FaceIV.css'
 
 const EMAIL_HREF = 'mailto:p@ulmartin.me'
@@ -150,7 +149,6 @@ function ContactTile({ tile, adjacentToGap, onSlide }) {
 }
 
 export default function FaceIV() {
-  const { play } = useAudio()
   const [tiles, setTiles] = useState(INITIAL_TILES)
   const gapIndex = tiles.indexOf(null)
 
@@ -162,7 +160,6 @@ export default function FaceIV() {
       next[cellIndex] = null
       return next
     })
-    play('grind')
   }
 
   return (

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, waitFor, act } from '@testing-library/react'
 import { AudioProvider, useAudio, MuteToggle, SOUNDS } from './audio.jsx'
 
 function makeSpyNode(state) {
@@ -7,6 +7,13 @@ function makeSpyNode(state) {
   node.connect = vi.fn(() => node)
   node.start = vi.fn()
   node.stop = vi.fn()
+  node.gain = {
+    value: 1,
+    setValueAtTime: vi.fn(),
+    exponentialRampToValueAtTime: vi.fn(),
+    linearRampToValueAtTime: vi.fn(),
+    setTargetAtTime: vi.fn(),
+  }
   state.nodes.push(node)
   return node
 }
@@ -34,6 +41,9 @@ function installMockAudioContext() {
     createBuffer() {
       return { getChannelData: () => new Float32Array(1) }
     }
+    decodeAudioData() {
+      return Promise.resolve({ sampleRate: 44100, duration: 1 })
+    }
   }
   const ctor = vi.fn(function (...args) {
     return new MockAudioContext(...args)
@@ -56,12 +66,17 @@ function Probe({ captureRef }) {
 
 let mock
 
+// Default: sample loading fails fast (fetch rejects) so the synth-focused tests
+// below never touch the network and never create sample nodes. The sample-
+// playback suite installs its own resolving fetch.
 beforeEach(() => {
   mock = installMockAudioContext()
+  vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('no network in test'))))
 })
 
 afterEach(() => {
   cleanup()
+  vi.unstubAllGlobals()
   delete window.AudioContext
   delete window.webkitAudioContext
 })
@@ -84,6 +99,9 @@ describe('AudioProvider / useAudio defaults', () => {
     expect(screen.getByTestId('muted').textContent).toBe('true')
     expect(screen.getByTestId('armed').textContent).toBe('false')
     expect(() => ref.current.play('snap')).not.toThrow()
+    expect(() => ref.current.playTurn(0)).not.toThrow()
+    expect(() => ref.current.playIntroSpin()).not.toThrow()
+    expect(() => ref.current.playArtifactBurst()).not.toThrow()
   })
 })
 
@@ -124,8 +142,10 @@ describe('play() guard', () => {
       </AudioProvider>
     )
     fireEvent(window, new Event('pointerdown'))
+    // arm() creates the master gain node; play() while muted must add nothing more.
+    const afterArm = mock.state.nodes.length
     ref.current.play('snap')
-    expect(mock.state.nodes.length).toBe(0)
+    expect(mock.state.nodes.length).toBe(afterArm)
   })
 
   it('is a no-op while unarmed, even when unmuted', () => {
@@ -150,10 +170,32 @@ describe('play() guard', () => {
     )
     fireEvent(window, new Event('pointerdown'))
     fireEvent.click(screen.getByRole('button', { name: /unmute audio/i }))
+    // Measure only the nodes play() creates (past the master gain from arm()).
+    const before = mock.state.nodes.length
     ref.current.play('snap')
-    expect(mock.state.nodes.length).toBeGreaterThan(0)
-    expect(mock.state.nodes[0].connect).toHaveBeenCalled()
-    expect(mock.state.nodes[0].start).toHaveBeenCalled()
+    const created = mock.state.nodes.slice(before)
+    expect(created.length).toBeGreaterThan(0)
+    expect(created[0].connect).toHaveBeenCalled()
+    expect(created[0].start).toHaveBeenCalled()
+  })
+
+  it('routes through a master gain and drops it to 0 on mute (silences everything in-flight)', () => {
+    const ref = { current: null }
+    render(
+      <AudioProvider>
+        <Probe captureRef={ref} />
+        <MuteToggle />
+      </AudioProvider>
+    )
+    fireEvent(window, new Event('pointerdown'))
+    // arm() creates the master gain first; it's the first node.
+    const master = mock.state.nodes[0]
+    // Toggle unmute then mute via the button so React flushes the gain effect.
+    const btn = screen.getByRole('button', { name: /audio/i })
+    fireEvent.click(btn) // unmute
+    fireEvent.click(btn) // mute
+    const last = master.gain.setTargetAtTime.mock.calls.at(-1)
+    expect(last && last[0]).toBe(0)
   })
 
   it('throws for an unregistered sound name', () => {
@@ -173,6 +215,141 @@ describe('SOUNDS registry', () => {
     expect(Object.keys(SOUNDS).sort()).toEqual(
       ['deadThunk', 'flip', 'grind', 'seam', 'shake', 'snap', 'thunk'].sort()
     )
+  })
+})
+
+describe('sample playback (turn / intro / jungle)', () => {
+  // A resolving fetch so arm() can decode the mp3s into buffers. The mock
+  // AudioContext's decodeAudioData resolves synchronously-ish, so buffers land
+  // shortly after arming; waitFor bridges the microtasks.
+  beforeEach(() => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve({ arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)) }))
+    )
+  })
+
+  function renderArmedUnmuted() {
+    const ref = { current: null }
+    render(
+      <AudioProvider>
+        <Probe captureRef={ref} />
+        <MuteToggle />
+      </AudioProvider>
+    )
+    // One toggle click both arms the context and unmutes.
+    fireEvent.click(screen.getByRole('button', { name: /unmute audio/i }))
+    return ref
+  }
+
+  it('playTurn(n) plays the decoded turn sample through a buffer source once loaded', async () => {
+    const ref = renderArmedUnmuted()
+    await waitFor(() => {
+      ref.current.playTurn(0)
+      const source = mock.state.nodes.find((n) => n.buffer)
+      expect(source).toBeTruthy()
+      expect(source.start).toHaveBeenCalled()
+    })
+  })
+
+  it('playArtifactBurst plays the decoded burst sample through a buffer source once loaded', async () => {
+    const ref = renderArmedUnmuted()
+    await waitFor(() => {
+      ref.current.playArtifactBurst()
+      const source = mock.state.nodes.find((n) => n.buffer)
+      expect(source).toBeTruthy()
+      expect(source.start).toHaveBeenCalled()
+    })
+  })
+
+  it('playTurn / playIntroSpin / playArtifactBurst are no-ops while muted', async () => {
+    const ref = { current: null }
+    render(
+      <AudioProvider>
+        <Probe captureRef={ref} />
+      </AudioProvider>
+    )
+    // Arm without unmuting: still muted.
+    fireEvent(window, new Event('pointerdown'))
+    // Let any sample loading settle.
+    await waitFor(() => expect(mock.state.instances.length).toBe(1))
+    const before = mock.state.nodes.length
+    ref.current.playTurn(2)
+    ref.current.playIntroSpin()
+    ref.current.playArtifactBurst()
+    expect(mock.state.nodes.length).toBe(before)
+  })
+
+  it('playTurn ignores an out-of-range face index', async () => {
+    const ref = renderArmedUnmuted()
+    // Wait until samples are loaded (a valid turn would produce a source).
+    await waitFor(() => {
+      ref.current.playTurn(0)
+      expect(mock.state.nodes.find((n) => n.buffer)).toBeTruthy()
+    })
+    const before = mock.state.nodes.length
+    ref.current.playTurn(9)
+    ref.current.playTurn(-1)
+    expect(mock.state.nodes.length).toBe(before)
+  })
+
+  it('the jungle bed starts looping once armed and unmuted, and stops on mute', async () => {
+    render(
+      <AudioProvider>
+        <MuteToggle />
+      </AudioProvider>
+    )
+    fireEvent.click(screen.getByRole('button', { name: /unmute audio/i }))
+    let loopNode
+    await waitFor(() => {
+      loopNode = mock.state.nodes.find((n) => n.loop === true)
+      expect(loopNode).toBeTruthy()
+    })
+    expect(loopNode.start).toHaveBeenCalled()
+    // Muting stops the loop.
+    fireEvent.click(screen.getByRole('button', { name: /mute audio/i }))
+    expect(loopNode.stop).toHaveBeenCalled()
+  })
+
+  it('ignition cuts the jungle bed and Wake up (exit) resumes it', async () => {
+    const ref = renderArmedUnmuted()
+    let loopNode
+    await waitFor(() => {
+      loopNode = mock.state.nodes.find((n) => n.loop === true)
+      expect(loopNode).toBeTruthy()
+    })
+    // The crystal detonates: the bed cuts out under it.
+    act(() => ref.current.enterIgnition())
+    expect(loopNode.stop).toHaveBeenCalled()
+    // Wake up: a fresh loop node starts (the old one is spent).
+    act(() => ref.current.exitIgnition())
+    await waitFor(() => {
+      const running = mock.state.nodes.filter(
+        (n) => n.loop === true && !n.stop.mock.calls.length
+      )
+      expect(running.length).toBe(1)
+    })
+  })
+
+  it('does not double-start the jungle bed across re-mute/unmute churn', async () => {
+    render(
+      <AudioProvider>
+        <MuteToggle />
+      </AudioProvider>
+    )
+    fireEvent.click(screen.getByRole('button', { name: /unmute audio/i }))
+    await waitFor(() => {
+      expect(mock.state.nodes.filter((n) => n.loop === true).length).toBe(1)
+    })
+    // Mute then unmute: at most one live loop node should be running at a time.
+    fireEvent.click(screen.getByRole('button', { name: /mute audio/i }))
+    fireEvent.click(screen.getByRole('button', { name: /unmute audio/i }))
+    await waitFor(() => {
+      const running = mock.state.nodes.filter(
+        (n) => n.loop === true && !n.stop.mock.calls.length
+      )
+      expect(running.length).toBe(1)
+    })
   })
 })
 

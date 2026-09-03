@@ -1,16 +1,23 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, cleanup, fireEvent } from '@testing-library/react'
+import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import Machine, { wrapIndex, stepDelta, faceIndex, FACES } from './Machine.jsx'
 
-const { mockPlay } = vi.hoisted(() => ({ mockPlay: vi.fn() }))
+const { mockPlay, mockPlayTurn, mockPlayIntroSpin } = vi.hoisted(() => ({
+  mockPlay: vi.fn(),
+  mockPlayTurn: vi.fn(),
+  mockPlayIntroSpin: vi.fn(),
+}))
 
 // The shell's own rotateTo/intro audio routing is under test here, not
-// AudioProvider's arming/synthesis (covered by audio.test.jsx), so audio.jsx
-// is replaced with a bare play() spy.
+// AudioProvider's arming/synthesis + sample loading (covered by audio.test.jsx),
+// so audio.jsx is replaced with bare spies for each trigger point.
 vi.mock('./audio.jsx', () => ({
   AudioProvider: ({ children }) => children,
   useAudio: () => ({
     play: mockPlay,
+    playTurn: mockPlayTurn,
+    playIntroSpin: mockPlayIntroSpin,
     muted: false,
     armed: true,
     toggleMute: () => {},
@@ -20,6 +27,16 @@ vi.mock('./audio.jsx', () => ({
   }),
   MuteToggle: () => null,
 }))
+
+// Faces reach for react-router (DetailModal renders <Link>), so mount the shell
+// inside a router context.
+function renderMachine() {
+  return render(
+    <MemoryRouter>
+      <Machine />
+    </MemoryRouter>,
+  )
+}
 
 function mockMatchMedia(matches) {
   window.matchMedia = vi.fn().mockImplementation((query) => ({
@@ -32,6 +49,8 @@ function mockMatchMedia(matches) {
 
 beforeEach(() => {
   mockPlay.mockClear()
+  mockPlayTurn.mockClear()
+  mockPlayIntroSpin.mockClear()
 })
 
 afterEach(() => {
@@ -85,9 +104,15 @@ describe('Machine shell — mount', () => {
     ).toBe(true)
   })
 
-  it('plays the intro thunk once on mount and never the snap', () => {
-    render(<Machine />)
-    expect(mockPlay).toHaveBeenCalledWith('thunk')
+  it('plays the one-shot intro-spin sample once under motion, never a turn', async () => {
+    mockMatchMedia(false)
+    renderMachine()
+    await waitFor(() => {
+      expect(mockPlayIntroSpin).toHaveBeenCalledTimes(1)
+    })
+    // The intro-spin sample covers the whole run-up + landing, so no per-face
+    // turn sound fires for the opening spin.
+    expect(mockPlayTurn).not.toHaveBeenCalled()
     expect(mockPlay).not.toHaveBeenCalledWith('snap')
   })
 })
@@ -106,16 +131,23 @@ describe('Machine shell — rotateTo via wayfinding pips', () => {
     ).toBe(true)
   })
 
-  it('every rotateTo settle fires the snap exactly once, not the thunk', () => {
-    const { container } = render(<Machine />)
+  it('every rotateTo settle fires the destination-face turn sample, not the old snap', () => {
+    // Reduced motion: no opening spin, so rotateTo is free from mount and the
+    // settle timer fires immediately (no intro fake-timer plumbing needed).
+    mockMatchMedia(true)
+    const { container } = renderMachine()
     mockPlay.mockClear()
-    const pips = container.querySelectorAll('.machine__pip')
-    expect(pips.length).toBe(5)
+    mockPlayTurn.mockClear()
+    const pips = container.querySelectorAll('.face-pip')
+    // Five faces, each rendering the five-pip wayfinding nav.
+    expect(pips.length).toBe(FACES.length * FACES.length)
     vi.useFakeTimers()
+    // Face I's fourth pip targets drum index 3 (Face IV).
     fireEvent.click(pips[3])
     vi.advanceTimersByTime(1000)
-    expect(mockPlay).toHaveBeenCalledTimes(1)
-    expect(mockPlay).toHaveBeenCalledWith('snap')
+    expect(mockPlayTurn).toHaveBeenCalledTimes(1)
+    expect(mockPlayTurn).toHaveBeenCalledWith(3)
+    expect(mockPlay).not.toHaveBeenCalledWith('snap')
   })
 })
 

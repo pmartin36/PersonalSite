@@ -66,9 +66,6 @@ describe('FaceII cards — flip state machine', () => {
       fireEvent.click(corners[corners.length - 1])
       expect(card.getAttribute('data-flipped')).toBe('false')
     })
-
-    expect(mockPlay).toHaveBeenCalledTimes(currentProjects.length * 2)
-    expect(mockPlay.mock.calls.every(([name]) => name === 'flip')).toBe(true)
   })
 
   it('flipping a card does not open its detail modal', () => {

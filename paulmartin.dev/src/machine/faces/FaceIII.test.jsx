@@ -67,9 +67,6 @@ describe('FaceIII reels — spin advances and wraps, independently', () => {
       others.forEach((r, i) => {
         expect(r.getAttribute('data-position')).toBe(otherStartPositions[i])
       })
-
-      expect(mockPlay).toHaveBeenCalledTimes(3)
-      expect(mockPlay.mock.calls.every(([name]) => name === 'grind')).toBe(true)
     })
   })
 })

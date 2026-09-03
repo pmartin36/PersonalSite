@@ -1,17 +1,16 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { render, cleanup, fireEvent } from '@testing-library/react'
 import FaceV from './FaceV.jsx'
 import { SEQUENCE, moveByOrder } from '../model.js'
 import { DIRECTION_GLYPH } from '../Clue.jsx'
 
-const { mockPlay } = vi.hoisted(() => ({ mockPlay: vi.fn() }))
-
-// FaceV's own lock/reveal logic is under test here, not audio arming or
-// synthesis (covered by audio.test.jsx), so audio.jsx is replaced with a bare
-// play() spy, matching the sibling face pattern.
+// FaceV's own lock/reveal logic is under test here, not audio (covered by
+// audio.test.jsx), so audio.jsx is replaced with inert no-ops.
 vi.mock('../audio.jsx', () => ({
   useAudio: () => ({
-    play: mockPlay,
+    playArtifactBurst: () => {},
+    enterIgnition: () => {},
+    exitIgnition: () => {},
     muted: false,
     armed: true,
     toggleMute: () => {},
@@ -22,10 +21,6 @@ vi.mock('../audio.jsx', () => ({
 }))
 
 const FACE_V_MOVE = moveByOrder(1)
-
-beforeEach(() => {
-  mockPlay.mockClear()
-})
 
 afterEach(() => {
   cleanup()
@@ -98,34 +93,6 @@ describe('FaceV sequence lock', () => {
     expect(lockWrapper(container).getAttribute('data-solved')).toBe('true')
     pressArrow(container, SEQUENCE[0])
     expect(lockWrapper(container).getAttribute('data-solved')).toBe('true')
-  })
-})
-
-describe('FaceV lock audio', () => {
-  it('plays shake and thunk on a correct advance', () => {
-    const { container } = render(<FaceV />)
-    pressArrow(container, SEQUENCE[0])
-    expect(mockPlay).toHaveBeenCalledWith('shake')
-    expect(mockPlay).toHaveBeenCalledWith('thunk')
-    expect(mockPlay).not.toHaveBeenCalledWith('deadThunk')
-  })
-
-  it('plays deadThunk, not shake, on a wrong press', () => {
-    const { container } = render(<FaceV />)
-    const wrongFirst = Object.keys(DIRECTION_GLYPH).find((d) => d !== SEQUENCE[0])
-    pressArrow(container, wrongFirst)
-    expect(mockPlay).toHaveBeenCalledWith('deadThunk')
-    expect(mockPlay).not.toHaveBeenCalledWith('shake')
-  })
-
-  it('plays seam in addition to shake and thunk on the completing press', () => {
-    const { container } = render(<FaceV />)
-    SEQUENCE.slice(0, -1).forEach((direction) => pressArrow(container, direction))
-    mockPlay.mockClear()
-    pressArrow(container, SEQUENCE[SEQUENCE.length - 1])
-    expect(mockPlay).toHaveBeenCalledWith('shake')
-    expect(mockPlay).toHaveBeenCalledWith('thunk')
-    expect(mockPlay).toHaveBeenCalledWith('seam')
   })
 })
 

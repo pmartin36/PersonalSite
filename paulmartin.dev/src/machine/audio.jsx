@@ -12,7 +12,10 @@ import {
 // Every synth builds short WebAudio nodes, connects toward `ctx.destination`,
 // and schedules its own start/stop. This is the sole place sound is
 // synthesized; callers always go through `play(name)`.
-function tone(ctx, startTime, { freq = 440, duration = 0.12, type = 'sine', gain = 0.2 } = {}) {
+// Every source connects to `dest` (the provider's master gain) rather than
+// straight to ctx.destination, so muting the master silences even a sound that
+// is already mid-playback. `dest` falls back to ctx.destination for safety.
+function tone(ctx, startTime, { freq = 440, duration = 0.12, type = 'sine', gain = 0.2 } = {}, dest) {
   const osc = ctx.createOscillator()
   const env = ctx.createGain()
   osc.type = type
@@ -22,13 +25,13 @@ function tone(ctx, startTime, { freq = 440, duration = 0.12, type = 'sine', gain
     env.gain.exponentialRampToValueAtTime(0.0001, startTime + duration)
   }
   osc.connect(env)
-  env.connect(ctx.destination)
+  env.connect(dest || ctx.destination)
   osc.start(startTime)
   osc.stop(startTime + duration)
   return osc
 }
 
-function noiseBurst(ctx, startTime, { duration = 0.15, gain = 0.25 } = {}) {
+function noiseBurst(ctx, startTime, { duration = 0.15, gain = 0.25 } = {}, dest) {
   const sampleRate = ctx.sampleRate || 44100
   const length = Math.max(1, Math.floor(sampleRate * duration))
   const buffer = ctx.createBuffer(1, length, sampleRate)
@@ -44,24 +47,52 @@ function noiseBurst(ctx, startTime, { duration = 0.15, gain = 0.25 } = {}) {
     env.gain.exponentialRampToValueAtTime(0.0001, startTime + duration)
   }
   source.connect(env)
-  env.connect(ctx.destination)
+  env.connect(dest || ctx.destination)
   source.start(startTime)
   source.stop(startTime + duration)
   return source
 }
 
 export const SOUNDS = {
-  snap: (ctx, startTime) => tone(ctx, startTime, { freq: 880, duration: 0.08, type: 'square', gain: 0.15 }),
-  thunk: (ctx, startTime) => noiseBurst(ctx, startTime, { duration: 0.18, gain: 0.3 }),
-  shake: (ctx, startTime) => noiseBurst(ctx, startTime, { duration: 0.25, gain: 0.2 }),
-  grind: (ctx, startTime) => noiseBurst(ctx, startTime, { duration: 0.4, gain: 0.18 }),
-  flip: (ctx, startTime) => tone(ctx, startTime, { freq: 660, duration: 0.1, type: 'triangle', gain: 0.18 }),
-  deadThunk: (ctx, startTime) => noiseBurst(ctx, startTime, { duration: 0.2, gain: 0.35 }),
-  seam: (ctx, startTime) => tone(ctx, startTime, { freq: 220, duration: 0.35, type: 'sine', gain: 0.22 }),
+  snap: (ctx, startTime, dest) => tone(ctx, startTime, { freq: 880, duration: 0.08, type: 'square', gain: 0.15 }, dest),
+  thunk: (ctx, startTime, dest) => noiseBurst(ctx, startTime, { duration: 0.18, gain: 0.3 }, dest),
+  shake: (ctx, startTime, dest) => noiseBurst(ctx, startTime, { duration: 0.25, gain: 0.2 }, dest),
+  grind: (ctx, startTime, dest) => noiseBurst(ctx, startTime, { duration: 0.4, gain: 0.18 }, dest),
+  flip: (ctx, startTime, dest) => tone(ctx, startTime, { freq: 660, duration: 0.1, type: 'triangle', gain: 0.18 }, dest),
+  deadThunk: (ctx, startTime, dest) => noiseBurst(ctx, startTime, { duration: 0.2, gain: 0.35 }, dest),
+  seam: (ctx, startTime, dest) => tone(ctx, startTime, { freq: 220, duration: 0.35, type: 'sine', gain: 0.22 }, dest),
 }
+
+// Pre-rendered mp3 samples fetched + decoded once on arm(), keyed by name.
+// Paths are relative to the Vite base URL so they resolve in dev and under a
+// deployed subpath alike. turn_face{n} is the drum landing sound for the face
+// at drum index n-1 (Face I -> turn_face1).
+export const SAMPLES = {
+  turn_face1: 'machine/sfx/turn_face1.mp3',
+  turn_face2: 'machine/sfx/turn_face2.mp3',
+  turn_face3: 'machine/sfx/turn_face3.mp3',
+  turn_face4: 'machine/sfx/turn_face4.mp3',
+  turn_face5: 'machine/sfx/turn_face5.mp3',
+  intro_spin: 'machine/sfx/intro_spin.mp3',
+  jungle_loop: 'machine/sfx/jungle_loop.mp3',
+  artifact_burst: 'machine/sfx/artifact_burst.mp3',
+}
+
+// Sample levels. The jungle bed sits well under the effects.
+const TURN_GAIN = 0.9
+const INTRO_GAIN = 0.9
+const JUNGLE_GAIN = 0.225
+// The artifact detonation (crystal core exploding, ears ringing) on ignition.
+// Left just under unity so it stacks with the jungle bed without clipping.
+const BURST_GAIN = 0.92
 
 const DEFAULT_AUDIO = {
   play: () => {},
+  playTurn: () => {},
+  playIntroSpin: () => {},
+  playArtifactBurst: () => {},
+  enterIgnition: () => {},
+  exitIgnition: () => {},
   muted: true,
   armed: false,
   toggleMute: () => {},
@@ -75,7 +106,92 @@ const MachineAudioContext = createContext(DEFAULT_AUDIO)
 export function AudioProvider({ children }) {
   const [muted, setMuted] = useState(true)
   const [armed, setArmed] = useState(false)
-  const s = useRef({ ctx: null }).current
+  // The Face V ignition takeover: while true the jungle bed is suppressed.
+  const [ignited, setIgnited] = useState(false)
+  // ctx: the live AudioContext. buffers: decoded sample cache keyed by SAMPLES
+  // name. jungle: the running ambience { src, g } or null.
+  const s = useRef({ ctx: null, buffers: {}, jungle: null, master: null }).current
+  // Mirrors `muted` for async callbacks (sample-load completion) that would
+  // otherwise capture a stale value.
+  const mutedRef = useRef(muted)
+  useEffect(() => {
+    mutedRef.current = muted
+  }, [muted])
+
+  // Route a decoded buffer through its own GainNode to the destination. Returns
+  // the { src, g } so a loop (the jungle bed) can be stopped later. A missing
+  // ctx or buffer is a silent no-op so audio never throws.
+  const playBuffer = useCallback(
+    (buffer, { gain = 1, loop = false } = {}) => {
+      if (!s.ctx || !buffer) return null
+      const src = s.ctx.createBufferSource()
+      src.buffer = buffer
+      src.loop = loop
+      const g = s.ctx.createGain()
+      if (g.gain) g.gain.value = gain
+      src.connect(g)
+      g.connect(s.master || s.ctx.destination)
+      src.start(s.ctx.currentTime)
+      return { src, g }
+    },
+    [s],
+  )
+
+  const startJungle = useCallback(() => {
+    if (s.jungle || !s.ctx) return
+    const buffer = s.buffers.jungle_loop
+    if (!buffer) return
+    s.jungle = playBuffer(buffer, { gain: JUNGLE_GAIN, loop: true })
+    // Ramp in so a resume after the ignition (Wake up) swells back rather than
+    // popping in at full level.
+    const g = s.jungle && s.jungle.g
+    if (g && g.gain && typeof g.gain.setValueAtTime === 'function') {
+      const now = s.ctx.currentTime
+      g.gain.setValueAtTime(0.0001, now)
+      if (typeof g.gain.linearRampToValueAtTime === 'function') {
+        g.gain.linearRampToValueAtTime(JUNGLE_GAIN, now + 0.9)
+      } else {
+        g.gain.value = JUNGLE_GAIN
+      }
+    }
+  }, [s, playBuffer])
+
+  const stopJungle = useCallback(() => {
+    if (!s.jungle) return
+    try {
+      s.jungle.src.stop()
+    } catch {
+      // already stopped / not started
+    }
+    s.jungle = null
+  }, [s])
+
+  // Fetch + decode every sample once. decodeAudioData and fetch don't exist in
+  // jsdom, so this bails cleanly there; any per-file failure is swallowed so a
+  // missing asset never breaks the app. Once the jungle bed decodes it starts
+  // itself if audio is already live and unmuted.
+  const loadSamples = useCallback(
+    (ctx) => {
+      if (typeof fetch !== 'function' || typeof ctx.decodeAudioData !== 'function') {
+        return
+      }
+      const base = (import.meta.env && import.meta.env.BASE_URL) || '/'
+      Object.entries(SAMPLES).forEach(([name, path]) => {
+        // Promise.resolve().then wraps the fetch so even a synchronous throw
+        // (e.g. an invalid URL) turns into a caught rejection.
+        Promise.resolve()
+          .then(() => fetch(`${base}${path}`))
+          .then((res) => res.arrayBuffer())
+          .then((data) => ctx.decodeAudioData(data))
+          .then((buffer) => {
+            s.buffers[name] = buffer
+            if (name === 'jungle_loop' && !mutedRef.current) startJungle()
+          })
+          .catch(() => {})
+      })
+    },
+    [s, startJungle],
+  )
 
   const arm = useCallback(() => {
     if (s.ctx) return
@@ -85,9 +201,16 @@ export function AudioProvider({ children }) {
     if (!AC) return
     const ctx = new AC()
     ctx.resume()
+    // Master gain: everything routes through it, so muting drops all output to 0
+    // instantly, including sounds already playing. Starts matching current mute.
+    const master = ctx.createGain()
+    if (master.gain) master.gain.value = mutedRef.current ? 0 : 1
+    if (master.connect) master.connect(ctx.destination)
     s.ctx = ctx
+    s.master = master
     setArmed(true)
-  }, [s])
+    loadSamples(ctx)
+  }, [s, loadSamples])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -118,12 +241,67 @@ export function AudioProvider({ children }) {
         throw new Error(`play: unknown sound "${name}"`)
       }
       if (!armed || muted || !s.ctx) return
-      synth(s.ctx, s.ctx.currentTime)
+      synth(s.ctx, s.ctx.currentTime, s.master)
     },
     [armed, muted, s]
   )
 
-  const value = { play, muted, armed, toggleMute, mute, unmute, arm }
+  // Play the pre-rendered landing sound for the drum face at `faceIndex`
+  // (0-based; Face I -> turn_face1). Gated like play(): silent until armed and
+  // unmuted, and a no-op if the sample hasn't decoded yet.
+  const playTurn = useCallback(
+    (faceIndex) => {
+      if (!armed || muted || !s.ctx) return
+      const n = Number(faceIndex)
+      if (!Number.isInteger(n) || n < 0 || n > 4) return
+      playBuffer(s.buffers[`turn_face${n + 1}`], { gain: TURN_GAIN })
+    },
+    [armed, muted, s, playBuffer]
+  )
+
+  // One-shot opening-spin sample (includes its own reverb/rubber-band tail).
+  const playIntroSpin = useCallback(() => {
+    if (!armed || muted || !s.ctx) return
+    playBuffer(s.buffers.intro_spin, { gain: INTRO_GAIN })
+  }, [armed, muted, s, playBuffer])
+
+  // One-shot artifact detonation on Face V ignition (the crystal core explodes
+  // and the ears ring). Gated like the other one-shots.
+  const playArtifactBurst = useCallback(() => {
+    if (!armed || muted || !s.ctx) return
+    playBuffer(s.buffers.artifact_burst, { gain: BURST_GAIN })
+  }, [armed, muted, s, playBuffer])
+
+  // The ignition takeover: the jungle bed cuts out under the detonation (ears
+  // ringing, fade to black) and ramps back in on Wake up. The burst one-shot is
+  // unaffected, it's already playing. Kept separate from mute: the mute toggle
+  // still owns the master gain; this only suppresses the ambience.
+  const enterIgnition = useCallback(() => setIgnited(true), [])
+  const exitIgnition = useCallback(() => setIgnited(false), [])
+
+  // Master gain follows mute so EVERYTHING (synths, one-shot samples, and the
+  // bed) is silenced the instant you mute, not just newly-triggered sounds. A
+  // short ramp avoids a click.
+  useEffect(() => {
+    if (!s.master || !s.master.gain) return
+    const target = muted ? 0 : 1
+    const now = s.ctx ? s.ctx.currentTime : 0
+    if (typeof s.master.gain.setTargetAtTime === 'function') {
+      s.master.gain.setTargetAtTime(target, now, 0.015)
+    } else {
+      s.master.gain.value = target
+    }
+  }, [muted, s])
+
+  // The jungle bed loops whenever audio is live, unmuted, and not in the
+  // ignition takeover; muting or igniting stops it, and clearing either resumes
+  // it (with startJungle's fade-in). startJungle guards against a double-start.
+  useEffect(() => {
+    if (armed && !muted && !ignited) startJungle()
+    else stopJungle()
+  }, [armed, muted, ignited, startJungle, stopJungle])
+
+  const value = { play, playTurn, playIntroSpin, playArtifactBurst, enterIgnition, exitIgnition, muted, armed, toggleMute, mute, unmute, arm }
 
   return (
     <MachineAudioContext.Provider value={value}>

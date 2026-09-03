@@ -4,7 +4,6 @@ import Still from '../../components/Still.jsx'
 import OrgTag from '../../components/OrgTag.jsx'
 import Clue from '../Clue.jsx'
 import DetailModal from '../DetailModal.jsx'
-import { useAudio } from '../audio.jsx'
 import { currentProjects } from '../../data/projects.js'
 import './FaceII.css'
 
@@ -47,7 +46,6 @@ function ClueBack({ index }) {
 // top or bottom quarter turns it about the spindle to its back, which carries
 // this card's slice of the clue. Both faces stay mounted.
 function Card({ project, index, onOpen }) {
-  const { play } = useAudio()
   // Accumulated turn about the spindle, in degrees. Clicking the top quarter
   // adds +180 (top edge back and over); the bottom quarter adds -180. It keeps
   // turning the way you push it, so flipping back does not reverse.
@@ -58,7 +56,6 @@ function Card({ project, index, onOpen }) {
   function flip(dir) {
     setTilt(0)
     setRotation((r) => r + dir * 180)
-    play('flip')
   }
 
   function handleMove(event) {

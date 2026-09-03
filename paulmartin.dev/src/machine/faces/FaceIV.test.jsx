@@ -114,19 +114,6 @@ describe('FaceIV slide legality', () => {
   })
 })
 
-describe('FaceIV slide audio', () => {
-  it('plays audio once on a legal slide and not at all on an illegal click', () => {
-    const { container } = render(<FaceIV />)
-
-    fireEvent.click(within(cellAt(container, 0)).getByRole('button', { name: /about/i }))
-    expect(mockPlay).not.toHaveBeenCalled()
-
-    fireEvent.click(within(cellAt(container, 1)).getByRole('button', { name: /about/i }))
-    expect(mockPlay).toHaveBeenCalledTimes(1)
-    expect(mockPlay).toHaveBeenCalledWith('grind')
-  })
-})
-
 describe('FaceIV contact tiles', () => {
   it('links to the expected Email, LinkedIn, and GitHub URLs', () => {
     const { container } = render(<FaceIV />)
