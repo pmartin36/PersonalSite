@@ -88,7 +88,7 @@ export const SAMPLES = {
 }
 
 // Sample levels. The jungle bed sits well under the effects.
-const TURN_GAIN = 0.9
+const TURN_GAIN = 0.7
 const INTRO_GAIN = 0.9
 const JUNGLE_GAIN = 0.225
 // The artifact detonation (crystal core exploding, ears ringing) on ignition.
@@ -100,7 +100,7 @@ const LID_GAIN = 0.9
 const POWERUP_GAIN = 0.7
 const GEARS_GAIN = 0.3
 // Light UI accents. Kept low so they never dominate.
-const UI_GAIN = 0.5
+const UI_GAIN = 0.4
 
 const DEFAULT_AUDIO = {
   play: () => {},

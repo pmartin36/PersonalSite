@@ -1,15 +1,14 @@
 /* Keeps the shared sandstone texture across the whole face (the sealed slate is
-   the same stone as the rest of the drum). Only the drop shadow that lifts the
-   face off the drum is customised here. */
+   the same stone as the rest of the drum). */
 .face-surface.face5-surface {
-  /* Only the drop shadow that lifts the face off the drum. No rectangular rim or
-     hairline: those drew straight along the box edge, cutting across the chipped
-     stone silhouette (the base layer already carries the warm edge shadow). */
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
+  /* No box-shadow: the outer drop shadow spilled out past the opened left/right
+     edges as a band across the bottom. The base layer already carries the warm
+     edge shadow, so none is needed here. */
+  box-shadow: none;
   /* Let the lid fold up off the top and spill past the left/right edges as its
      corners swing forward (they read over the holders/scene and are clipped by the
-     viewport at the window edge). Only the bottom is held at the edge: it is a
-     shared fold, where the drop shadow must not bleed onto the neighbouring face. */
+     viewport at the window edge). Only the bottom is held at the edge, a shared
+     fold. */
   overflow: visible;
   clip-path: inset(-100vh -100vw 0 -100vw);
 }
