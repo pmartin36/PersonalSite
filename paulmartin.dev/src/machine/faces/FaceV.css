@@ -13,22 +13,32 @@
   clip-path: inset(-100vh -100vw 0 -100vw);
 }
 
+/* The slab fills the whole face (no content padding), so the lid and chamber, which
+   are positioned in percentages, line up with the recess baked into the face art at
+   every viewport aspect (the default padding used rem/vh and drifted with size). */
+.face5-surface .face-surface__content {
+  padding: 0;
+}
+
 .face5-slab {
   position: relative;
   width: 100%;
   height: 100%;
-  perspective: 1400px;
+  /* Scales with the rig (was a fixed 1400px, which drifted the lid's foreshortening
+     and alignment as the face resized). */
+  perspective: calc(var(--face-h) * 2.6);
 }
 
 /* The sunk chamber under the lid: a mid dark-brown floor well below the surface,
    in shadow, like the Face IV tray. Revealed as the lid hinges up. */
 .face5-chamber {
   position: absolute;
-  /* Matches the lid/seam bounds, so the chamber is revealed within the frame. */
-  top: 3.5%;
-  right: 6.5%;
-  bottom: 6.5%;
-  left: 6.5%;
+  /* Matches the recess baked into the face art (and the lid), so the chamber is
+     revealed within the frame at every aspect. */
+  top: 9.3%;
+  right: 9.5%;
+  bottom: 11.9%;
+  left: 9.5%;
   z-index: 1;
   display: flex;
   align-items: center;
@@ -37,22 +47,9 @@
      through the seam while the box is sealed. */
   visibility: hidden;
   border-radius: 5px;
-  /* The sunk floor is the same stone dropped into deep, rich brown shadow: the
-     aligned texture (same window as the lid) MULTIPLIED by a warm brown, which
-     darkens while keeping the warmth and the cracks - the rich brown of the
-     carved name, not a grey wash. */
-  background:
-    /* The top cut wall: a hard dark band, then a linear falloff to the floor over
-       2x the hard edge (matching the Face IV tray). */
-    linear-gradient(to bottom, rgba(30, 18, 7, 0.62) 0, rgba(30, 18, 7, 0.62) 5.3px, rgba(30, 18, 7, 0) 16px),
-    linear-gradient(rgb(206, 192, 168), rgb(206, 192, 168)),
-    url('/machine/test_asset_with_leaves2.png') 50% 35% / 114.94% 111.11% no-repeat;
-  background-blend-mode: normal, multiply, normal;
-  /* Lit lower lip + a hard rim; the top wall is the background gradient above. */
-  box-shadow:
-    inset 0 -5px 0 rgba(250, 224, 156, 0.5),
-    inset 0 -15px 15px rgba(184, 134, 68, 0.16),
-    inset 0 0 0 1.5px rgba(34, 20, 8, 0.42);
+  /* The sunk chamber floor and its cut walls are baked into the face art
+     (stone_face_05), revealed as the lid hinges up; this is just the frame that
+     holds the drive. */
 }
 
 /* A deeper rectangular pocket just big enough for the drive, cut into the floor:
@@ -150,13 +147,16 @@
    the seam, the pad, and the clue, and lifts up and back to reveal the chamber. */
 .face5-lid {
   position: absolute;
-  /* The lid is the seamed panel itself: it sits on the seam line and hinges
-     from its top edge, so the fold lines up with the seam. */
-  top: 3.5%;
-  right: 6.5%;
-  bottom: 6.5%;
-  left: 6.5%;
+  /* The cap fills the recess baked into the face art (matched to it at every
+     aspect) and hinges from its top edge. */
+  top: 9.3%;
+  right: 9.5%;
+  bottom: 11.9%;
+  left: 9.5%;
   z-index: 2;
+  /* The slab's stone thickness: front flush, underside and the four edge walls run
+     back into the recess by this much, closing the box. */
+  --lid-depth: 18px;
   transform-style: preserve-3d;
   transform-origin: top center;
   transition: transform 1.5s cubic-bezier(0.45, 0.05, 0.25, 1);
@@ -184,28 +184,60 @@
   box-shadow:
     inset 0 1px 2px rgba(0, 0, 0, 0.4),
     0 1px 0 rgba(210, 190, 140, 0.22);
-  /* Opaque, but showing the SAME full-face sandstone windowed to the lid's
-     position, so it stays registered with the frame around it (continuous when
-     sealed) while remaining a solid slab that's visible as it hinges open. The
-     lid is inset 6.5% L/R, 3.5% top / 6.5% bottom, so the image is scaled to the
-     full face (100/87 = 114.94% wide, 100/90 = 111.11% tall) and positioned to
-     line the face's texture origin up with the lid (50% 35%). */
-  background: url('/machine/test_asset_with_leaves2.png') 50% 35% / 114.94% 111.11% no-repeat;
+  /* The cap slab that seals the chamber - its own painted art. */
+  background: url('/machine/cap_face_05.png') center / cover no-repeat;
 }
 
 /* The chiselled inner side of the slab: a darker, rougher stone with a deep rim,
    so once the lid hinges up it reads clearly as a raised lid, not a faint seam. */
 .face5-lid__underside {
-  transform: rotateX(180deg);
+  /* The far face of the slab, a slab-depth behind the front. */
+  transform: translateZ(calc(-1 * var(--lid-depth))) rotateX(180deg);
   /* Same sandstone as the slab, but darker - it is the shadowed inner face. The
      aligned texture (matching the front) under a warm dark wash that deepens
      toward the bottom, so it reads as stone in shade, not a flat gradient. */
   background:
-    linear-gradient(180deg, rgba(38, 25, 10, 0.34) 0%, rgba(16, 9, 3, 0.6) 100%),
-    url('/machine/test_asset_with_leaves2.png') 50% 35% / 114.94% 111.11% no-repeat;
+    linear-gradient(180deg, rgba(74, 47, 22, 0.4) 0%, rgba(48, 30, 13, 0.62) 100%),
+    url('/machine/cap_face_05.png') center / cover no-repeat;
   /* No border or rim: its bottom edge fades into the chamber below instead of
-     cutting a hard seam across the opening. */
-  box-shadow: inset 0 6px 16px rgba(0, 0, 0, 0.45);
+     cutting a hard seam across the opening. A warm brown shade, not black. */
+  box-shadow: inset 0 6px 16px rgba(30, 18, 8, 0.5);
+}
+
+/* The slab's four stone edge walls, folding back from the flush front into the
+   recess so the lid is a closed box. Cut sandstone, a touch shadowed. */
+.face5-lid__edge {
+  position: absolute;
+  background: linear-gradient(180deg, #c2a05e 0%, #7c5c30 100%);
+  backface-visibility: hidden;
+}
+
+.face5-lid__edge--bottom {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: var(--lid-depth);
+  transform-origin: bottom center;
+  transform: rotateX(90deg);
+  backface-visibility: visible;
+}
+
+.face5-lid__edge--left {
+  top: 0;
+  left: 0;
+  width: var(--lid-depth);
+  height: 100%;
+  transform-origin: left center;
+  transform: rotateY(90deg);
+}
+
+.face5-lid__edge--right {
+  top: 0;
+  right: 0;
+  width: var(--lid-depth);
+  height: 100%;
+  transform-origin: right center;
+  transform: rotateY(-90deg);
 }
 
 .face5-slab[data-stage='open'] .face5-chamber {
@@ -231,46 +263,84 @@
   gap: clamp(0.45rem, 1.4vw, 1.1rem);
 }
 
-/* Dark cherry-wood keys: a deep matte mahogany with a faint grain, raised off
-   the slate, pressing in on click. No shine, no bezel. */
-.face5-pad__button {
+/* Each key is set into a socket cut into the slate: a dark recess with a brown
+   seam rim, matching the sunk trays elsewhere. The key fills it flush at rest;
+   pressing sinks the key down so the dark inner wall shows above it, reading as
+   the key sinking into the panel. overflow:hidden keeps the sunk key in its hole. */
+.face5-pad__socket {
   flex: 1 1 0;
   aspect-ratio: 1;
+  position: relative;
+  border-radius: 9px;
+  overflow: hidden;
+  /* The cutout in the box: a brown lip (the seam - a feature of the box, not the
+     key) around a shadowed interior. The key sits flush in it and recedes into the
+     shadow when pressed; the lip stays put. */
+  border: 2px solid #83611f;
+  background: linear-gradient(180deg, #1d1108 0%, #2c190e 100%);
+}
+
+/* Polished obsidian keys: near-black volcanic glass with a cool top sheen (the
+   overhead light on the glossy face), carrying a faceted ruby. Seated flush in the
+   cutout; no bezel, no border of its own. */
+.face5-pad__button {
+  position: absolute;
+  inset: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: 7px;
   cursor: pointer;
-  font-size: clamp(1.4rem, 3vw, 2.3rem);
-  color: #e6c256;
-  background:
-    repeating-linear-gradient(
-      87deg,
-      rgba(0, 0, 0, 0.06) 0 2px,
-      rgba(0, 0, 0, 0) 2px 8px
-    ),
-    linear-gradient(180deg, #59261f 0%, #431a15 55%, #33120e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #08080b;
   box-shadow:
-    inset 0 1px 1px rgba(150, 92, 72, 0.35),
-    inset 0 -2px 5px rgba(0, 0, 0, 0.5),
-    0 4px 0 #24100b,
-    0 7px 10px rgba(0, 0, 0, 0.5);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+    inset 0 1px 1px rgba(190, 196, 216, 0.22),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.62);
+  /* The key rises back up slowly (~1s) after a press; the press itself is quicker
+     (see :active, ~0.5s), so it sinks and eases back up. */
   transition:
-    transform 0.08s ease,
-    box-shadow 0.08s ease,
+    transform 1s ease-out,
+    box-shadow 1s ease-out,
     filter 0.12s ease;
 }
 
 .face5-pad__button:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.12);
 }
 
-.face5-pad__button:active {
-  transform: translateY(4px);
+/* The cel-shaded obsidian fills the key, behind the ruby. */
+.face5-key-obsidian {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* The ruby sits centred on the obsidian, a little smaller than the key. */
+.face5-key-ruby {
+  position: relative;
+  width: 62%;
+  height: 62%;
+  display: block;
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.6));
+}
+
+.face5-pad__button:active,
+.face5-pad__button.is-pressed {
+  /* Sink straight in: the whole key stays in view but recedes a little, so a frame
+     of the brown wall shows around it and the recess casts a shadow over its top.
+     .is-pressed (JS) holds this past the pointer release so a tap plays the full
+     sink; :active covers keyboard activation. */
+  transform: scale(0.88);
   box-shadow:
+    inset 0 7px 8px rgba(0, 0, 0, 0.5),
     inset 0 1px 1px rgba(150, 92, 72, 0.3),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.5),
-    0 1px 0 #24100b,
-    0 2px 5px rgba(0, 0, 0, 0.45);
+    inset 0 -2px 4px rgba(0, 0, 0, 0.45);
+  /* The press sinks in over ~0.4s (still quicker than the ~1s rise back up). */
+  transition:
+    transform 0.4s ease,
+    box-shadow 0.4s ease;
 }
 
 /* A shallow pocket carved into the slate holding the move-1 clue, like the sunk
@@ -278,7 +348,7 @@
 .face5-clue-box {
   position: absolute;
   left: 50%;
-  bottom: 0.6%;
+  bottom: 2%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;

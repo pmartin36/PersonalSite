@@ -4,39 +4,58 @@
    are bare stone. */
 
 .face3 {
+  position: relative;
   width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(0.75rem, 2vh, 1.5rem);
+}
+
+/* Foliage layer over the reels, aligned to the face like the stone base. */
+.face3-leaves {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: url('/machine/leaves_face_03.png') center / cover no-repeat;
 }
 
 .face3-title {
+  position: absolute;
+  top: 5.4%;
+  left: 0;
+  right: 0;
   margin: 0;
   text-align: center;
   font-family: var(--display, serif);
-  font-size: clamp(1.12rem, 2.45vw, 1.82rem);
+  font-size: 2.24rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   /* Carved look comes from the shared .machine-carve class on the element. */
 }
 
+/* Positioned to the three reel slots baked into the face art (stone_face_03):
+   centres 19.4/49.9/80.4%, each 27.7% wide, spanning top 16.4% to bottom 9.7%. */
 .face3-reels {
-  flex: 1;
-  min-height: 0;
+  position: absolute;
+  top: 17.0%;
+  bottom: 9.1%;
+  left: 5.5%;
+  right: 5.7%;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: clamp(1rem, 3vw, 2.4rem);
+  justify-content: space-between;
 }
 
 .face3-reel {
-  --reel-win-h: 58vh;
-  --reel-face-h: 46vh;
+  /* Fixed to the design resolution (the content box is 1440x791, scaled to the
+     face), so the reels fill the baked slots at every aspect. */
+  --reel-win-h: 572px;
+  --reel-face-h: 453px;
   /* Hexagon apothem: (faceHeight / 2) / tan(30deg) ~= 0.866 * faceHeight. */
   --reel-apothem: calc(var(--reel-face-h) * 0.866);
-  flex: 1 1 0;
-  max-width: 24rem;
+  flex: 0 0 31.2%;
+  max-width: none;
+  /* Brings the reel content in a couple px each side without moving the slot. */
+  padding: 0 2px;
 }
 
 /* The slot cut into the slab: the current face centred with the next/previous

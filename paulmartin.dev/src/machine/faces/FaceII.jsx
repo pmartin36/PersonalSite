@@ -179,14 +179,6 @@ export default function FaceII() {
       <div className="face2">
         <p className="face2-title machine-carve">Current Projects</p>
         <div className="face2-hollow">
-          <div className="face2-interior" aria-hidden="true">
-            <span className="face2-int face2-int--top" />
-            <span className="face2-int face2-int--bottom" />
-            <span className="face2-int face2-int--left" />
-            <span className="face2-int face2-int--right" />
-            <span className="face2-int face2-int--back" />
-            <span className="face2-int-seam" />
-          </div>
           <div className="face2-rod" aria-hidden="true">
             <span className="face2-rod__mount face2-rod__mount--left" />
             <span className="face2-rod__mount face2-rod__mount--right" />

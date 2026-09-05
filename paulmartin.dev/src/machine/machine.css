@@ -37,7 +37,7 @@
   background-image:
     radial-gradient(140% 100% at 50% -12%, rgba(233, 216, 176, 0.32) 0%, rgba(189, 160, 103, 0) 46%),
     radial-gradient(120% 80% at 50% 118%, rgba(36, 29, 18, 0.28) 0%, transparent 60%),
-    url('/machine/test_asset_with_leaves2.png');
+    var(--face-stone, url('/machine/face1.png'));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -50,6 +50,43 @@
     inset 0 0 11px 2px rgba(58, 32, 10, 0.82),
     inset 0 6px 8px rgba(250, 242, 219, 0.2),
     inset 0 -18px 30px rgba(46, 28, 10, 0.42);
+}
+
+/* Per-face painted stone. Faces IV and V carry their recess (tray / chamber) baked
+   into the art, so their in-CSS inset shading is removed (see FaceIV/FaceV css). */
+.machine__face--II .face-surface__base {
+  --face-stone: url('/machine/stone_face_02.png');
+}
+.machine__face--III .face-surface__base {
+  /* Stone only; the leaves are a separate layer painted over the reels (see
+     .face3-leaves) so they drape in front of the content. */
+  --face-stone: url('/machine/background_face_03.png');
+}
+.machine__face--IV .face-surface__base {
+  --face-stone: url('/machine/stone_face_04.png');
+}
+.machine__face--V .face-surface__base {
+  --face-stone: url('/machine/stone_face_05.png');
+}
+
+/* Faces III/IV align content to a recess baked into the face art AND must scale
+   their contents (fonts, icons, cards) with the face. Both come from laying the
+   content out at a fixed design resolution (the 1.82:1 face at ~1050x577, the size
+   it was authored for) and scaling that box uniformly to the actual face. Every
+   rem/percent/position then tracks the face at any viewport aspect. */
+.machine__face--II .face-surface__content,
+.machine__face--III .face-surface__content,
+.machine__face--IV .face-surface__content {
+  top: 0;
+  left: 0;
+  right: auto;
+  bottom: auto;
+  width: 1440px;
+  height: 791px;
+  padding: 0;
+  /* zoom, not transform: scale - zoom re-lays-out at the scaled size so text stays
+     crisp, where transform rasterizes then scales the bitmap and blurs the text. */
+  zoom: calc(var(--face-w) / 1440px);
 }
 
 .face-surface__content {

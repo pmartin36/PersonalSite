@@ -4,33 +4,15 @@
    move-2 clue is carved. */
 
 .face4-tray {
-  position: relative;
-  /* Bound by height with a true 3:2 ratio so the 3x2 grid gives square cells.
-     Height was the limiting dimension, so binding it keeps the ratio exact and
-     uses most of the vertical space; width follows and is capped as a safety. */
-  height: 96%;
-  aspect-ratio: 3 / 2;
-  max-width: 98%;
+  /* Positioned to the recess baked into the face art (stone_face_04), so the 3x2
+     grid sits in the sunk tray at every viewport aspect. The recess is a true 3:2
+     box, so the cells stay square. */
+  position: absolute;
+  top: 7.4%;
+  left: 15.3%;
+  right: 15.3%;
+  bottom: 8.5%;
   border-radius: 7px;
-  /* The sunk floor is the same stone dropped into deep, rich brown shadow: the
-     texture MULTIPLIED by a warm brown (not a flat dark wash - that greys out
-     like the name did). Multiply darkens while keeping the warmth and the cracks,
-     landing on the same rich brown as the carved name. */
-  background:
-    /* The top cut wall: a hard dark band (4px), then a linear falloff to the floor
-       over 8px (2x the hard edge). Cleaner than a blurred box-shadow. */
-    linear-gradient(to bottom, rgba(30, 18, 7, 0.62) 0, rgba(30, 18, 7, 0.62) 4.6px, rgba(30, 18, 7, 0) 13.8px),
-    linear-gradient(rgb(206, 192, 168), rgb(206, 192, 168)),
-    url('/machine/test_asset_with_leaves2.png') center / cover no-repeat;
-  background-blend-mode: normal, multiply, normal;
-  /* The cut edge, matching the text carve rather than a soft fake shadow: a crisp
-     dark upper wall dropping into the recess, a lit gold lower lip catching the
-     overhead sun, and a hard rim. */
-  box-shadow:
-    /* lit lower lip + a hard rim; the top wall is the background gradient above */
-    inset 0 -4px 0 rgba(250, 224, 156, 0.5),
-    inset 0 -12px 12px rgba(184, 134, 68, 0.16),
-    inset 0 0 0 1.5px rgba(34, 20, 8, 0.42);
 }
 
 /* The floor carries the two carved clue pieces, behind the tiles: the tally

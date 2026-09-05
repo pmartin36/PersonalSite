@@ -241,6 +241,8 @@ export default function FaceIII() {
             />
           ))}
         </div>
+        {/* Foliage painted over the reels, so leaves drape in front of the device. */}
+        <div className="face3-leaves" aria-hidden="true" />
       </div>
       {modalProject && (
         <DetailModal

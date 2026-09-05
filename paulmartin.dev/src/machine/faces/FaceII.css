@@ -3,18 +3,23 @@
    cavity reads as looking into the dark interior of the drum. */
 
 .face2 {
+  position: relative;
   width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(0.75rem, 2vh, 1.5rem);
 }
 
+/* Positioned in the title band of the face art (the content is laid out at the
+   1440x791 design resolution and scaled to the face, so this holds at every
+   aspect). */
 .face2-title {
+  position: absolute;
+  top: 4.4%;
+  left: 3.75%;
+  right: 3.75%;
   margin: 0;
   text-align: center;
   font-family: var(--display, serif);
-  font-size: clamp(1.12rem, 2.45vw, 1.82rem);
+  font-size: 2.24rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   /* Carved look comes from the shared .machine-carve class on the element. */
@@ -25,76 +30,14 @@
    the back; heavy AO deepens the top. Faint seams mark where the inner faces
    meet. */
 .face2-hollow {
-  position: relative;
-  flex: 1;
-  min-height: 0;
+  position: absolute;
+  top: 16.61%;
+  bottom: 6.83%;
+  left: 3.75%;
+  right: 3.75%;
   border-radius: 7px;
-  background: #0a0603;
-  box-shadow:
-    inset 0 0 0 2px rgba(18, 12, 6, 0.85),
-    inset 0 2px 0 rgba(213, 189, 132, 0.14);
-}
-
-/* Looking into the drum: five interior faces in perspective toward a small back
-   plane. Top face angles down into shadow (dark), bottom face angles up into
-   light (lighter), the two endcaps are the side walls (middle tone), the back
-   is darkest. Faces meet at thin near-black creases (the seam rect + the tonal
-   boundaries), not thick bands. */
-.face2-interior {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  border-radius: 7px;
-}
-
-.face2-int {
-  position: absolute;
-  inset: 0;
-}
-
-.face2-int--top {
-  clip-path: polygon(0 0, 100% 0, 80% 27%, 20% 27%);
-  background: linear-gradient(to bottom, #2a1c0c 0%, #241a0e 27%);
-}
-
-.face2-int--bottom {
-  clip-path: polygon(20% 73%, 80% 73%, 100% 100%, 0 100%);
-  background: linear-gradient(to bottom, #241a0e 73%, #6b5028 100%);
-}
-
-.face2-int--left {
-  clip-path: polygon(0 0, 20% 27%, 20% 73%, 0 100%);
-  background: linear-gradient(to right, #3a2c18 0%, #241a0e 20%);
-}
-
-.face2-int--right {
-  clip-path: polygon(100% 0, 100% 100%, 80% 73%, 80% 27%);
-  background: linear-gradient(to right, #241a0e 80%, #3a2c18 100%);
-}
-
-/* The back plane: the deepest part, a dark brown (not black), with a slightly
-   darker central crease where the two rear faces meet. */
-.face2-int--back {
-  clip-path: polygon(20% 27%, 80% 27%, 80% 73%, 20% 73%);
-  background: linear-gradient(
-    180deg,
-    #241a0e,
-    #201709 49.3%,
-    #16100a 50%,
-    #201709 50.7%,
-    #241a0e
-  );
-}
-
-/* Thin near-black creases around the back plane. */
-.face2-int-seam {
-  position: absolute;
-  left: 20%;
-  top: 27%;
-  right: 20%;
-  bottom: 27%;
-  border: 1px solid #16100a;
+  /* The drum interior (its five perspective faces) is baked into the face art
+     (stone_face_02); this is just the frame that holds the rod and cards. */
 }
 
 /* The spindle: a brass rod spanning the hollow at mid-height, mounted into the
