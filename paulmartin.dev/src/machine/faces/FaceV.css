@@ -198,7 +198,7 @@
      toward the bottom, so it reads as stone in shade, not a flat gradient. */
   background:
     linear-gradient(180deg, rgba(74, 47, 22, 0.4) 0%, rgba(48, 30, 13, 0.62) 100%),
-    url('/machine/cap_face_05.png') center / cover no-repeat;
+    url('/machine/cap_underside_05.png') center / cover no-repeat;
   /* No border or rim: its bottom edge fades into the chamber below instead of
      cutting a hard seam across the opening. A warm brown shade, not black. */
   box-shadow: inset 0 6px 16px rgba(30, 18, 8, 0.5);
@@ -263,21 +263,21 @@
   gap: clamp(0.45rem, 1.4vw, 1.1rem);
 }
 
-/* Each key is set into a socket cut into the slate: a dark recess with a brown
-   seam rim, matching the sunk trays elsewhere. The key fills it flush at rest;
-   pressing sinks the key down so the dark inner wall shows above it, reading as
-   the key sinking into the panel. overflow:hidden keeps the sunk key in its hole. */
+/* Each key is set into a hole cut into the slate. The hole (its brown rim and
+   shadowed interior) is painted into the lid art (cap_face_05), so this is just the
+   container that holds the key over it. The key fills it flush at rest; pressing
+   sinks the key so the painted inner wall shows above it, reading as the key sinking
+   into the panel. overflow:hidden keeps the sunk key in its hole. */
 .face5-pad__socket {
   flex: 1 1 0;
   aspect-ratio: 1;
   position: relative;
   border-radius: 9px;
   overflow: hidden;
-  /* The cutout in the box: a brown lip (the seam - a feature of the box, not the
-     key) around a shadowed interior. The key sits flush in it and recedes into the
-     shadow when pressed; the lip stays put. */
-  border: 2px solid #83611f;
-  background: linear-gradient(180deg, #1d1108 0%, #2c190e 100%);
+  /* A translucent dark-brown wash over the painted hole, so its side walls (the
+     frame that shows around the key as it sinks) read a touch deeper than the flat
+     art. Kept transparent so the painted stone still reads through. */
+  background: rgba(22, 13, 6, 0.42);
 }
 
 /* Polished obsidian keys: near-black volcanic glass with a cool top sheen (the
@@ -285,7 +285,9 @@
    cutout; no bezel, no border of its own. */
 .face5-pad__button {
   position: absolute;
-  inset: 0;
+  /* 1px in from the socket on every side, so the key seats inside the painted hole
+     (a touch smaller than the key's footprint) rather than overhanging its rim. */
+  inset: 1px;
   border: none;
   border-radius: 7px;
   cursor: pointer;
@@ -303,6 +305,45 @@
     transform 1s ease-out,
     box-shadow 1s ease-out,
     filter 0.12s ease;
+}
+
+/* Per-key seating trim: the painted holes sit a hair in toward the row centre and
+   up, so the left pair (Left, Up) loses its extra pixel off the right and bottom,
+   the right pair (Right, Down) off the left and bottom (inset order T R B L). */
+.face5-pad__button[data-direction='Left'],
+.face5-pad__button[data-direction='Up'] {
+  inset: 1px 2px 2px 1px;
+}
+
+.face5-pad__button[data-direction='Right'],
+.face5-pad__button[data-direction='Down'] {
+  inset: 1px 1px 2px 2px;
+}
+
+/* Recess shadow over the key: as it sinks into the painted hole its top slides
+   under the upper wall and falls into shadow. Transparent at rest, it fades in with
+   the press (quick, matching the sink) and fades back out slowly with the rise. */
+.face5-pad__button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 5;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.62) 0%,
+    rgba(0, 0, 0, 0.28) 22%,
+    rgba(0, 0, 0, 0) 52%
+  );
+  opacity: 0;
+  transition: opacity 1s ease-out;
+}
+
+.face5-pad__button:active::after,
+.face5-pad__button.is-pressed::after {
+  opacity: 1;
+  transition: opacity 0.4s ease;
 }
 
 .face5-pad__button:hover {
