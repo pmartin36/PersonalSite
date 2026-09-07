@@ -114,13 +114,17 @@
   border-radius: 2px;
   cursor: pointer;
   text-decoration: none;
-  background: var(--m-sandstone);
+  /* Each tile's painted stone (--tile-tex, set on the cell) over a sandstone
+     fallback for any transparent edge. */
+  background-color: var(--m-sandstone);
+  background-image: var(--tile-tex);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   /* Flat top, flush with the frame: just a lit top edge and a fine dark seam.
      No drop shadow, so tiles never float above the surrounding stone. The
      block's front face is drawn separately, only where the gap exposes it. */
-  box-shadow:
-    inset 0 0 0 1px rgba(8, 5, 2, 0.5),
-    inset 0 2px 0 rgba(255, 247, 224, 0.5);
+  box-shadow: inset 0 2px 0 rgba(255, 247, 224, 0.5);
 }
 
 /* The block's front face: always drawn just under the top face; the tile in the
@@ -129,11 +133,17 @@
 .face4-cell::after {
   content: '';
   position: absolute;
-  left: 1px;
-  right: 1px;
+  left: 0;
+  right: 0;
   top: 100%;
   height: 0.6rem;
-  background: linear-gradient(to bottom, #7a5c30 0%, #543f1e 100%);
+  /* The tile's bottom edge, mirrored and made fully opaque (--tile-side), so the
+     extruded front face flows from the tile without its rounded corners bleeding.
+     A warm-brown gradient shades it in code so it reads as a shadowed stone edge
+     rather than a blackened one. */
+  background:
+    linear-gradient(to bottom, rgba(46, 28, 12, 0.34), rgba(46, 28, 12, 0.6)),
+    var(--tile-side) center / 100% 100% no-repeat;
   box-shadow: 0 4px 7px rgba(0, 0, 0, 0.4);
   pointer-events: none;
 }
@@ -163,8 +173,11 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
+  gap: 0.6rem;
   text-align: center;
+  /* Same engraved face as the rest of the machine (was falling back to the
+     button's system font). */
+  font-family: var(--display, serif);
 }
 
 .face4-tile--left .face4-about {
@@ -175,31 +188,27 @@
   left: -100%;
 }
 
-/* Two carved side flourishes flanking the centred About copy: a feathered
-   serpent/vine column engraved down each far edge, same recess/lip treatment as
-   the text. Absolutely placed so they fill the left/right space without pushing
-   the heading or paragraph; the right one mirrors the left. One sits in each
-   About tile, so a tile shows its own flourish whether or not its partner is
-   beside it. */
-.face4-about__frame {
-  position: absolute;
-  /* Oversized so the border straddles the tile edge: its outer half runs past
-     the perimeter and the tile's overflow clip hides it. Horizontal offset is
-     ~2x vertical so the block's 2:1 ratio clips an even band all round. */
-  inset: -14% -5%;
-  background: rgba(64, 44, 18, 0.6);
-  -webkit-mask: url(/machine/about-border.png) center / 100% 100% no-repeat;
-  mask: url(/machine/about-border.png) center / 100% 100% no-repeat;
-  filter:
-    drop-shadow(0 1.5px 0 rgba(250, 226, 164, 0.6))
-    drop-shadow(0 -1px 0.5px rgba(22, 13, 4, 0.4));
+/* A thin darkish-brown seam down the inner edge of each About half, so the two
+   read as separate blocks with a groove between them when they sit side by side
+   (keeps the lit top edge that the base tile carries). */
+.face4-tile--about.face4-tile--left {
+  box-shadow:
+    inset 0 2px 0 rgba(255, 247, 224, 0.5),
+    inset -1px 0 0 rgba(110, 78, 42, 0.3);
+}
+
+.face4-tile--about.face4-tile--right {
+  box-shadow:
+    inset 0 2px 0 rgba(255, 247, 224, 0.5),
+    inset 1px 0 0 rgba(110, 78, 42, 0.3);
 }
 
 .face4-about__heading {
   font-family: var(--display, serif);
-  font-size: clamp(1.5rem, 4.5vw, 2.8rem);
+  font-size: 2.9rem;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  letter-spacing: 0.012em;
   /* Deep carve (the richer Face I look) - overrides the lighter .face4-about. */
   color: rgba(44, 26, 8, 0.86);
   text-shadow:
@@ -209,9 +218,9 @@
 }
 
 .face4-about__body {
-  font-size: clamp(0.72rem, 1.5vw, 1rem);
-  line-height: 1.42;
-  max-width: 72%;
+  font-size: 1.35rem;
+  line-height: 1.4;
+  max-width: 82%;
 }
 
 /* A giant icon carved into the tile: a translucent recess so the stone reads
@@ -235,7 +244,7 @@
 .face4-contact__icon {
   /* A fixed size (the link now shrink-wraps, so a percentage has no definite
      height to resolve against). */
-  height: clamp(3rem, 7.4vh, 4.8rem);
+  height: 5.4rem;
   width: auto;
   /* Deep carve (the richer Face I look): a strong lit gold lower lip and a dark
      top wall, sized in px for this icon (~77px tall). */
@@ -252,7 +261,7 @@
 .face4-contact__value {
   max-width: 92%;
   font-family: var(--mono, monospace);
-  font-size: clamp(0.72rem, 1.55vw, 1rem);
+  font-size: 1.3rem;
   white-space: nowrap;
   color: rgba(64, 44, 18, 0.66);
   text-shadow:

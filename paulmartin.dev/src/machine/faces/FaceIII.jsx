@@ -99,6 +99,19 @@ function SeamGlyph({ char, half }) {
 // spell MORE PROJECTS ON, with the GitHub mark under the middle word.
 const REEL_CTA = ['MORE', 'PROJECTS', 'ON']
 
+// Each reel's blank face carries its own stone, ripped from the tile art, so the
+// three CTA faces read as distinct carved stone rather than flat fill. One tile
+// per reel (different from each other); cover-fit so it fills without stretching.
+const REEL_STONE = [
+  '/machine/tile_01.png',
+  '/machine/tile_03.png',
+  '/machine/tile_02.png',
+]
+
+// The average stone colour of each reel's tile, used as the flat background for
+// that reel's content (project) faces so they match the textured blank face.
+const REEL_STONE_COLOR = ['#ebbc6f', '#e9ba70', '#e8bd70']
+
 // The GitHub mark, etched into the stone like the other carvings.
 function GithubMark({ className }) {
   return (
@@ -168,7 +181,10 @@ function Reel({ faces, reelIndex, position, onSpin, onOpen }) {
   const wheelFaces = [...faces, ...faces]
 
   return (
-    <div className="face3-reel">
+    <div
+      className="face3-reel"
+      style={{ '--reel-stone-color': REEL_STONE_COLOR[reelIndex] }}
+    >
       <div
         ref={windowRef}
         className="face3-reel__window"
@@ -186,12 +202,18 @@ function Reel({ faces, reelIndex, position, onSpin, onOpen }) {
           {wheelFaces.map((project, i) => {
             const pos = i % faces.length
             const seam = SEAM_GLYPHS[reelIndex]
+            const isBlank = !project
             return (
               <div
                 key={i}
-                className="face3-reel__face"
+                className={
+                  'face3-reel__face' + (isBlank ? ' face3-reel__face--blank' : '')
+                }
                 style={{
                   transform: `rotateX(${-60 * i}deg) translateZ(var(--reel-apothem))`,
+                  ...(isBlank
+                    ? { '--reel-stone': `url(${REEL_STONE[reelIndex]})` }
+                    : null),
                 }}
               >
                 {project ? (

@@ -46,12 +46,12 @@ function TallyMark({ count }) {
 // 2x3 grid, cells 0..5. Row 1 = About (left half) / About (right half) / gap.
 // Row 2 = Email / LinkedIn / GitHub. null is the gap tile.
 const INITIAL_TILES = [
-  { id: 'about-0', kind: 'about', half: 'left' },
-  { id: 'about-1', kind: 'about', half: 'right' },
+  { id: 'about-0', kind: 'about', half: 'left', tex: '/machine/tile_01.png' },
+  { id: 'about-1', kind: 'about', half: 'right', tex: '/machine/tile_02.png' },
   null,
-  { id: 'email', kind: 'contact', label: 'Email', icon: 'envelope', value: 'p@ulmartin.me', href: EMAIL_HREF },
-  { id: 'linkedin', kind: 'contact', label: 'LinkedIn', icon: 'linkedin', value: 'Paul Martin', href: LINKEDIN_HREF },
-  { id: 'bluesky', kind: 'contact', label: 'Bluesky', icon: 'bluesky', value: '@paulmartindev.bsky.social', href: BLUESKY_HREF },
+  { id: 'email', kind: 'contact', label: 'Email', icon: 'envelope', value: 'p@ulmartin.me', href: EMAIL_HREF, tex: '/machine/tile_03.png' },
+  { id: 'linkedin', kind: 'contact', label: 'LinkedIn', icon: 'linkedin', value: 'Paul Martin', href: LINKEDIN_HREF, tex: '/machine/tile_04.png' },
+  { id: 'bluesky', kind: 'contact', label: 'Bluesky', icon: 'bluesky', value: 'paulmartindev', href: BLUESKY_HREF, tex: '/machine/tile_05.png' },
 ]
 
 // Stable render order so the DOM never reorders on a slide (only each tile's
@@ -83,7 +83,6 @@ function AboutTile({ half, onClick }) {
       onClick={onClick}
     >
       <span className="face4-about">
-        <span className="face4-about__frame" aria-hidden="true" />
         <span className="face4-about__heading">About Me</span>
         <span className="face4-about__body">{ABOUT_TEXT}</span>
       </span>
@@ -191,10 +190,14 @@ export default function FaceIV() {
                 data-tile-kind={tile.kind}
                 // Lower rows stack above upper ones so a tile's top face covers
                 // the front face of the tile behind it; the gap and the tray
-                // edge are where a front face is left exposed.
+                // edge are where a front face is left exposed. --tile-tex is the
+                // tile's top face; --tile-side is its bottom edge mirrored and made
+                // fully opaque, for the exposed front face.
                 style={{
                   transform: `translate(${col * 100}%, ${row * 100}%)`,
                   zIndex: row + 1,
+                  '--tile-tex': `url(${tile.tex})`,
+                  '--tile-side': `url(${tile.tex.replace('.png', '_side.png')})`,
                 }}
               >
                 {tile.kind === 'about' ? (

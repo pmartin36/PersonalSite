@@ -125,8 +125,25 @@
   padding: 3px 5px;
   /* Flat, uniform stone with a symmetric thin edge, so faces tile and their
      seams match up cleanly rather than one appearing to slip under the next. */
-  background: var(--m-sandstone);
+  /* Content (project) faces show this flat colour, matched to the average of this
+     reel's tile stone (--reel-stone-color) so they blend with the textured blank.
+     A flat 8% black overlay knocks the brightness down (a x0.92 multiply, so it
+     darkens without graying), matching the blank faces. */
+  background-color: var(--reel-stone-color, var(--m-sandstone));
+  background-image: linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08));
   box-shadow: inset 0 0 0 1px rgba(28, 20, 9, 0.16);
+}
+
+/* Blank call-to-action faces carry stone ripped from the tile art. cover fills the
+   face without stretching and crops the tiles' rounded transparent corners out;
+   each reel sets a different tile via --reel-stone. */
+.face3-reel__face--blank {
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)),
+    var(--reel-stone);
+  background-size: auto, cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 /* Hint 1 half-glyphs: an etched character clipped to one half, riding a face
@@ -143,9 +160,10 @@
   font-size: calc(var(--reel-face-h) * 0.50);
   line-height: 1;
   text-transform: uppercase;
-  /* Subtractive: a faint black that just deepens the shadow of whatever it sits
-     on (stone or card), like a shallow carve, rather than painting a colour. */
-  color: rgba(12, 8, 3, 0.16);
+  /* Subtractive, but a mid warm brown rather than near-black, so multiplying it
+     onto the stone deepens toward brown (an etched brown mark) instead of a neutral
+     gray shadow. */
+  color: rgba(150, 95, 46, 0.26);
   mix-blend-mode: multiply;
 }
 
@@ -163,13 +181,14 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  font-family: var(--mono, monospace);
-  font-weight: 800;
-  font-size: clamp(1.9rem, 7.2vh, 3.9rem);
-  letter-spacing: 0.02em;
+  font-family: var(--display, serif);
+  font-weight: 600;
+  font-size: clamp(1.62rem, 6.2vh, 3.32rem);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   white-space: nowrap;
-  /* Carved look comes from the shared .machine-carve class on the element. */
+  /* Carved look comes from the shared .machine-carve class on the element, the same
+     engraved treatment as the PAST/CURRENT PROJECTS headers. */
 }
 
 .face3-cta__logo-link {
