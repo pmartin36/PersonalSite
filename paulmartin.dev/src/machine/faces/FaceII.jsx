@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import FaceSurface from '../FaceSurface.jsx'
 import Still from '../../components/Still.jsx'
 import OrgTag from '../../components/OrgTag.jsx'
@@ -11,23 +11,104 @@ import './FaceII.css'
 // bottom edge (degrees, at the extreme). Just a little lean.
 const WOBBLE_MAX = 6
 
-// A seven-segment cell showing only its lit bars (no unfilled outlines). The
-// clue is spread across the three card backs, so each card lights a different
-// part of one figure.
+// Each card back is a different square cut from the hero face's stone, so the three
+// read as pieces of one slab rather than repeated tiles.
+const BACK_STONE = [
+  '/machine/back_stone_1.png',
+  '/machine/back_stone_2.png',
+  '/machine/back_stone_3.png',
+]
+
+// Shared carve filters, the hero name's technique: the stone sunk into deep warm
+// shadow by a per-channel brightness subtraction (keeps texture and hue, unlike a
+// flat fill), and a lit gold band isolated on each stroke's lower edge.
+function ClueCarveDefs() {
+  return (
+    <svg aria-hidden="true" width="0" height="0" style={{ position: 'absolute' }}>
+      <defs>
+        <filter id="clue-sink" colorInterpolationFilters="sRGB">
+          <feComponentTransfer>
+            <feFuncR type="linear" slope="1" intercept="-0.33" />
+            <feFuncG type="linear" slope="1" intercept="-0.35" />
+            <feFuncB type="linear" slope="1" intercept="-0.27" />
+          </feComponentTransfer>
+        </filter>
+        <filter
+          id="clue-lip"
+          x="-60%"
+          y="-60%"
+          width="220%"
+          height="220%"
+          colorInterpolationFilters="sRGB"
+        >
+          <feOffset in="SourceAlpha" dx="0" dy="-2.4" result="up" />
+          <feComposite in="SourceAlpha" in2="up" operator="out" result="band" />
+          <feGaussianBlur in="band" stdDeviation="0.5" result="soft" />
+          <feFlood floodColor="#f2c77d" floodOpacity="0.92" result="col" />
+          <feComposite in="col" in2="soft" operator="in" />
+        </filter>
+      </defs>
+    </svg>
+  )
+}
+
+// One stone for every cut's floor (the slices differ in tone, which made one card's
+// bar read a different colour); the card backgrounds still vary.
+const CARVE_STONE = '/machine/back_stone_1.png'
+
+// Shapes carved into the stone, the same way the hero name is cut: a dark upper wall
+// peeking above, the stone floor sunk into shadow (clipped to the shapes, so an
+// overlapping plus reads as one cut, not a doubly-dark crossing), and a lit gold
+// lower lip on every bottom edge.
+function Carved({ viewBox, shapes }) {
+  const clip = useId()
+  return (
+    <svg className="face2-carve" viewBox={viewBox} aria-hidden="true">
+      <defs>
+        <clipPath id={clip}>{shapes}</clipPath>
+      </defs>
+      <g transform="translate(0,-2)" fill="rgba(18,11,3,0.92)">
+        {shapes}
+      </g>
+      <image
+        href={CARVE_STONE}
+        x="0"
+        y="0"
+        width="100%"
+        height="100%"
+        preserveAspectRatio="xMidYMid slice"
+        clipPath={`url(#${clip})`}
+        filter="url(#clue-sink)"
+      />
+      <g fill="#000" filter="url(#clue-lip)">
+        {shapes}
+      </g>
+    </svg>
+  )
+}
+
+// Seven-segment bars with pointed hexagonal tips (matching the display's original
+// clip-paths): hbar points left/right, vbar points top/bottom.
+const hbar = (x, y, w, h) =>
+  `${x + 0.07 * w},${y} ${x + 0.93 * w},${y} ${x + w},${y + h / 2} ${x + 0.93 * w},${y + h} ${x + 0.07 * w},${y + h} ${x},${y + h / 2}`
+const vbar = (x, y, w, h) =>
+  `${x},${y + 0.07 * h} ${x + w / 2},${y} ${x + w},${y + 0.07 * h} ${x + w},${y + 0.93 * h} ${x + w / 2},${y + h} ${x},${y + 0.93 * h}`
+const SEG = {
+  a: hbar(12, 0, 64, 12), g: hbar(12, 70, 64, 12), d: hbar(12, 140, 64, 12),
+  f: vbar(0, 12, 12, 57), b: vbar(76, 12, 12, 57), e: vbar(0, 83, 12, 57), c: vbar(76, 83, 12, 57),
+}
 function Segments({ lit }) {
+  const shapes = lit.map((s) => <polygon key={s} points={SEG[s]} />)
   return (
     <div className="face2-cell" aria-hidden="true">
-      {lit.map((seg) => (
-        <span key={seg} className={`face2-seg face2-seg--${seg}`} />
-      ))}
+      <Carved viewBox="0 0 88 152" shapes={shapes} />
     </div>
   )
 }
 
 // The clue split across the three backs: left card = the two left bars, middle
-// card = a plus with the order digit above it, right card = the two bottom
-// bars. The bars f+e+d draw an L (Left); the middle digit is the order. Together
-// they read the move-6 clue.
+// card = a plus with the order digit above it, right card = the bottom bar. The
+// bars f+e+d draw an L (Left); the middle digit is the order.
 function ClueBack({ index }) {
   if (index === 0) return <Segments lit={['f', 'e']} />
   if (index === 2) return <Segments lit={['d']} />
@@ -36,7 +117,15 @@ function ClueBack({ index }) {
       <Clue order={6} variant="seven-seg" className="face2-mid__num">
         {({ orderGlyph }) => <span>{orderGlyph}</span>}
       </Clue>
-      <span className="face2-mid__plus" />
+      <div className="face2-mid__plus">
+        <Carved
+          viewBox="0 0 70 70"
+          shapes={[
+            <polygon key="h" points={hbar(0, 28.2, 70, 13.6)} />,
+            <polygon key="v" points={vbar(28.2, 0, 13.6, 70)} />,
+          ]}
+        />
+      </div>
     </div>
   )
 }
@@ -148,7 +237,10 @@ function Card({ project, index, onOpen }) {
               </button>
             </div>
           </div>
-          <div className="face2-plate face2-plate--back">
+          <div
+            className="face2-plate face2-plate--back"
+            style={{ '--back-stone': `url(${BACK_STONE[index]})` }}
+          >
             <button
               type="button"
               className="face2-turn face2-turn--top"
@@ -176,6 +268,7 @@ export default function FaceII() {
 
   return (
     <FaceSurface aria-label="Face II">
+      <ClueCarveDefs />
       <div className="face2">
         <p className="face2-title machine-carve">Current Projects</p>
         <div className="face2-hollow">
