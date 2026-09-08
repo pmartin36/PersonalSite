@@ -7,6 +7,7 @@ function makeSpyNode(state) {
   node.connect = vi.fn(() => node)
   node.start = vi.fn()
   node.stop = vi.fn()
+  node.playbackRate = { value: 1 }
   node.gain = {
     value: 1,
     setValueAtTime: vi.fn(),
@@ -109,6 +110,9 @@ describe('AudioProvider / useAudio defaults', () => {
     expect(() => ref.current.playMuteClick()).not.toThrow()
     expect(() => ref.current.playDetailOpen()).not.toThrow()
     expect(() => ref.current.playDetailClose()).not.toThrow()
+    expect(() => ref.current.playReelSpin()).not.toThrow()
+    expect(() => ref.current.playTileSlide()).not.toThrow()
+    expect(() => ref.current.playCardFlip()).not.toThrow()
   })
 })
 

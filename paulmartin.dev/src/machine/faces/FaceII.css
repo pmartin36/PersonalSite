@@ -50,16 +50,21 @@
   height: 0.72rem;
   transform: translateY(-50%);
   border-radius: 999px;
+  /* Brass: a bright gold top grading to a deeper gold/bronze (not the browns that
+     read as wood), with a thin near-white specular band just under the top edge for a
+     touch of metal shine. */
   background: linear-gradient(
     180deg,
-    #f6e6b4 0%,
-    #d3ad5f 32%,
-    #9c7930 62%,
-    #5f4519 100%
+    #fff2bc 0%,
+    #fffbe8 9%,
+    #f0cf6c 30%,
+    #d9ab3e 54%,
+    #b6851f 77%,
+    #7f5b13 100%
   );
   box-shadow:
-    0 2px 5px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    0 2px 5px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 252, 224, 0.65);
   z-index: 1;
 }
 

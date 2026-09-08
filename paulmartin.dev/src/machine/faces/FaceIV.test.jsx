@@ -12,6 +12,7 @@ const { mockPlay } = vi.hoisted(() => ({ mockPlay: vi.fn() }))
 vi.mock('../audio.jsx', () => ({
   useAudio: () => ({
     play: mockPlay,
+    playTileSlide: () => {},
     muted: false,
     armed: true,
     toggleMute: () => {},

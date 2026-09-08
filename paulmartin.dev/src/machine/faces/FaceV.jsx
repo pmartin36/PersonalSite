@@ -29,6 +29,23 @@ const BUTTON_SRC = {
 // sinks all the way down before it eases back up. Matches the down transition.
 const KEY_DOWN_MS = 400
 
+// The lock reads the last presses, not a run from scratch: the code opens whenever
+// the most recent presses end with SEQUENCE, no matter what came before. Returns how
+// many trailing presses currently match the start of SEQUENCE (the visible progress).
+function matchLength(buffer) {
+  for (let k = Math.min(buffer.length, SEQUENCE.length); k > 0; k--) {
+    let ok = true
+    for (let i = 0; i < k; i++) {
+      if (buffer[buffer.length - k + i] !== SEQUENCE[i]) {
+        ok = false
+        break
+      }
+    }
+    if (ok) return k
+  }
+  return 0
+}
+
 function ArrowPad({ onPress }) {
   const [pressed, setPressed] = useState({})
   const downAt = useRef({})
@@ -205,6 +222,9 @@ export default function FaceV() {
   } = useAudio()
   const { rotateTo, lockRotation } = useMachine()
   const [progress, setProgress] = useState(0)
+  // The recent presses (kept to SEQUENCE length), so the code matches on a trailing
+  // window rather than a clean run from the start.
+  const bufferRef = useRef([])
   // 'sealed' -> lid closed, entering the code. 'open' -> lid hinged up, drive
   // blinking, drum locked.
   const [stage, setStage] = useState('sealed')
@@ -220,23 +240,21 @@ export default function FaceV() {
 
   function press(direction) {
     if (stage !== 'sealed' || igniting) return
-    const expected = SEQUENCE[progress]
-    if (direction === expected) {
-      const next = progress + 1
-      setProgress(next)
-      if (next === SEQUENCE.length) {
-        setStage('open')
-        lockRotation(true)
-        // The lid grinds open (stone-on-stone + ascending melody). At 50% open the
-        // power-up fires and the idle watch-gears start and loop.
-        playLidOpen()
-        lidTimerRef.current = window.setTimeout(() => {
-          playPowerup()
-          startGears()
-        }, POWERUP_AT_MS)
-      }
-    } else {
-      setProgress(0)
+    const buffer = [...bufferRef.current, direction].slice(-SEQUENCE.length)
+    bufferRef.current = buffer
+    const matched = matchLength(buffer)
+    setProgress(matched)
+    if (matched === SEQUENCE.length) {
+      bufferRef.current = []
+      setStage('open')
+      lockRotation(true)
+      // The lid grinds open (stone-on-stone + ascending melody). At 50% open the
+      // power-up fires and the idle watch-gears start and loop.
+      playLidOpen()
+      lidTimerRef.current = window.setTimeout(() => {
+        playPowerup()
+        startGears()
+      }, POWERUP_AT_MS)
     }
   }
 
@@ -269,6 +287,7 @@ export default function FaceV() {
       rotateTo(faceIndex('I'), { silent: true })
       setStage('sealed')
       setProgress(0)
+      bufferRef.current = []
     }, 400)
   }
 

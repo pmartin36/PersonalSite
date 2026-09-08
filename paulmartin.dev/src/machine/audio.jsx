@@ -68,11 +68,15 @@ export const SOUNDS = {
 // deployed subpath alike. turn_face{n} is the drum landing sound for the face
 // at drum index n-1 (Face I -> turn_face1).
 export const SAMPLES = {
-  turn_face1: 'machine/sfx/turn_face1.mp3',
-  turn_face2: 'machine/sfx/turn_face2.mp3',
-  turn_face3: 'machine/sfx/turn_face3.mp3',
-  turn_face4: 'machine/sfx/turn_face4.mp3',
-  turn_face5: 'machine/sfx/turn_face5.mp3',
+  // The turn is split so each spin can be pitch-varied without detuning the note:
+  // turn_body (slide + landing + tremor, no note) plays at a random pitch per turn;
+  // turn_note{n} (the face's in-tune note) plays at true pitch.
+  turn_body: 'machine/sfx/turn_body.mp3',
+  turn_note1: 'machine/sfx/turn_note1.mp3',
+  turn_note2: 'machine/sfx/turn_note2.mp3',
+  turn_note3: 'machine/sfx/turn_note3.mp3',
+  turn_note4: 'machine/sfx/turn_note4.mp3',
+  turn_note5: 'machine/sfx/turn_note5.mp3',
   intro_spin: 'machine/sfx/intro_spin.mp3',
   jungle_loop: 'machine/sfx/jungle_loop.mp3',
   artifact_burst: 'machine/sfx/artifact_burst.mp3',
@@ -85,6 +89,16 @@ export const SAMPLES = {
   ui_tap: 'machine/sfx/ui_tap.mp3',
   ui_open: 'machine/sfx/ui_open.mp3',
   ui_close: 'machine/sfx/ui_close.mp3',
+  // Face III slot-reel step: the drum spin pitched up, no note. Three hand-picked
+  // pitch variants, chosen at random per spin (avoids the atonal odd pitches that
+  // continuous random detune sometimes landed on).
+  reel_spin1: 'machine/sfx/reel_spin1.mp3',
+  reel_spin2: 'machine/sfx/reel_spin2.mp3',
+  reel_spin3: 'machine/sfx/reel_spin3.mp3',
+  // Face IV sliding tile: the lid stone-grind pitched up, shortened to the slide.
+  tile_slide: 'machine/sfx/tile_slide.mp3',
+  // Face II card flip: an antique metal lid pivot (used as-is).
+  card_flip: 'machine/sfx/card_flip.mp3',
 }
 
 // Sample levels. The jungle bed sits well under the effects.
@@ -101,6 +115,12 @@ const POWERUP_GAIN = 0.7
 const GEARS_GAIN = 0.3
 // Light UI accents. Kept low so they never dominate.
 const UI_GAIN = 0.4
+// The reel spin sits like the turn, a bit under so a fast flurry isn't fatiguing.
+const REEL_GAIN = 0.16
+// Face IV tile slide, a small quick stone move.
+const TILE_GAIN = 0.15
+// Face II card flip, a light frequent action, kept under the UI clicks.
+const CARD_GAIN = 0.35
 
 const DEFAULT_AUDIO = {
   play: () => {},
@@ -114,6 +134,9 @@ const DEFAULT_AUDIO = {
   playMuteClick: () => {},
   playDetailOpen: () => {},
   playDetailClose: () => {},
+  playReelSpin: () => {},
+  playTileSlide: () => {},
+  playCardFlip: () => {},
   enterIgnition: () => {},
   exitIgnition: () => {},
   muted: true,
@@ -133,7 +156,7 @@ export function AudioProvider({ children }) {
   const [ignited, setIgnited] = useState(false)
   // ctx: the live AudioContext. buffers: decoded sample cache keyed by SAMPLES
   // name. jungle: the running ambience { src, g } or null.
-  const s = useRef({ ctx: null, buffers: {}, jungle: null, gears: null, master: null }).current
+  const s = useRef({ ctx: null, buffers: {}, jungle: null, gears: null, master: null, reelVoice: null }).current
   // Mirrors `muted` for async callbacks (sample-load completion) that would
   // otherwise capture a stale value.
   const mutedRef = useRef(muted)
@@ -145,11 +168,13 @@ export function AudioProvider({ children }) {
   // the { src, g } so a loop (the jungle bed) can be stopped later. A missing
   // ctx or buffer is a silent no-op so audio never throws.
   const playBuffer = useCallback(
-    (buffer, { gain = 1, loop = false, offset = 0, bypassMaster = false } = {}) => {
+    (buffer, { gain = 1, loop = false, offset = 0, bypassMaster = false, rate = 1 } = {}) => {
       if (!s.ctx || !buffer) return null
       const src = s.ctx.createBufferSource()
       src.buffer = buffer
       src.loop = loop
+      // rate != 1 detunes this one-shot (used to vary reel spins spin-to-spin).
+      if (rate !== 1 && src.playbackRate) src.playbackRate.value = rate
       const g = s.ctx.createGain()
       if (g.gain) g.gain.value = gain
       src.connect(g)
@@ -282,7 +307,11 @@ export function AudioProvider({ children }) {
       if (!armed || muted || !s.ctx) return
       const n = Number(faceIndex)
       if (!Number.isInteger(n) || n < 0 || n > 4) return
-      playBuffer(s.buffers[`turn_face${n + 1}`], { gain: TURN_GAIN })
+      // Body pitched +/- 25% per spin so two turns never sound identical; the
+      // note plays at true pitch so the melody stays in tune.
+      const rate = 1 + (Math.random() * 2 - 1) * 0.25
+      playBuffer(s.buffers.turn_body, { gain: TURN_GAIN, rate })
+      playBuffer(s.buffers[`turn_note${n + 1}`], { gain: TURN_GAIN })
     },
     [armed, muted, s, playBuffer]
   )
@@ -373,6 +402,38 @@ export function AudioProvider({ children }) {
     playBuffer(s.buffers.ui_close, { gain: UI_GAIN })
   }, [armed, muted, s, playBuffer])
 
+  // One Face III reel stepping (the drum spin pitched up, no note). Single voice:
+  // a new step STOPS the one in flight and restarts, so spinning fast never
+  // stacks overlapping scrapes, it retriggers the spin. +/- ~6% pitch per step
+  // so repeats don't sound copy-pasted (no tone to detune).
+  const playReelSpin = useCallback(() => {
+    if (!armed || muted || !s.ctx) return
+    if (s.reelVoice) {
+      try { s.reelVoice.src.stop() } catch { /* already ended */ }
+      s.reelVoice = null
+    }
+    // Pick one of three hand-picked pitch variants at random per spin.
+    const pick = 1 + Math.floor(Math.random() * 3)
+    s.reelVoice = playBuffer(s.buffers[`reel_spin${pick}`], { gain: REEL_GAIN })
+  }, [armed, muted, s, playBuffer])
+
+  // One Face II card flipping on its spindle.
+  const playCardFlip = useCallback(() => {
+    if (!armed || muted || !s.ctx) return
+    playBuffer(s.buffers.card_flip, { gain: CARD_GAIN })
+  }, [armed, muted, s, playBuffer])
+
+  // One Face IV tile sliding into place. Pitch maps to the slide DIRECTION: up/right
+  // slides read a touch higher, down/left a touch lower, so the sound tracks the move.
+  const playTileSlide = useCallback(
+    (direction) => {
+      if (!armed || muted || !s.ctx) return
+      const rate = direction === 'up' || direction === 'right' ? 1.06 : 0.94
+      playBuffer(s.buffers.tile_slide, { gain: TILE_GAIN, rate })
+    },
+    [armed, muted, s, playBuffer]
+  )
+
   // Master gain follows mute so EVERYTHING (synths, one-shot samples, and the
   // bed) is silenced the instant you mute, not just newly-triggered sounds. A
   // short ramp avoids a click.
@@ -395,7 +456,7 @@ export function AudioProvider({ children }) {
     else stopJungle()
   }, [armed, muted, ignited, startJungle, stopJungle])
 
-  const value = { play, playTurn, playIntroSpin, playArtifactBurst, playLidOpen, playPowerup, startGears, stopGears, playMuteClick, playDetailOpen, playDetailClose, enterIgnition, exitIgnition, muted, armed, toggleMute, mute, unmute, arm }
+  const value = { play, playTurn, playIntroSpin, playArtifactBurst, playLidOpen, playPowerup, startGears, stopGears, playMuteClick, playDetailOpen, playDetailClose, playReelSpin, playTileSlide, playCardFlip, enterIgnition, exitIgnition, muted, armed, toggleMute, mute, unmute, arm }
 
   return (
     <MachineAudioContext.Provider value={value}>

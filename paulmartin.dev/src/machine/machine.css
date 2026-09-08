@@ -126,6 +126,20 @@
     0 0.02em 0.03em rgba(14, 7, 1, 0.25);
 }
 
+/* Engraved text is decorative (cut into the stone); it should never show a text
+   selection highlight. Covers the carve class and every face's carved elements. */
+.machine-carve,
+.machine-carve--deep,
+.face1-name,
+.face4-about,
+.face4-contact__value,
+.face4-clue,
+.face2-mid__num,
+.face3-seam {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .clue {
   display: inline-flex;
   align-items: center;

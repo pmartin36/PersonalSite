@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import FaceSurface from '../FaceSurface.jsx'
+import { useAudio } from '../audio.jsx'
 import Clue from '../Clue.jsx'
 import './FaceIV.css'
 
@@ -148,17 +149,25 @@ function ContactTile({ tile, adjacentToGap, onSlide }) {
 }
 
 export default function FaceIV() {
+  const { playTileSlide } = useAudio()
   const [tiles, setTiles] = useState(INITIAL_TILES)
   const gapIndex = tiles.indexOf(null)
 
   function trySlide(cellIndex) {
     if (!adjacent(cellIndex, gapIndex)) return
+    // Direction the TILE travels (toward the gap), for the pitch mapping.
+    const c = rowCol(cellIndex)
+    const g = rowCol(gapIndex)
+    let direction
+    if (c.row === g.row) direction = g.col > c.col ? 'right' : 'left'
+    else direction = g.row > c.row ? 'down' : 'up'
     setTiles((current) => {
       const next = [...current]
       next[gapIndex] = current[cellIndex]
       next[cellIndex] = null
       return next
     })
+    playTileSlide(direction)
   }
 
   return (
