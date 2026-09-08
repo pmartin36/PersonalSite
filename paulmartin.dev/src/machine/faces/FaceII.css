@@ -362,9 +362,14 @@
   font-family: var(--display, serif);
   font-size: 2.4rem;
   font-weight: 700;
-  color: #e0b446;
-  /* Gold, no shine: a soft cast shadow downwards for depth, no glow. */
-  text-shadow: 0 4px 4px rgba(20, 12, 4, 0.5);
+  /* Dimensional gold kept crisp (a clipped gradient rasterizes blurry on the flipped
+     3D back): a solid gold with a lit top edge and a dark lower edge for depth, plus
+     a soft downward cast shadow, no glow. */
+  color: #e8bf52;
+  text-shadow:
+    0 -1px 0 rgba(255, 244, 188, 0.55),
+    0 1px 0 rgba(120, 76, 18, 0.9),
+    0 4px 4px rgba(20, 12, 4, 0.45);
 }
 
 .face2-mid__plus {
