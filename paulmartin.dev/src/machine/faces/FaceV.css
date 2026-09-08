@@ -204,6 +204,18 @@
   box-shadow: inset 0 6px 16px rgba(30, 18, 8, 0.5);
 }
 
+/* Art credit on the chamber floor (the device's own plane, not the lid), tucked in
+   the bottom-right corner, revealed when the lid hinges open. Plain dark brown. */
+.face5-credit {
+  position: absolute;
+  right: 0.7rem;
+  bottom: 0.5rem;
+  font-family: 'Eczar Variable', 'Eczar', var(--display, serif);
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  color: #3a2410;
+}
+
 /* The slab's four stone edge walls, folding back from the flush front into the
    recess so the lid is a closed box. Cut sandstone, a touch shadowed. */
 .face5-lid__edge {

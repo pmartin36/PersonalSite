@@ -90,8 +90,9 @@ export const SAMPLES = {
   ui_open: 'machine/sfx/ui_open.mp3',
   ui_close: 'machine/sfx/ui_close.mp3',
   // Face III slot-reel step: the drum spin pitched up, no note. Three hand-picked
-  // pitch variants, chosen at random per spin (avoids the atonal odd pitches that
-  // continuous random detune sometimes landed on).
+  // One per reel: a descending D-min-pentatonic coin-tick figure over a low stone
+  // grumble, with a light stone thunk seating at the end. The three reels start on
+  // adjacent pentatonic degrees, so each reel has its own note.
   reel_spin1: 'machine/sfx/reel_spin1.mp3',
   reel_spin2: 'machine/sfx/reel_spin2.mp3',
   reel_spin3: 'machine/sfx/reel_spin3.mp3',
@@ -99,6 +100,9 @@ export const SAMPLES = {
   tile_slide: 'machine/sfx/tile_slide.mp3',
   // Face II card flip: an antique metal lid pivot (used as-is).
   card_flip: 'machine/sfx/card_flip.mp3',
+  // Face V arrow-pad press: a muted stone slide, a deep stone thunk seating into
+  // place, then a soft return slide.
+  pad_press: 'machine/sfx/pad_press.mp3',
 }
 
 // Sample levels. The jungle bed sits well under the effects.
@@ -116,11 +120,15 @@ const GEARS_GAIN = 0.3
 // Light UI accents. Kept low so they never dominate.
 const UI_GAIN = 0.4
 // The reel spin sits like the turn, a bit under so a fast flurry isn't fatiguing.
-const REEL_GAIN = 0.16
-// Face IV tile slide, a small quick stone move.
+const REEL_GAIN = 0.2
+// Face IV tile slide, a small quick stone move. Three tonal styles (root, +2, +3
+// semitones - D-min-pentatonic steps), picked at random per slide.
 const TILE_GAIN = 0.15
+const TILE_RATES = [1.0, 1.122, 1.189]
 // Face II card flip, a light frequent action, kept under the UI clicks.
 const CARD_GAIN = 0.35
+// Face V arrow-pad press, a small frequent stone tap, kept quiet and non-fatiguing.
+const PAD_GAIN = 0.42
 
 const DEFAULT_AUDIO = {
   play: () => {},
@@ -137,6 +145,7 @@ const DEFAULT_AUDIO = {
   playReelSpin: () => {},
   playTileSlide: () => {},
   playCardFlip: () => {},
+  playPadPress: () => {},
   enterIgnition: () => {},
   exitIgnition: () => {},
   muted: true,
@@ -402,19 +411,17 @@ export function AudioProvider({ children }) {
     playBuffer(s.buffers.ui_close, { gain: UI_GAIN })
   }, [armed, muted, s, playBuffer])
 
-  // One Face III reel stepping (the drum spin pitched up, no note). Single voice:
-  // a new step STOPS the one in flight and restarts, so spinning fast never
-  // stacks overlapping scrapes, it retriggers the spin. +/- ~6% pitch per step
-  // so repeats don't sound copy-pasted (no tone to detune).
-  const playReelSpin = useCallback(() => {
+  // One Face III reel stepping. Each reel (0-2) plays its own note figure. Single
+  // voice: a new step STOPS the one in flight and restarts, so spinning fast
+  // retriggers the figure rather than stacking.
+  const playReelSpin = useCallback((reelIndex = 0) => {
     if (!armed || muted || !s.ctx) return
     if (s.reelVoice) {
       try { s.reelVoice.src.stop() } catch { /* already ended */ }
       s.reelVoice = null
     }
-    // Pick one of three hand-picked pitch variants at random per spin.
-    const pick = 1 + Math.floor(Math.random() * 3)
-    s.reelVoice = playBuffer(s.buffers[`reel_spin${pick}`], { gain: REEL_GAIN })
+    const n = 1 + (((reelIndex % 3) + 3) % 3)   // reel 0/1/2 -> reel_spin1/2/3
+    s.reelVoice = playBuffer(s.buffers[`reel_spin${n}`], { gain: REEL_GAIN })
   }, [armed, muted, s, playBuffer])
 
   // One Face II card flipping on its spindle.
@@ -423,12 +430,21 @@ export function AudioProvider({ children }) {
     playBuffer(s.buffers.card_flip, { gain: CARD_GAIN })
   }, [armed, muted, s, playBuffer])
 
-  // One Face IV tile sliding into place. Pitch maps to the slide DIRECTION: up/right
-  // slides read a touch higher, down/left a touch lower, so the sound tracks the move.
+  // One Face V arrow-pad key being pressed. +/- ~5% pitch per press so a flurry
+  // of taps never sounds copy-pasted.
+  const playPadPress = useCallback(() => {
+    if (!armed || muted || !s.ctx) return
+    const rate = 1 + (Math.random() * 2 - 1) * 0.05
+    playBuffer(s.buffers.pad_press, { gain: PAD_GAIN, rate })
+  }, [armed, muted, s, playBuffer])
+
+  // One Face IV tile sliding into place. Three tonal styles picked at random per
+  // slide (D-min-pentatonic-ish steps, all at/above the base so none hit low and
+  // loud), so repeated slides vary without tracking direction.
   const playTileSlide = useCallback(
-    (direction) => {
+    () => {
       if (!armed || muted || !s.ctx) return
-      const rate = direction === 'up' || direction === 'right' ? 1.06 : 0.94
+      const rate = TILE_RATES[Math.floor(Math.random() * TILE_RATES.length)]
       playBuffer(s.buffers.tile_slide, { gain: TILE_GAIN, rate })
     },
     [armed, muted, s, playBuffer]
@@ -456,7 +472,7 @@ export function AudioProvider({ children }) {
     else stopJungle()
   }, [armed, muted, ignited, startJungle, stopJungle])
 
-  const value = { play, playTurn, playIntroSpin, playArtifactBurst, playLidOpen, playPowerup, startGears, stopGears, playMuteClick, playDetailOpen, playDetailClose, playReelSpin, playTileSlide, playCardFlip, enterIgnition, exitIgnition, muted, armed, toggleMute, mute, unmute, arm }
+  const value = { play, playTurn, playIntroSpin, playArtifactBurst, playLidOpen, playPowerup, startGears, stopGears, playMuteClick, playDetailOpen, playDetailClose, playReelSpin, playTileSlide, playCardFlip, playPadPress, enterIgnition, exitIgnition, muted, armed, toggleMute, mute, unmute, arm }
 
   return (
     <MachineAudioContext.Provider value={value}>

@@ -125,9 +125,9 @@ const CONTACT_ICONS = {
 
 // A contact tile: a giant icon carved into the tile, with the value below it.
 // Only the value is the link (so most of the tile stays draggable), and only the
-// value lights up. When the tile sits next to the gap a click slides instead of
-// navigating.
-function ContactTile({ tile, adjacentToGap, onSlide }) {
+// value lights up. Clicking the link always navigates (it stops the click from
+// reaching the tile's slide handler); clicking the surrounding stone slides.
+function ContactTile({ tile, onSlide }) {
   const Icon = CONTACT_ICONS[tile.icon]
   return (
     <div className="face4-tile face4-tile--contact" onClick={onSlide}>
@@ -137,9 +137,7 @@ function ContactTile({ tile, adjacentToGap, onSlide }) {
         target="_blank"
         rel="noopener noreferrer"
         aria-label={tile.label}
-        onClick={(event) => {
-          if (adjacentToGap) event.preventDefault()
-        }}
+        onClick={(event) => event.stopPropagation()}
       >
         <Icon className="face4-contact__icon" />
         <span className="face4-contact__value">{tile.value}</span>
@@ -212,11 +210,7 @@ export default function FaceIV() {
                 {tile.kind === 'about' ? (
                   <AboutTile half={tile.half} onClick={() => trySlide(index)} />
                 ) : (
-                  <ContactTile
-                    tile={tile}
-                    adjacentToGap={adjacent(index, gapIndex)}
-                    onSlide={() => trySlide(index)}
-                  />
+                  <ContactTile tile={tile} onSlide={() => trySlide(index)} />
                 )}
               </div>
             )

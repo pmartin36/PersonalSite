@@ -247,7 +247,7 @@ export default function FaceIII() {
     setPositions((current) =>
       current.map((p, i) => (i === reelIndex ? p + dir : p)),
     )
-    playReelSpin()
+    playReelSpin(reelIndex)
   }
 
   return (

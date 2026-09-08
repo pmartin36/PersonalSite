@@ -10,6 +10,7 @@ vi.mock('../audio.jsx', () => ({
     playArtifactBurst: () => {},
     playLidOpen: () => {},
     playPowerup: () => {},
+    playPadPress: () => {},
     startGears: () => {},
     stopGears: () => {},
     enterIgnition: () => {},

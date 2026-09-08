@@ -46,17 +46,19 @@ function matchLength(buffer) {
   return 0
 }
 
-function ArrowPad({ onPress }) {
+function ArrowPad({ onPress, onPressStart }) {
   const [pressed, setPressed] = useState({})
   const downAt = useRef({})
   const timers = useRef({})
 
   // Press: sink now, and keep it down until at least KEY_DOWN_MS has passed (a tap
-  // completes the full sink), or until release if the key is held longer.
+  // completes the full sink), or until release if the key is held longer. The
+  // press SOUND fires here (on the way down), not on release.
   function down(direction) {
     clearTimeout(timers.current[direction])
     downAt.current[direction] = performance.now()
     setPressed((p) => ({ ...p, [direction]: true }))
+    onPressStart?.(direction)
   }
   function up(direction) {
     if (!downAt.current[direction]) return
@@ -215,6 +217,7 @@ export default function FaceV() {
     playArtifactBurst,
     playLidOpen,
     playPowerup,
+    playPadPress,
     startGears,
     stopGears,
     enterIgnition,
@@ -237,6 +240,13 @@ export default function FaceV() {
   // Pending "50% open" trigger for the power-up + idle gears, so it can be
   // cancelled if the drive is taken before the lid finishes opening.
   const lidTimerRef = useRef(null)
+
+  // The stone tap fires on the way DOWN (pointer-down), so the thunk lands as the
+  // key sinks, not on release. The lock itself still advances on the click.
+  function pressStart(direction) {
+    if (stage !== 'sealed' || igniting) return
+    playPadPress()
+  }
 
   function press(direction) {
     if (stage !== 'sealed' || igniting) return
@@ -309,12 +319,13 @@ export default function FaceV() {
           <div className="face5-alcove">
             {stage === 'open' && <Device onIgnite={ignite} />}
           </div>
+          <span className="face5-credit">Art by Olga Kholkina</span>
         </div>
         <div className="face5-lid">
           {/* The sealed slate face, carrying the pad and clue. */}
           <div className="face5-lid__face">
             <div className="face5-lock">
-              <ArrowPad onPress={press} />
+              <ArrowPad onPress={press} onPressStart={pressStart} />
             </div>
             <div className="face5-clue-box" aria-hidden="true">
               <Clue order={1} className="face5-clue">
