@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, cleanup, fireEvent, within } from '@testing-library/react'
 import FaceIV from './FaceIV.jsx'
-import { MOVES, moveByOrder } from '../model.js'
-import { DIRECTION_GLYPH } from '../Clue.jsx'
+import { MOVES } from '../model.js'
+import { directionLetter } from '../Clue.jsx'
 
 const { mockPlay } = vi.hoisted(() => ({ mockPlay: vi.fn() }))
 
@@ -26,21 +26,36 @@ const FACE_IV_MOVE = MOVES.find((m) => m.faceId === 'IV')
 
 const EMAIL_HREF = 'mailto:p@ulmartin.me'
 const LINKEDIN_HREF = 'https://www.linkedin.com/in/paul-martin-b8547616/'
-const GITHUB_HREF = 'https://github.com/pmartin36'
+const BLUESKY_HREF = 'https://bsky.app/profile/paulmartindev.bsky.social'
 
-function cellsInfo(container) {
-  return Array.from(container.querySelectorAll('[data-cell]')).map((el) => ({
-    index: Number(el.getAttribute('data-cell')),
-    gap: el.getAttribute('data-gap') === 'true',
-    kind: el.getAttribute('data-tile-kind'),
-    text: el.textContent,
+// The 2x3 tray has no gap cell in the DOM: five tiles render (the gap is the one
+// grid position none of them occupy). Each tile carries its grid index in its
+// transform, translate(col*100%, row*100%), so the index is read back from there.
+function tileIndex(cell) {
+  const m = cell.style.transform.match(/translate\(\s*([-\d.]+)%\s*,\s*([-\d.]+)%\s*\)/)
+  const col = Math.round(Number(m[1]) / 100)
+  const row = Math.round(Number(m[2]) / 100)
+  return row * 3 + col
+}
+
+function tiles(container) {
+  return Array.from(container.querySelectorAll('.face4-cell')).map((cell) => ({
+    cell,
+    index: tileIndex(cell),
+    kind: cell.getAttribute('data-tile-kind'),
   }))
 }
 
-function cellAt(container, index) {
-  const cell = container.querySelector(`[data-cell="${index}"]`)
-  expect(cell, `cell ${index} exists`).not.toBeNull()
-  return cell
+function tileAt(container, index) {
+  const found = tiles(container).find((t) => t.index === index)
+  expect(found, `a tile occupies grid index ${index}`).toBeTruthy()
+  return found.cell
+}
+
+function occupiedIndices(container) {
+  return tiles(container)
+    .map((t) => t.index)
+    .sort((a, b) => a - b)
 }
 
 beforeEach(() => {
@@ -52,87 +67,81 @@ afterEach(() => {
 })
 
 describe('FaceIV initial layout', () => {
-  it('renders 6 cells: About, About, gap, Email, LinkedIn, GitHub, with the gap at cell 2', () => {
+  it('renders five tiles: About, About, Email, LinkedIn, Bluesky, with the gap at grid index 2', () => {
     const { container } = render(<FaceIV />)
-    const cells = cellsInfo(container)
-    expect(cells.length).toBe(6)
-    expect(cells.map((c) => c.gap)).toEqual([false, false, true, false, false, false])
-    expect(cells[0].kind).toBe('about')
-    expect(cells[1].kind).toBe('about')
-    expect(cells[3].kind).toBe('contact')
-    expect(cells[4].kind).toBe('contact')
-    expect(cells[5].kind).toBe('contact')
+    const all = tiles(container)
+    expect(all.length).toBe(5)
+    // Index 2 (top-right) is the gap: no tile occupies it.
+    expect(occupiedIndices(container)).toEqual([0, 1, 3, 4, 5])
+    expect(tileAt(container, 0).getAttribute('data-tile-kind')).toBe('about')
+    expect(tileAt(container, 1).getAttribute('data-tile-kind')).toBe('about')
+    expect(tileAt(container, 3).getAttribute('data-tile-kind')).toBe('contact')
+    expect(tileAt(container, 4).getAttribute('data-tile-kind')).toBe('contact')
+    expect(tileAt(container, 5).getAttribute('data-tile-kind')).toBe('contact')
   })
 })
 
 describe('FaceIV slide legality', () => {
-  it('slides a tile adjacent to the gap (About at cell 1) into the gap', () => {
+  it('slides the About tile adjacent to the gap (grid index 1) into the gap', () => {
     const { container } = render(<FaceIV />)
-    const before = cellsInfo(container)
-    const tile = within(cellAt(container, 1)).getByRole('button', { name: /about/i })
+    const tile = within(tileAt(container, 1)).getByRole('button', { name: /about/i })
 
     fireEvent.click(tile)
 
-    const after = cellsInfo(container)
-    expect(after[1].gap).toBe(true)
-    expect(after[2].gap).toBe(false)
-    expect(after[2].kind).toBe('about')
-    expect(after.filter((c, i) => i !== 1 && i !== 2)).toEqual(
-      before.filter((c, i) => i !== 1 && i !== 2),
-    )
+    // The About tile moved into the gap (index 2); the gap is now at index 1.
+    expect(occupiedIndices(container)).toEqual([0, 2, 3, 4, 5])
+    expect(tileAt(container, 2).getAttribute('data-tile-kind')).toBe('about')
   })
 
-  it('slides a tile adjacent to the gap (GitHub at cell 5) into the gap', () => {
+  it('slides the contact tile adjacent to the gap (Bluesky at grid index 5) into the gap', () => {
     const { container } = render(<FaceIV />)
-    const tile = within(cellAt(container, 5)).getByRole('link', { name: /github/i })
+    const tile = within(tileAt(container, 5)).getByRole('link', { name: /bluesky/i })
 
     fireEvent.click(tile)
 
-    const after = cellsInfo(container)
-    expect(after[5].gap).toBe(true)
-    expect(after[2].gap).toBe(false)
-    expect(after[2].kind).toBe('contact')
+    expect(occupiedIndices(container)).toEqual([0, 1, 2, 3, 4])
+    expect(tileAt(container, 2).getAttribute('data-tile-kind')).toBe('contact')
   })
 
-  it('leaves the arrangement unchanged when a non-adjacent tile is clicked (About at cell 0)', () => {
+  it('leaves the arrangement unchanged when a non-adjacent About tile is clicked (grid index 0)', () => {
     const { container } = render(<FaceIV />)
-    const before = cellsInfo(container)
-    const tile = within(cellAt(container, 0)).getByRole('button', { name: /about/i })
+    const before = occupiedIndices(container)
+    const tile = within(tileAt(container, 0)).getByRole('button', { name: /about/i })
 
     fireEvent.click(tile)
 
-    expect(cellsInfo(container)).toEqual(before)
+    expect(occupiedIndices(container)).toEqual(before)
   })
 
-  it('leaves the arrangement unchanged when a non-adjacent contact tile is clicked (Email at cell 3)', () => {
+  it('leaves the arrangement unchanged when a non-adjacent contact tile is clicked (Email at grid index 3)', () => {
     const { container } = render(<FaceIV />)
-    const before = cellsInfo(container)
-    const tile = within(cellAt(container, 3)).getByRole('link', { name: /email/i })
+    const before = occupiedIndices(container)
+    const tile = within(tileAt(container, 3)).getByRole('link', { name: /email/i })
 
     fireEvent.click(tile)
 
-    expect(cellsInfo(container)).toEqual(before)
+    expect(occupiedIndices(container)).toEqual(before)
   })
 })
 
 describe('FaceIV contact tiles', () => {
-  it('links to the expected Email, LinkedIn, and GitHub URLs', () => {
+  it('links to the expected Email, LinkedIn, and Bluesky URLs', () => {
     const { container } = render(<FaceIV />)
     expect(
-      within(cellAt(container, 3)).getByRole('link', { name: /email/i }).getAttribute('href'),
+      within(tileAt(container, 3)).getByRole('link', { name: /email/i }).getAttribute('href'),
     ).toBe(EMAIL_HREF)
     expect(
-      within(cellAt(container, 4)).getByRole('link', { name: /linkedin/i }).getAttribute('href'),
+      within(tileAt(container, 4)).getByRole('link', { name: /linkedin/i }).getAttribute('href'),
     ).toBe(LINKEDIN_HREF)
     expect(
-      within(cellAt(container, 5)).getByRole('link', { name: /github/i }).getAttribute('href'),
-    ).toBe(GITHUB_HREF)
+      within(tileAt(container, 5)).getByRole('link', { name: /bluesky/i }).getAttribute('href'),
+    ).toBe(BLUESKY_HREF)
   })
 
   it('renders the About tiles as buttons, not links', () => {
     const { container } = render(<FaceIV />)
-    expect(within(cellAt(container, 0)).queryByRole('link')).toBeNull()
-    expect(within(cellAt(container, 1)).queryByRole('link')).toBeNull()
+    expect(within(tileAt(container, 0)).queryByRole('link')).toBeNull()
+    expect(within(tileAt(container, 1)).queryByRole('link')).toBeNull()
   })
 })
 
@@ -145,11 +154,11 @@ describe('FaceIV clue hook', () => {
     expect(clues[0].getAttribute('data-clue-direction')).toBe(FACE_IV_MOVE.direction)
   })
 
-  it('renders the order piece as one tally stroke per move order and the direction piece as the derived glyph', () => {
+  it('renders the order piece as one tally stroke per move order and the direction piece as the derived letter', () => {
     const { container } = render(<FaceIV />)
-    const strokes = container.querySelectorAll('.face4-clue__order .face4-tally__stroke')
-    expect(strokes.length).toBe(moveByOrder(5).order)
+    const strokes = container.querySelectorAll('.face4-clue__order .face4-tally__path')
+    expect(strokes.length).toBe(FACE_IV_MOVE.order)
     const directionPiece = container.querySelector('[data-clue-piece="direction"]')
-    expect(directionPiece.textContent).toBe(DIRECTION_GLYPH[FACE_IV_MOVE.direction])
+    expect(directionPiece.textContent).toBe(directionLetter(FACE_IV_MOVE.direction))
   })
 })

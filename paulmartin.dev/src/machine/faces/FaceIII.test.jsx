@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, cleanup, fireEvent } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import FaceIII from './FaceIII.jsx'
 import { directionLetter } from '../Clue.jsx'
-import { moveByOrder } from '../model.js'
-import { WINNING } from '../seamGlyphs.js'
+import { MOVES } from '../model.js'
 
 const { mockPlay } = vi.hoisted(() => ({ mockPlay: vi.fn() }))
 
@@ -25,12 +25,41 @@ vi.mock('../audio.jsx', () => ({
   }),
 }))
 
-function reelButtons(container) {
-  return Array.from(container.querySelectorAll('[data-reel]'))
+// Face III carries two of the lock's six moves. The seam move (order 5) is
+// spelled by the half-glyph edges that meet across the reel gaps; the other
+// Face III move is the gold colored-character clue gilded into the copy.
+const SEAM_ORDER = 5
+const COLORED_MOVE = MOVES.find((m) => m.faceId === 'III' && m.order !== SEAM_ORDER)
+const CLUE_DIGIT = String(COLORED_MOVE.order)
+const CLUE_LETTER = directionLetter(COLORED_MOVE.direction).toUpperCase()
+
+// Projects reach for react-router (the plaque's <OrgTag> renders a <Link>), so
+// mount inside a router.
+function renderFace() {
+  return render(
+    <MemoryRouter>
+      <FaceIII />
+    </MemoryRouter>,
+  )
+}
+
+function reels(container) {
+  return Array.from(container.querySelectorAll('.face3-reel'))
+}
+
+function reelWindow(reel) {
+  return reel.querySelector('.face3-reel__window')
 }
 
 function facesOf(reel) {
-  return Array.from(reel.querySelectorAll('[data-reel-face]'))
+  return Array.from(reel.querySelectorAll('.face3-reel__face'))
+}
+
+// The wheel's rotation is carried in its transform: rotateX(60 * position deg).
+function wheelRotation(reel) {
+  const wheel = reel.querySelector('.face3-reel__wheel')
+  const m = wheel.style.transform.match(/rotateX\(([-\d.]+)deg\)/)
+  return Number(m[1])
 }
 
 beforeEach(() => {
@@ -42,109 +71,79 @@ afterEach(() => {
 })
 
 describe('FaceIII reels — mount', () => {
-  it('renders exactly three reel spin buttons, each at position 0', () => {
-    const { container } = render(<FaceIII />)
-    const reels = reelButtons(container)
-    expect(reels.length).toBe(3)
-    reels.forEach((reel) => {
-      expect(reel.getAttribute('data-position')).toBe('0')
+  it('renders exactly three reels, each a spinnable window', () => {
+    const { container } = renderFace()
+    const all = reels(container)
+    expect(all.length).toBe(3)
+    all.forEach((reel) => {
+      const win = reelWindow(reel)
+      expect(win).not.toBeNull()
+      expect(win.getAttribute('role')).toBe('button')
+      expect(win.getAttribute('aria-label')).toBe('Spin reel')
     })
   })
-})
 
-describe('FaceIII reels — spin advances and wraps, independently', () => {
-  ;[0, 1, 2].forEach((reelIndex) => {
-    it(`tapping reel ${reelIndex} three times cycles its position 1, 2, 0 and leaves the other reels untouched`, () => {
-      const { container } = render(<FaceIII />)
-      const reels = reelButtons(container)
-      const target = reels[reelIndex]
-      const others = reels.filter((_, i) => i !== reelIndex)
-      const otherStartPositions = others.map((r) => r.getAttribute('data-position'))
-
-      const expectedPositions = ['1', '2', '0']
-      expectedPositions.forEach((expected) => {
-        fireEvent.click(target)
-        expect(target.getAttribute('data-position')).toBe(expected)
-      })
-
-      others.forEach((r, i) => {
-        expect(r.getAttribute('data-position')).toBe(otherStartPositions[i])
-      })
-    })
-  })
-})
-
-describe('FaceIII reels — blank third face', () => {
-  it('every reel has a blank face at index 2', () => {
-    const { container } = render(<FaceIII />)
-    const reels = reelButtons(container)
-    expect(reels.length).toBe(3)
-    reels.forEach((reel) => {
+  it('each reel is a six-face wheel (its three entries repeated) with two blank faces', () => {
+    const { container } = renderFace()
+    reels(container).forEach((reel) => {
       const faces = facesOf(reel)
-      expect(faces.length).toBe(3)
-      expect(faces[2].getAttribute('data-blank')).toBe('true')
+      expect(faces.length).toBe(6)
+      const blanks = faces.filter((f) => f.classList.contains('face3-reel__face--blank'))
+      expect(blanks.length).toBe(2)
     })
   })
+})
 
-  it('reel 3 (index 2) has all three faces blank', () => {
-    const { container } = render(<FaceIII />)
-    const reels = reelButtons(container)
-    const reel3 = reels[2]
-    const faces = facesOf(reel3)
-    faces.forEach((face) => {
-      expect(face.getAttribute('data-blank')).toBe('true')
+describe('FaceIII reels — spin advances one step, independently', () => {
+  ;[0, 1, 2].forEach((reelIndex) => {
+    it(`clicking reel ${reelIndex} advances only its wheel by 60deg`, () => {
+      const { container } = renderFace()
+      const all = reels(container)
+      const before = all.map(wheelRotation)
+
+      fireEvent.click(reelWindow(all[reelIndex]))
+
+      const after = all.map(wheelRotation)
+      after.forEach((rot, i) => {
+        if (i === reelIndex) expect(rot).toBe(before[i] + 60)
+        else expect(rot).toBe(before[i])
+      })
     })
   })
 })
 
 describe('FaceIII reels — content', () => {
-  it('reel 1 shows Stargazer and Pong on its non-blank faces', () => {
-    const { container } = render(<FaceIII />)
-    const reel1 = reelButtons(container)[0]
-    expect(reel1.textContent).toContain('Stargazer')
-    expect(reel1.textContent).toContain('Pong')
+  it('reel 0 shows Pong and Stargazer', () => {
+    const { container } = renderFace()
+    const reel = reels(container)[0]
+    expect(reel.textContent).toContain('Pong')
+    expect(reel.textContent).toContain('Stargazer')
   })
 
-  it('reel 2 shows The 16 Spaces and Solar Express on its non-blank faces', () => {
-    const { container } = render(<FaceIII />)
-    const reel2 = reelButtons(container)[1]
-    expect(reel2.textContent).toContain('The 16 Spaces')
-    expect(reel2.textContent).toContain('Solar Express')
-  })
-})
-
-describe('FaceIII clue — move 6 (colored digit + paired letter)', () => {
-  it('renders a clue hook at order 6, matching MOVES direction Left, without spinning any reel', () => {
-    const { container } = render(<FaceIII />)
-    const hook = container.querySelector('[data-clue-order="6"]')
-    expect(hook).toBeTruthy()
-    expect(hook.getAttribute('data-clue-direction')).toBe('Left')
-    expect(hook.textContent).toContain('6')
-    expect(mockPlay).not.toHaveBeenCalled()
+  it('reel 1 shows The 16 Spaces and Solar Express', () => {
+    const { container } = renderFace()
+    const reel = reels(container)[1]
+    expect(reel.textContent).toContain('The 16 Spaces')
+    expect(reel.textContent).toContain('Solar Express')
   })
 
-  it('the paired direction letter is derived from the same MOVES entry as the hook and shares its tint class', () => {
-    const { container } = render(<FaceIII />)
-    const hook = container.querySelector('[data-clue-order="6"]')
-    const tintClass = Array.from(hook.classList).find((c) => c.includes('tint'))
-    expect(tintClass).toBeTruthy()
-
-    const letterEl = Array.from(container.querySelectorAll(`.${tintClass}`)).find(
-      (el) => el !== hook,
-    )
-    expect(letterEl).toBeTruthy()
-    expect(letterEl.textContent.trim()).toBe(directionLetter(moveByOrder(6).direction))
+  it('reel 2 shows Nuclear Reactor and Jam Games', () => {
+    const { container } = renderFace()
+    const reel = reels(container)[2]
+    expect(reel.textContent).toContain('Nuclear Reactor')
+    expect(reel.textContent).toContain('Jam Games')
   })
 })
 
 describe('FaceIII seam-glyph edges — every face etched', () => {
-  it('every reel face renders a left and right edge mark, behind content and hidden from AT', () => {
-    const { container } = render(<FaceIII />)
-    const faces = Array.from(container.querySelectorAll('[data-reel-face]'))
-    expect(faces.length).toBe(9)
+  it('every reel face renders a left and right seam half-glyph, hidden from AT', () => {
+    const { container } = renderFace()
+    const faces = Array.from(container.querySelectorAll('.face3-reel__face'))
+    // Three reels, six faces each.
+    expect(faces.length).toBe(18)
     faces.forEach((face) => {
-      const left = face.querySelector('[data-edge="left"]')
-      const right = face.querySelector('[data-edge="right"]')
+      const left = face.querySelector('.face3-seam--left')
+      const right = face.querySelector('.face3-seam--right')
       expect(left).toBeTruthy()
       expect(right).toBeTruthy()
       expect(left.getAttribute('aria-hidden')).toBe('true')
@@ -153,40 +152,28 @@ describe('FaceIII seam-glyph edges — every face etched', () => {
   })
 })
 
-describe('FaceIII clue — move 2 (seam-glyph alignment)', () => {
-  it('renders a clue hook at order 2, matching MOVES direction Right, without spinning any reel', () => {
-    const { container } = render(<FaceIII />)
-    const hook = container.querySelector('[data-clue-order="2"]')
-    expect(hook).toBeTruthy()
-    expect(hook.getAttribute('data-clue-direction')).toBe('Right')
+describe('FaceIII colored-character clue', () => {
+  it('gilds the order digit in the Pong headline, derived from the Face III colored move', () => {
+    const { container } = renderFace()
+    const orderClue = container.querySelector('.plaque__clue[data-clue-piece="order"]')
+    expect(orderClue).toBeTruthy()
+    expect(orderClue.textContent).toBe(CLUE_DIGIT)
   })
 
-  it('spinning to the winning combination shows the aligned/clean-read state', () => {
-    const { container } = render(<FaceIII />)
-    const reels = reelButtons(container)
-    WINNING.positions.forEach((target, reelIndex) => {
-      for (let clicks = 0; clicks < target; clicks++) {
-        fireEvent.click(reels[reelIndex])
-      }
-    })
-    const seamClue = container.querySelector('.face3-seam-clue')
-    expect(seamClue).toBeTruthy()
-    expect(seamClue.className).toContain('face3-seam-clue--aligned')
+  it('gilds the paired direction letter in the Solar Express blurb, the same colored move', () => {
+    const { container } = renderFace()
+    const dirClue = container.querySelector('.plaque__clue[data-clue-piece="direction"]')
+    expect(dirClue).toBeTruthy()
+    expect(dirClue.textContent).toBe(CLUE_LETTER)
   })
+})
 
-  it('a non-winning combination does not show the aligned/clean-read state', () => {
-    const { container } = render(<FaceIII />)
-    const reels = reelButtons(container)
-    WINNING.positions.forEach((target, reelIndex) => {
-      for (let clicks = 0; clicks < target; clicks++) {
-        fireEvent.click(reels[reelIndex])
-      }
-    })
-    // one more click moves reel 0 off the winning position while the other
-    // two reels stay put, so the combination as a whole is no longer winning
-    fireEvent.click(reels[0])
-    const seamClue = container.querySelector('.face3-seam-clue')
-    expect(seamClue).toBeTruthy()
-    expect(seamClue.className).not.toContain('face3-seam-clue--aligned')
+describe('FaceIII onward call-to-action', () => {
+  it('the middle reel carries the GitHub link out', () => {
+    const { container } = renderFace()
+    const link = container.querySelector('.face3-cta__logo-link')
+    expect(link).toBeTruthy()
+    expect(link.getAttribute('href')).toBe('https://github.com/pmartin36')
+    expect(link.getAttribute('aria-label')).toBe('More projects on GitHub')
   })
 })

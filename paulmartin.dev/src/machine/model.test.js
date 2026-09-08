@@ -5,11 +5,11 @@ describe('MOVES', () => {
   it('has 6 entries with the exact order/direction/faceId mapping', () => {
     expect(MOVES).toEqual([
       { order: 1, direction: 'Up', faceId: 'V' },
-      { order: 2, direction: 'Right', faceId: 'III' },
-      { order: 3, direction: 'Left', faceId: 'II' },
+      { order: 2, direction: 'Right', faceId: 'IV' },
+      { order: 3, direction: 'Down', faceId: 'III' },
       { order: 4, direction: 'Up', faceId: 'I' },
-      { order: 5, direction: 'Down', faceId: 'IV' },
-      { order: 6, direction: 'Left', faceId: 'III' },
+      { order: 5, direction: 'Right', faceId: 'III' },
+      { order: 6, direction: 'Left', faceId: 'II' },
     ])
   })
 
@@ -21,7 +21,7 @@ describe('MOVES', () => {
 
 describe('SEQUENCE', () => {
   it('equals the directions in order', () => {
-    expect(SEQUENCE).toEqual(['Up', 'Right', 'Left', 'Up', 'Down', 'Left'])
+    expect(SEQUENCE).toEqual(['Up', 'Right', 'Down', 'Up', 'Right', 'Left'])
   })
 
   it('is derived from MOVES sorted by order, not a standalone literal', () => {
@@ -40,7 +40,7 @@ describe('RESUME_URL', () => {
 
 describe('moveByOrder', () => {
   it('returns the entry for a known order', () => {
-    expect(moveByOrder(3)).toEqual({ order: 3, direction: 'Left', faceId: 'II' })
+    expect(moveByOrder(3)).toEqual({ order: 3, direction: 'Down', faceId: 'III' })
   })
 
   it('throws on an unknown order', () => {

@@ -95,7 +95,7 @@ describe('rotation helpers', () => {
 
 describe('Machine shell — mount', () => {
   it('renders all five faces as regions, in DOM order', () => {
-    render(<Machine />)
+    renderMachine()
     const regions = screen.queryAllByRole('region')
     expect(regions.map((r) => r.getAttribute('aria-label'))).toEqual([
       'Face I',
@@ -107,8 +107,10 @@ describe('Machine shell — mount', () => {
   })
 
   it('rests on Face I: its pip is lit and its region is the active face', () => {
-    const { container } = render(<Machine />)
-    const pips = container.querySelectorAll('.machine__pip')
+    const { container } = renderMachine()
+    // Each face carries its own five-pip wayfinding nav; the first face's first
+    // pip is the lit "you are here" pip.
+    const pips = container.querySelectorAll('.face-pip')
     expect(pips[0]?.getAttribute('aria-current')).toBe('true')
     expect(
       container.querySelector('.machine__face--I')?.classList.contains('machine__face--active')
@@ -129,17 +131,26 @@ describe('Machine shell — mount', () => {
 })
 
 describe('Machine shell — rotateTo via wayfinding pips', () => {
-  it('clicking a pip brings the matching face to front and lights that pip', () => {
-    const { container } = render(<Machine />)
+  it('clicking a pip brings the matching face to front', () => {
+    // Reduced motion: no opening spin, so rotateTo is free from mount.
+    mockMatchMedia(true)
+    const { container } = renderMachine()
     mockPlay.mockClear()
-    const pips = container.querySelectorAll('.machine__pip')
-    expect(pips.length).toBe(5)
+    // Every face renders the five-pip nav, so the drum carries FACES.length^2 pips.
+    const pips = container.querySelectorAll('.face-pip')
+    expect(pips.length).toBe(FACES.length * FACES.length)
+    // Face I's fourth pip (index 3 of the first nav) targets drum index 3 (Face IV).
     fireEvent.click(pips[3])
-    expect(pips[3].getAttribute('aria-current')).toBe('true')
-    expect(pips[0].getAttribute('aria-current')).not.toBe('true')
     expect(
       container.querySelector('.machine__face--IV')?.classList.contains('machine__face--active')
     ).toBe(true)
+    expect(
+      container.querySelector('.machine__face--I')?.classList.contains('machine__face--active')
+    ).toBe(false)
+    // The now-active Face IV nav lights its own "you are here" pip (its fourth).
+    const faceIVNav = container.querySelector('.machine__face--IV .face-wayfinding')
+    const faceIVPips = faceIVNav.querySelectorAll('.face-pip')
+    expect(faceIVPips[3].getAttribute('aria-current')).toBe('true')
   })
 
   it('every rotateTo settle fires the destination-face turn sample, not the old snap', () => {
@@ -165,7 +176,7 @@ describe('Machine shell — rotateTo via wayfinding pips', () => {
 describe('Machine shell — reduced motion', () => {
   it('takes the static crossfade path: no intro thunk/snap, all five faces still present in DOM order', () => {
     mockMatchMedia(true)
-    const { container } = render(<Machine />)
+    const { container } = renderMachine()
     expect(container.querySelector('[data-reduced]')).not.toBeNull()
     expect(mockPlay).not.toHaveBeenCalled()
     const regions = screen.queryAllByRole('region')

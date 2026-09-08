@@ -8,9 +8,9 @@ describe('Clue data hooks', () => {
   for (const move of [
     { order: 1, direction: 'Up' },
     { order: 2, direction: 'Right' },
-    { order: 3, direction: 'Left' },
+    { order: 3, direction: 'Down' },
     { order: 4, direction: 'Up' },
-    { order: 5, direction: 'Down' },
+    { order: 5, direction: 'Right' },
     { order: 6, direction: 'Left' },
   ]) {
     it(`order ${move.order} emits data-clue-order/direction from MOVES`, () => {
@@ -52,7 +52,7 @@ describe('Clue data hooks', () => {
         }}
       </Clue>
     )
-    expect(received[0]).toMatchObject({ order: 5, direction: 'Down' })
+    expect(received[0]).toMatchObject({ order: 5, direction: 'Right' })
   })
 
   it('does not announce the direction to assistive tech', () => {

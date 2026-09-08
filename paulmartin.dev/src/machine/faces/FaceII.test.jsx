@@ -99,12 +99,14 @@ describe('FaceII cards — Details opens the matching project', () => {
 })
 
 describe('FaceII clue', () => {
-  it('renders exactly one clue hook, matching MOVES for face II (order 3, Left), displayed as "3L"', () => {
+  it('renders exactly one clue hook, matching MOVES for face II (order 6, Left), showing the order digit "6"', () => {
     const { container } = render(<FaceII />)
     const clues = container.querySelectorAll('[data-clue-order]')
     expect(clues.length).toBe(1)
-    expect(clues[0].getAttribute('data-clue-order')).toBe('3')
+    expect(clues[0].getAttribute('data-clue-order')).toBe('6')
     expect(clues[0].getAttribute('data-clue-direction')).toBe('Left')
-    expect(clues[0].textContent).toBe('3L')
+    // The middle card-back shows only the order digit; the Left direction is
+    // carried by the f/e/d seven-segment bars carved across the three cards.
+    expect(clues[0].textContent).toBe('6')
   })
 })

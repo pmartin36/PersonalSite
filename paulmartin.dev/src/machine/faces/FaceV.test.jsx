@@ -2,7 +2,6 @@ import { describe, it, expect, afterEach, vi } from 'vitest'
 import { render, cleanup, fireEvent } from '@testing-library/react'
 import FaceV from './FaceV.jsx'
 import { SEQUENCE, moveByOrder } from '../model.js'
-import { DIRECTION_GLYPH } from '../Clue.jsx'
 
 // FaceV's own lock/reveal logic is under test here, not audio (covered by
 // audio.test.jsx), so audio.jsx is replaced with inert no-ops.
@@ -31,72 +30,84 @@ afterEach(() => {
 })
 
 function arrowButtons(container) {
-  return Array.from(container.querySelectorAll('[data-direction]'))
+  return Array.from(container.querySelectorAll('.face5-pad__button'))
 }
 
 function pressArrow(container, direction) {
-  const button = container.querySelector(`[data-direction="${direction}"]`)
+  const button = container.querySelector(`[aria-label="${direction}"]`)
   expect(button, `arrow button for ${direction} exists`).not.toBeNull()
   fireEvent.click(button)
 }
 
+// The lock wrapper is the .face5-slab; it is solved when its data-stage is
+// "open" (there is no data-solved attribute anymore).
 function lockWrapper(container) {
-  const el = container.querySelector('[data-solved]')
-  expect(el, 'lock wrapper with data-solved exists').not.toBeNull()
+  const el = container.querySelector('.face5-slab')
+  expect(el, 'lock wrapper .face5-slab exists').not.toBeNull()
   return el
 }
 
+function isSolved(container) {
+  return lockWrapper(container).getAttribute('data-stage') === 'open'
+}
+
 describe('FaceV arrow pad', () => {
-  it('renders exactly four arrow buttons, one per direction, glyph derived from DIRECTION_GLYPH', () => {
+  it('renders exactly four arrow buttons, one per direction, selected by aria-label, each an image key', () => {
     const { container } = render(<FaceV />)
     const buttons = arrowButtons(container)
     expect(buttons.length).toBe(4)
-    const directions = buttons.map((b) => b.getAttribute('data-direction')).sort()
-    expect(directions).toEqual(Object.keys(DIRECTION_GLYPH).sort())
+    const directions = buttons.map((b) => b.getAttribute('aria-label')).sort()
+    expect(directions).toEqual(['Down', 'Left', 'Right', 'Up'])
     buttons.forEach((b) => {
-      const dir = b.getAttribute('data-direction')
-      expect(b.textContent).toBe(DIRECTION_GLYPH[dir])
+      // The key is a painted PNG face, not a glyph rendered from DIRECTION_GLYPH.
+      expect(b.querySelector('img')).not.toBeNull()
+      expect(b.textContent).toBe('')
     })
   })
 })
 
-describe('FaceV sequence lock', () => {
-  it('solves on the full correct SEQUENCE and flips to the solved celebration', () => {
-    const { container, getByText } = render(<FaceV />)
+describe('FaceV sequence lock (sliding window)', () => {
+  it('solves on the full correct SEQUENCE: stage opens and the drive can be taken', () => {
+    const { container, getByLabelText } = render(<FaceV />)
     SEQUENCE.forEach((direction) => pressArrow(container, direction))
-    expect(lockWrapper(container).getAttribute('data-solved')).toBe('true')
-    expect(getByText('You found the way through.')).toBeTruthy()
+    expect(isSolved(container)).toBe(true)
+    expect(lockWrapper(container).getAttribute('data-lock-progress')).toBe(
+      String(SEQUENCE.length),
+    )
+    expect(getByLabelText('Take the drive')).toBeTruthy()
   })
 
-  it('a wrong first press resets progress to 0 and does not solve', () => {
+  it('garbage presses followed by the full SEQUENCE still solve (the window matches the trailing presses)', () => {
     const { container } = render(<FaceV />)
-    const wrongFirst = Object.keys(DIRECTION_GLYPH).find((d) => d !== SEQUENCE[0])
-    pressArrow(container, wrongFirst)
-    expect(lockWrapper(container).getAttribute('data-lock-progress')).toBe('0')
-    expect(lockWrapper(container).getAttribute('data-solved')).toBe('false')
+    // Mistimed / wrong presses first: the lock no longer hard-resets on a bad press.
+    ;['Down', 'Left', 'Down'].forEach((d) => pressArrow(container, d))
+    expect(isSolved(container)).toBe(false)
+    SEQUENCE.forEach((direction) => pressArrow(container, direction))
+    expect(isSolved(container)).toBe(true)
   })
 
-  it('a wrong press at step 3 resets progress to 0, even when it equals SEQUENCE[0]', () => {
+  it('an incomplete SEQUENCE does not solve, but shows partial progress', () => {
     const { container } = render(<FaceV />)
-    pressArrow(container, SEQUENCE[0])
-    pressArrow(container, SEQUENCE[1])
-    pressArrow(container, SEQUENCE[0])
-    expect(lockWrapper(container).getAttribute('data-lock-progress')).toBe('0')
-    expect(lockWrapper(container).getAttribute('data-solved')).toBe('false')
+    const partial = SEQUENCE.slice(0, SEQUENCE.length - 1)
+    partial.forEach((direction) => pressArrow(container, direction))
+    expect(isSolved(container)).toBe(false)
+    expect(lockWrapper(container).getAttribute('data-lock-progress')).toBe(
+      String(partial.length),
+    )
   })
 
-  it('one Up press from a fresh state advances progress to 1 (the mashing gimme)', () => {
+  it('one Up press from a fresh state advances progress to 1 (Up opens SEQUENCE)', () => {
     const { container } = render(<FaceV />)
     pressArrow(container, 'Up')
     expect(lockWrapper(container).getAttribute('data-lock-progress')).toBe('1')
   })
 
-  it('an extra press after solving leaves the solved state unchanged', () => {
+  it('an extra press after solving leaves the open stage unchanged', () => {
     const { container } = render(<FaceV />)
     SEQUENCE.forEach((direction) => pressArrow(container, direction))
-    expect(lockWrapper(container).getAttribute('data-solved')).toBe('true')
+    expect(isSolved(container)).toBe(true)
     pressArrow(container, SEQUENCE[0])
-    expect(lockWrapper(container).getAttribute('data-solved')).toBe('true')
+    expect(isSolved(container)).toBe(true)
   })
 })
 
