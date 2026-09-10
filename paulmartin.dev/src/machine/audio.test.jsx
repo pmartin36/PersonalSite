@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen, fireEvent, cleanup, waitFor, act } from '@testing-library/react'
-import { AudioProvider, useAudio, MuteToggle, SOUNDS } from './audio.jsx'
+import { AudioProvider, useAudio, MuteToggle } from './audio.jsx'
 
 function makeSpyNode(state) {
   const node = {}
@@ -99,7 +99,6 @@ describe('AudioProvider / useAudio defaults', () => {
     render(<Probe captureRef={ref} />)
     expect(screen.getByTestId('muted').textContent).toBe('true')
     expect(screen.getByTestId('armed').textContent).toBe('false')
-    expect(() => ref.current.play('snap')).not.toThrow()
     expect(() => ref.current.playTurn(0)).not.toThrow()
     expect(() => ref.current.playIntroSpin()).not.toThrow()
     expect(() => ref.current.playArtifactBurst()).not.toThrow()
@@ -144,52 +143,7 @@ describe('gesture arming', () => {
   })
 })
 
-describe('play() guard', () => {
-  it('is a no-op while muted, even when armed', () => {
-    const ref = { current: null }
-    render(
-      <AudioProvider>
-        <Probe captureRef={ref} />
-      </AudioProvider>
-    )
-    fireEvent(window, new Event('pointerdown'))
-    // arm() creates the master gain node; play() while muted must add nothing more.
-    const afterArm = mock.state.nodes.length
-    ref.current.play('snap')
-    expect(mock.state.nodes.length).toBe(afterArm)
-  })
-
-  it('is a no-op while unarmed, even when unmuted', () => {
-    const ref = { current: null }
-    render(
-      <AudioProvider>
-        <Probe captureRef={ref} />
-      </AudioProvider>
-    )
-    ref.current.unmute()
-    ref.current.play('snap')
-    expect(mock.state.nodes.length).toBe(0)
-  })
-
-  it('creates a source node, connects it, and starts it while unmuted and armed', () => {
-    const ref = { current: null }
-    render(
-      <AudioProvider>
-        <Probe captureRef={ref} />
-        <MuteToggle />
-      </AudioProvider>
-    )
-    fireEvent(window, new Event('pointerdown'))
-    fireEvent.click(screen.getByRole('button', { name: /unmute audio/i }))
-    // Measure only the nodes play() creates (past the master gain from arm()).
-    const before = mock.state.nodes.length
-    ref.current.play('snap')
-    const created = mock.state.nodes.slice(before)
-    expect(created.length).toBeGreaterThan(0)
-    expect(created[0].connect).toHaveBeenCalled()
-    expect(created[0].start).toHaveBeenCalled()
-  })
-
+describe('master gain / mute', () => {
   it('routes through a master gain and drops it to 0 on mute (silences everything in-flight)', () => {
     const ref = { current: null }
     render(
@@ -209,24 +163,6 @@ describe('play() guard', () => {
     expect(last && last[0]).toBe(0)
   })
 
-  it('throws for an unregistered sound name', () => {
-    const ref = { current: null }
-    render(
-      <AudioProvider>
-        <Probe captureRef={ref} />
-      </AudioProvider>
-    )
-    fireEvent(window, new Event('pointerdown'))
-    expect(() => ref.current.play('bogus')).toThrow()
-  })
-})
-
-describe('SOUNDS registry', () => {
-  it('contains exactly the full trigger-point set', () => {
-    expect(Object.keys(SOUNDS).sort()).toEqual(
-      ['deadThunk', 'flip', 'grind', 'seam', 'shake', 'snap', 'thunk'].sort()
-    )
-  })
 })
 
 describe('sample playback (turn / intro / jungle)', () => {

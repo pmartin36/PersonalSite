@@ -7,62 +7,6 @@ import {
   useState,
 } from 'react'
 
-// Full trigger-point sound registry: snap/thunk (rotateTo settle + intro),
-// flip (Face II), grind (Face III reel), shake+thunk/deadThunk/seam (Face V lock).
-// Every synth builds short WebAudio nodes, connects toward `ctx.destination`,
-// and schedules its own start/stop. This is the sole place sound is
-// synthesized; callers always go through `play(name)`.
-// Every source connects to `dest` (the provider's master gain) rather than
-// straight to ctx.destination, so muting the master silences even a sound that
-// is already mid-playback. `dest` falls back to ctx.destination for safety.
-function tone(ctx, startTime, { freq = 440, duration = 0.12, type = 'sine', gain = 0.2 } = {}, dest) {
-  const osc = ctx.createOscillator()
-  const env = ctx.createGain()
-  osc.type = type
-  if (osc.frequency) osc.frequency.value = freq
-  if (env.gain) {
-    env.gain.setValueAtTime(gain, startTime)
-    env.gain.exponentialRampToValueAtTime(0.0001, startTime + duration)
-  }
-  osc.connect(env)
-  env.connect(dest || ctx.destination)
-  osc.start(startTime)
-  osc.stop(startTime + duration)
-  return osc
-}
-
-function noiseBurst(ctx, startTime, { duration = 0.15, gain = 0.25 } = {}, dest) {
-  const sampleRate = ctx.sampleRate || 44100
-  const length = Math.max(1, Math.floor(sampleRate * duration))
-  const buffer = ctx.createBuffer(1, length, sampleRate)
-  const data = buffer.getChannelData(0)
-  for (let i = 0; i < length; i++) {
-    data[i] = (Math.random() * 2 - 1) * (1 - i / length)
-  }
-  const source = ctx.createBufferSource()
-  source.buffer = buffer
-  const env = ctx.createGain()
-  if (env.gain) {
-    env.gain.setValueAtTime(gain, startTime)
-    env.gain.exponentialRampToValueAtTime(0.0001, startTime + duration)
-  }
-  source.connect(env)
-  env.connect(dest || ctx.destination)
-  source.start(startTime)
-  source.stop(startTime + duration)
-  return source
-}
-
-export const SOUNDS = {
-  snap: (ctx, startTime, dest) => tone(ctx, startTime, { freq: 880, duration: 0.08, type: 'square', gain: 0.15 }, dest),
-  thunk: (ctx, startTime, dest) => noiseBurst(ctx, startTime, { duration: 0.18, gain: 0.3 }, dest),
-  shake: (ctx, startTime, dest) => noiseBurst(ctx, startTime, { duration: 0.25, gain: 0.2 }, dest),
-  grind: (ctx, startTime, dest) => noiseBurst(ctx, startTime, { duration: 0.4, gain: 0.18 }, dest),
-  flip: (ctx, startTime, dest) => tone(ctx, startTime, { freq: 660, duration: 0.1, type: 'triangle', gain: 0.18 }, dest),
-  deadThunk: (ctx, startTime, dest) => noiseBurst(ctx, startTime, { duration: 0.2, gain: 0.35 }, dest),
-  seam: (ctx, startTime, dest) => tone(ctx, startTime, { freq: 220, duration: 0.35, type: 'sine', gain: 0.22 }, dest),
-}
-
 // Pre-rendered mp3 samples fetched + decoded once on arm(), keyed by name.
 // Paths are relative to the Vite base URL so they resolve in dev and under a
 // deployed subpath alike. turn_face{n} is the drum landing sound for the face
@@ -131,7 +75,6 @@ const CARD_GAIN = 0.35
 const PAD_GAIN = 0.42
 
 const DEFAULT_AUDIO = {
-  play: () => {},
   playTurn: () => {},
   playIntroSpin: () => {},
   playArtifactBurst: () => {},
@@ -296,21 +239,9 @@ export function AudioProvider({ children }) {
   const mute = useCallback(() => setMuted(true), [])
   const unmute = useCallback(() => setMuted(false), [])
 
-  const play = useCallback(
-    (name) => {
-      const synth = SOUNDS[name]
-      if (!synth) {
-        throw new Error(`play: unknown sound "${name}"`)
-      }
-      if (!armed || muted || !s.ctx) return
-      synth(s.ctx, s.ctx.currentTime, s.master)
-    },
-    [armed, muted, s]
-  )
-
   // Play the pre-rendered landing sound for the drum face at `faceIndex`
-  // (0-based; Face I -> turn_face1). Gated like play(): silent until armed and
-  // unmuted, and a no-op if the sample hasn't decoded yet.
+  // (0-based; Face I -> turn_face1). Gated: silent until armed and unmuted, and
+  // a no-op if the sample hasn't decoded yet.
   const playTurn = useCallback(
     (faceIndex) => {
       if (!armed || muted || !s.ctx) return
@@ -472,7 +403,7 @@ export function AudioProvider({ children }) {
     else stopJungle()
   }, [armed, muted, ignited, startJungle, stopJungle])
 
-  const value = { play, playTurn, playIntroSpin, playArtifactBurst, playLidOpen, playPowerup, startGears, stopGears, playMuteClick, playDetailOpen, playDetailClose, playReelSpin, playTileSlide, playCardFlip, playPadPress, enterIgnition, exitIgnition, muted, armed, toggleMute, mute, unmute, arm }
+  const value = { playTurn, playIntroSpin, playArtifactBurst, playLidOpen, playPowerup, startGears, stopGears, playMuteClick, playDetailOpen, playDetailClose, playReelSpin, playTileSlide, playCardFlip, playPadPress, enterIgnition, exitIgnition, muted, armed, toggleMute, mute, unmute, arm }
 
   return (
     <MachineAudioContext.Provider value={value}>
