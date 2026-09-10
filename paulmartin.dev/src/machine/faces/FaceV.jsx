@@ -127,7 +127,6 @@ function Celebration() {
   return (
     <div className="face5-celebration">
       <h2 className="face5-celebration__title">What was that?!</h2>
-      <p className="face5-celebration__lede">You've been knocked unconscious.</p>
       <p className="face5-celebration__body">
         If you've enjoyed this little puzzle portfolio, shoot me a message.
       </p>
