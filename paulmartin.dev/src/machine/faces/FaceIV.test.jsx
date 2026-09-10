@@ -93,14 +93,27 @@ describe('FaceIV slide legality', () => {
     expect(tileAt(container, 2).getAttribute('data-tile-kind')).toBe('about')
   })
 
-  it('slides the contact tile adjacent to the gap (Bluesky at grid index 5) into the gap', () => {
+  it('slides the contact tile adjacent to the gap (Bluesky at grid index 5) when its stone is clicked', () => {
     const { container } = render(<FaceIV />)
-    const tile = within(tileAt(container, 5)).getByRole('link', { name: /bluesky/i })
+    // The stone of the tile slides; the link itself navigates (see next test).
+    const stone = tileAt(container, 5).querySelector('.face4-tile--contact')
+    expect(stone).toBeTruthy()
 
-    fireEvent.click(tile)
+    fireEvent.click(stone)
 
     expect(occupiedIndices(container)).toEqual([0, 1, 2, 3, 4])
     expect(tileAt(container, 2).getAttribute('data-tile-kind')).toBe('contact')
+  })
+
+  it('clicking a contact link navigates instead of sliding, even next to the gap (Bluesky at grid index 5)', () => {
+    const { container } = render(<FaceIV />)
+    const before = occupiedIndices(container)
+    const link = within(tileAt(container, 5)).getByRole('link', { name: /bluesky/i })
+
+    fireEvent.click(link)
+
+    // The link stops the click from reaching the tile's slide handler.
+    expect(occupiedIndices(container)).toEqual(before)
   })
 
   it('leaves the arrangement unchanged when a non-adjacent About tile is clicked (grid index 0)', () => {
