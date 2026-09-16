@@ -34,7 +34,7 @@ const INTRO_HOLD_CAP_MS = 800
 
 // Decode the background up front so its first paint doesn't jank the opening
 // spin. Resolves (never rejects) once it is ready or immediately if it can't.
-const MACHINE_BG_URL = '/machine/ruins-bg.jpeg'
+const MACHINE_BG_URL = '/machine/ruins-bg.png'
 function decodeBackground() {
   if (typeof Image === 'undefined') return Promise.resolve()
   const img = new Image()
@@ -303,6 +303,11 @@ function MachineShell() {
             })}
           </div>
         </div>
+        {/* Foreground foliage (the PSD's "Floated" layer) painted in front of the
+            drum. Same full-scene canvas and cover/center framing as the background,
+            so the two stay locked together and the plants never drift from the
+            scene as the viewport resizes. */}
+        <div className="machine__foreground" aria-hidden="true" />
         <MuteToggle className="machine__mute" />
       </div>
     </MachineContext.Provider>

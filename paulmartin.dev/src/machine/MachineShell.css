@@ -14,25 +14,26 @@
   --apothem: calc(var(--face-h) * 0.688);
   /* Holder geometry. --holder-cap (in --face-h units, so the top tracks the drum
      at every aspect) is the distance from the drum's vertical centre up to the
-     dome's apex; it fixes where the holder art's top sits, matching the old
-     bracket top. --holder-inset tucks each bracket behind the drum's side edge.
-     The art (331x1185, aspect 331/1185) is intentionally oversized: height is
-     driven off the viewport so the bracket always runs past the bottom of the
-     screen (never floats), with the base flare left off-screen as a buffer. Width
-     follows the art's aspect, so the bracket is wider than the old CSS one - which
-     is fine; the height reaching the floor is the hard requirement. */
+     dome's apex. --holder-rise lifts the bracket so the dome apex, which sits ~39px
+     down inside the 362x1249 art canvas (the vine overhangs above and to the side
+     of the stone), lands at that point. --holder-inset tucks each bracket behind
+     the drum's side edge. The art is intentionally oversized: height is driven off
+     the viewport so the bracket always runs past the bottom of the screen (never
+     floats), with the base left off-screen as a buffer. Width follows the art's
+     aspect; the 362 numerator maps the canvas so the stone shaft shows at its
+     native width. */
   --holder-inset: calc(var(--face-h) * 0.175);
   --holder-cap: calc(var(--face-h) * 0.085);
-  --holder-rise: calc(var(--face-h) * 0.040);
+  --holder-rise: calc(var(--face-h) * 0.084);
   --holder-h: calc((50vh + var(--holder-cap)) * 2.296);
-  --holder-w: calc(var(--holder-h) * 331 / 1185 * 0.765);
+  --holder-w: calc(var(--holder-h) * 362 / 1185 * 0.765);
   position: relative;
   width: 100%;
   height: 100vh;
   overflow: hidden;
   /* The device stands in sunlit jungle ruins. */
   background-color: var(--m-crevice);
-  background-image: url('/machine/ruins-bg.jpeg');
+  background-image: url('/machine/ruins-bg.png');
   background-size: cover;
   background-position: center;
   /* Held hidden until the font and background are ready, then faded in whole (see
@@ -64,6 +65,24 @@
     rgba(20, 14, 6, 0) 70%,
     rgba(20, 14, 6, 0.32) 100%
   );
+}
+
+/* Foreground foliage: the PSD's "Floated" layer on the full scene canvas, drawn in
+   front of the drum (above the viewport at z-index 2) but under the scene's
+   lighting overlay (::after, z-index 6) so the same grading falls over it. It uses
+   the exact same box (inset:0 of .machine) and the same cover/center framing as the
+   background painted on .machine, so the two are sized and positioned by identical
+   maths and the plants never drift from the scene at any viewport size.
+   pointer-events:none so it never blocks a click on the device beneath it. */
+.machine__foreground {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background-image: url('/machine/ruins-fg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 /* Two stone brackets that grip the drum's left and right edges and run down to
