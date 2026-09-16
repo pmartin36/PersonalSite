@@ -1,0 +1,414 @@
+{
+  "w": 889,
+  "h": 889,
+  "layers": [
+    {
+      "i": 1,
+      "name": "Shadow",
+      "slug": "shadow",
+      "bbox": [
+        -6,
+        30,
+        883,
+        893
+      ],
+      "center": [
+        0.4933,
+        0.5191
+      ],
+      "opacity": 0.859,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 2,
+      "name": "Ring_06",
+      "slug": "ring_06",
+      "bbox": [
+        93,
+        87,
+        793,
+        778
+      ],
+      "center": [
+        0.4983,
+        0.4865
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 3,
+      "name": "Back_Gear",
+      "slug": "back_gear",
+      "bbox": [
+        194,
+        181,
+        693,
+        680
+      ],
+      "center": [
+        0.4989,
+        0.4843
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 4,
+      "name": "Gear_08",
+      "slug": "gear_08",
+      "bbox": [
+        152,
+        422,
+        346,
+        612
+      ],
+      "center": [
+        0.2801,
+        0.5816
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 5,
+      "name": "Gear_07",
+      "slug": "gear_07",
+      "bbox": [
+        460,
+        174,
+        684,
+        398
+      ],
+      "center": [
+        0.6434,
+        0.3217
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 6,
+      "name": "Gear_06",
+      "slug": "gear_06",
+      "bbox": [
+        369,
+        512,
+        594,
+        732
+      ],
+      "center": [
+        0.5416,
+        0.6997
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 7,
+      "name": "Gear_05",
+      "slug": "gear_05",
+      "bbox": [
+        224,
+        312,
+        352,
+        440
+      ],
+      "center": [
+        0.324,
+        0.4229
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 8,
+      "name": "Gear_04",
+      "slug": "gear_04",
+      "bbox": [
+        227,
+        186,
+        337,
+        297
+      ],
+      "center": [
+        0.3172,
+        0.2717
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 9,
+      "name": "Radial_Rays",
+      "slug": "radial_rays",
+      "bbox": [
+        51,
+        149,
+        747,
+        803
+      ],
+      "center": [
+        0.4488,
+        0.5354
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 10,
+      "name": "Blue_Rays",
+      "slug": "blue_rays",
+      "bbox": [
+        72,
+        172,
+        726,
+        783
+      ],
+      "center": [
+        0.4488,
+        0.5371
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 11,
+      "name": "Blue_Rays_Glow",
+      "slug": "blue_rays_glow",
+      "bbox": [
+        0,
+        0,
+        889,
+        889
+      ],
+      "center": [
+        0.5,
+        0.5
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 12,
+      "name": "Ring_05",
+      "slug": "ring_05",
+      "bbox": [
+        144,
+        135,
+        742,
+        731
+      ],
+      "center": [
+        0.4983,
+        0.4871
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 13,
+      "name": "Ring_04",
+      "slug": "ring_04",
+      "bbox": [
+        227,
+        217,
+        684,
+        669
+      ],
+      "center": [
+        0.5124,
+        0.4983
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 14,
+      "name": "Blue_Lines",
+      "slug": "blue_lines",
+      "bbox": [
+        254,
+        237,
+        679,
+        648
+      ],
+      "center": [
+        0.5247,
+        0.4978
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 15,
+      "name": "Blue_Lines_glow",
+      "slug": "blue_lines_glow",
+      "bbox": [
+        0,
+        0,
+        889,
+        889
+      ],
+      "center": [
+        0.5,
+        0.5
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 16,
+      "name": "Ring_03",
+      "slug": "ring_03",
+      "bbox": [
+        205,
+        219,
+        657,
+        666
+      ],
+      "center": [
+        0.4848,
+        0.4978
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 17,
+      "name": "Ring_02",
+      "slug": "ring_02",
+      "bbox": [
+        302,
+        292,
+        585,
+        574
+      ],
+      "center": [
+        0.4989,
+        0.4871
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 18,
+      "name": "Central_rings",
+      "slug": "central_rings",
+      "bbox": [
+        335,
+        325,
+        550,
+        540
+      ],
+      "center": [
+        0.4978,
+        0.4865
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 19,
+      "name": "Central_Gear",
+      "slug": "central_gear",
+      "bbox": [
+        369,
+        361,
+        515,
+        504
+      ],
+      "center": [
+        0.4972,
+        0.4865
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 20,
+      "name": "Gear_03",
+      "slug": "gear_03",
+      "bbox": [
+        516,
+        374,
+        634,
+        491
+      ],
+      "center": [
+        0.6468,
+        0.4865
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 21,
+      "name": "Gem",
+      "slug": "gem",
+      "bbox": [
+        399,
+        391,
+        486,
+        476
+      ],
+      "center": [
+        0.4978,
+        0.4876
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 22,
+      "name": "Gem_Glow",
+      "slug": "gem_glow",
+      "bbox": [
+        0,
+        0,
+        889,
+        889
+      ],
+      "center": [
+        0.5,
+        0.5
+      ],
+      "opacity": 0.702,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 23,
+      "name": "Gear_02",
+      "slug": "gear_02",
+      "bbox": [
+        356,
+        56,
+        531,
+        231
+      ],
+      "center": [
+        0.4989,
+        0.1614
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    },
+    {
+      "i": 24,
+      "name": "Gear_01",
+      "slug": "gear_01",
+      "bbox": [
+        580,
+        536,
+        755,
+        710
+      ],
+      "center": [
+        0.7508,
+        0.7008
+      ],
+      "opacity": 1.0,
+      "blend": "NORMAL"
+    }
+  ]
+}

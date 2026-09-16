@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, Suspense, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import '@fontsource-variable/figtree'
@@ -8,6 +8,10 @@ import ProjectDetail from './pages/ProjectDetail.jsx'
 import Solved from './pages/Solved.jsx'
 import Moonlight from './madebymoonlight/Moonlight.jsx'
 import './index.css'
+
+// Dev-only tuning bench for the artifact. Lazy so it is its own chunk, and gated
+// on DEV so the route (and its chunk) never ship in the production build.
+const ArtifactLab = import.meta.env.DEV ? lazy(() => import('./pages/ArtifactLab.jsx')) : null
 
 // A reload lands at the top, not wherever the reader had scrolled to. Left to itself the
 // browser restores the old offset AFTER load, which drops you mid-page and, if that lands on
@@ -25,6 +29,16 @@ createRoot(document.getElementById('root')).render(
         <Route path="/solved" element={<Solved />} />
         <Route path="/projects/:slug" element={<ProjectDetail />} />
         <Route path="/madebymoonlight/*" element={<Moonlight />} />
+        {ArtifactLab && (
+          <Route
+            path="/artifact-lab"
+            element={
+              <Suspense fallback={null}>
+                <ArtifactLab />
+              </Suspense>
+            }
+          />
+        )}
       </Routes>
     </BrowserRouter>
   </StrictMode>,
