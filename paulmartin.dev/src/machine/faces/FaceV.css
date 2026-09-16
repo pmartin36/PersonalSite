@@ -52,95 +52,94 @@
      holds the drive. */
 }
 
-/* A deeper rectangular pocket just big enough for the drive, cut into the floor:
-   darker still, with a hard inner rim so the drive reads as seated down in it. */
-.face5-alcove {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(0.28rem, 0.8vw, 0.5rem);
-  border-radius: 6px;
-  background: #1c1206;
-  box-shadow:
-    inset 0 6px 12px rgba(0, 0, 0, 0.75),
-    inset 0 2px 4px rgba(0, 0, 0, 0.7),
-    inset 0 -2px 3px rgba(120, 92, 46, 0.18),
-    inset 0 0 0 1.5px rgba(8, 5, 2, 0.8),
-    0 1px 0 rgba(120, 92, 46, 0.2);
+/* The prize: the artifact, centred in the chamber and filling its height (square).
+   The art is decorative; only the gem hit-target below takes clicks. */
+.face5-artifact {
+  position: relative;
+  display: block;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+  pointer-events: none;
 }
 
-/* The prize: a small USB drive lying in the pocket. A silver connector, a dark
-   plastic body, and a red LED that blinks. */
-.face5-device {
-  display: flex;
-  align-items: center;
+/* The click target: a small disc over the gem / central gear (centred on the gem
+   at 49.78%/48.76% of the art). Ignites, so the flash bursts from the centre. */
+/* The recess the artifact sits in, carved to the artifact's own shadow silhouette
+   (dilated for padding). Engraved like our other stone cuts: a darkened-stone
+   sink, a dark inner top wall, and a lit lower lip. */
+.face5-artifact-alcove {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.face5-artifact-alcove__sink,
+.face5-artifact-alcove__wall,
+.face5-artifact-alcove__lip {
+  position: absolute;
+  inset: 0;
+  --recess: url('/artifact/shadow_recess.png');
+}
+
+/* Sink: darken the chamber stone within the silhouette (multiply keeps texture). */
+.face5-artifact-alcove__sink {
+  background: #2a1a09;
+  mix-blend-mode: multiply;
+  -webkit-mask: var(--recess) center / 100% 100% no-repeat;
+  mask: var(--recess) center / 100% 100% no-repeat;
+}
+
+/* Wall: hard dark-brown line along the top edge (silhouette minus itself shifted
+   down). Warm dark brown, not black. */
+.face5-artifact-alcove__wall {
+  background: rgba(34, 20, 9, 0.92);
+  -webkit-mask-image: var(--recess), var(--recess);
+  -webkit-mask-size: 100% 100%, 100% 100%;
+  -webkit-mask-position: 0 0, 0 4px;
+  -webkit-mask-repeat: no-repeat, no-repeat;
+  -webkit-mask-composite: source-out;
+  mask-image: var(--recess), var(--recess);
+  mask-size: 100% 100%, 100% 100%;
+  mask-position: 0 0, 0 4px;
+  mask-repeat: no-repeat, no-repeat;
+  mask-composite: subtract;
+}
+
+/* Lip: a faint warm line along the bottom edge - the recess is inset under the
+   lid and in shadow, so it barely catches light (much dimmer than a face carve). */
+.face5-artifact-alcove__lip {
+  background: rgba(198, 162, 112, 0.3);
+  -webkit-mask-image: var(--recess), var(--recess);
+  -webkit-mask-size: 100% 100%, 100% 100%;
+  -webkit-mask-position: 0 0, 0 -4px;
+  -webkit-mask-repeat: no-repeat, no-repeat;
+  -webkit-mask-composite: source-out;
+  mask-image: var(--recess), var(--recess);
+  mask-size: 100% 100%, 100% 100%;
+  mask-position: 0 0, 0 -4px;
+  mask-repeat: no-repeat, no-repeat;
+  mask-composite: subtract;
+}
+
+.face5-artifact__hit {
+  position: absolute;
+  left: 49.78%;
+  top: 48.76%;
+  width: 22%;
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%);
   padding: 0;
   border: none;
+  border-radius: 50%;
   background: none;
   cursor: pointer;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6));
-  transition:
-    transform 0.15s ease,
-    filter 0.15s ease;
+  pointer-events: auto;
 }
 
-.face5-device:hover,
-.face5-device:focus-visible {
-  filter: drop-shadow(0 5px 9px rgba(0, 0, 0, 0.6));
-  outline: none;
-}
-
-.face5-device__cap {
-  width: clamp(1rem, 2.6vw, 1.5rem);
-  height: clamp(1.5rem, 3.8vw, 2.2rem);
-  border-radius: 2px 1px 1px 2px;
-  background: linear-gradient(180deg, #e8ecef 0%, #a9b0b6 46%, #d2d7db 54%, #7f868c 100%);
-  box-shadow:
-    inset 0 0 0 1px rgba(60, 66, 72, 0.6),
-    inset 0 2px 2px rgba(255, 255, 255, 0.5),
-    inset 0 -2px 3px rgba(0, 0, 0, 0.35);
-}
-
-.face5-device__body {
-  position: relative;
-  width: clamp(3rem, 8vw, 4.6rem);
-  height: clamp(1.9rem, 4.8vw, 2.8rem);
-  margin-left: -2px;
-  border-radius: 3px 8px 8px 3px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 30%),
-    linear-gradient(180deg, #2a2f36 0%, #171a1f 55%, #0d0f12 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.7),
-    0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.face5-device__led {
-  position: absolute;
-  top: 50%;
-  right: clamp(0.5rem, 1.4vw, 0.8rem);
-  width: clamp(0.42rem, 1vw, 0.6rem);
-  height: clamp(0.42rem, 1vw, 0.6rem);
-  transform: translateY(-50%);
-  border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, #ff8a7a, #e11d12 60%, #7a0b06);
-  animation: face5-blink 0.85s steps(1, end) infinite;
-}
-
-@keyframes face5-blink {
-  0%,
-  55% {
-    opacity: 1;
-    box-shadow:
-      0 0 4px 1px rgba(240, 40, 30, 0.85),
-      0 0 9px 2px rgba(240, 40, 30, 0.5);
-  }
-  56%,
-  100% {
-    opacity: 0.28;
-    box-shadow: 0 0 2px rgba(240, 40, 30, 0.25);
-  }
+.face5-artifact__hit:focus-visible {
+  outline: 2px solid rgba(150, 220, 255, 0.7);
+  outline-offset: 2px;
 }
 
 /* The sealed lid: the flat sandstone slate, hinged at its top edge. It carries

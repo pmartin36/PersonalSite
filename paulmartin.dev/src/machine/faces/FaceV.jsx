@@ -5,6 +5,7 @@ import Clue, { DIRECTION_GLYPH } from '../Clue.jsx'
 import { useAudio } from '../audio.jsx'
 import { useMachine, faceIndex } from '../Machine.jsx'
 import { SEQUENCE } from '../model.js'
+import Artifact from '../../artifact/Artifact.jsx'
 import './FaceV.css'
 
 // The pad's input alphabet, laid out as a single row: Left, Up, Right, Down.
@@ -103,23 +104,6 @@ function ArrowPad({ onPress, onPressStart }) {
         </span>
       ))}
     </div>
-  )
-}
-
-// The prize: a small drive blinking in its alcove. Clicking it ignites.
-function Device({ onIgnite }) {
-  return (
-    <button
-      type="button"
-      className="face5-device"
-      aria-label="Take the drive"
-      onClick={onIgnite}
-    >
-      <span className="face5-device__cap" aria-hidden="true" />
-      <span className="face5-device__body" aria-hidden="true">
-        <span className="face5-device__led" />
-      </span>
-    </button>
   )
 }
 
@@ -235,6 +219,8 @@ export default function FaceV() {
   // back off to reveal the already-reset drum.
   const [igniting, setIgniting] = useState(false)
   const [waking, setWaking] = useState(false)
+  // Hover over the gem hit-target swells the gem + inner gear.
+  const [gemHover, setGemHover] = useState(false)
   const originRef = useRef({ x: 0, y: 0 })
   // Pending "50% open" trigger for the power-up + idle gears, so it can be
   // cancelled if the drive is taken before the lid finishes opening.
@@ -315,9 +301,32 @@ export default function FaceV() {
     <FaceSurface className="face5-surface" aria-label="Face V">
       <div className="face5-slab" data-stage={stage} data-lock-progress={progress}>
         <div className="face5-chamber" aria-hidden={stage === 'open' ? undefined : 'true'}>
-          <div className="face5-alcove">
-            {stage === 'open' && <Device onIgnite={ignite} />}
-          </div>
+          {/* The prize: the artifact, revealed as the lid hinges up. Mounted only
+              once the lid begins opening, so it draws no CPU (and loads no art)
+              until then. Clicking it ignites, as the drive used to. */}
+          {stage === 'open' && (
+            <div className="face5-artifact">
+              {/* A recess the artifact sits in, carved to the shape of its own
+                  shadow (dilated for padding): a darkened-stone sink, a dark inner
+                  top wall, and a lit lower lip, like our other engravings. */}
+              <div className="face5-artifact-alcove" aria-hidden="true">
+                <div className="face5-artifact-alcove__sink" />
+                <div className="face5-artifact-alcove__wall" />
+                <div className="face5-artifact-alcove__lip" />
+              </div>
+              <Artifact centerHover={gemHover} />
+              {/* Only the gem / central gear is the click target (the art itself
+                  is decorative), so the flash ignites from the centre. */}
+              <button
+                type="button"
+                className="face5-artifact__hit"
+                aria-label="Take the artifact"
+                onClick={ignite}
+                onPointerEnter={() => setGemHover(true)}
+                onPointerLeave={() => setGemHover(false)}
+              />
+            </div>
+          )}
           <span className="face5-credit">Art by Olga Kholkina</span>
         </div>
         <div className="face5-lid">
