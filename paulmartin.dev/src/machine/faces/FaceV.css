@@ -178,8 +178,10 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.5rem;
-  padding: 1.2rem;
+  /* Face-relative gap and padding (percent of the lid) so the keypad block scales
+     with the device rather than holding a fixed rem inset as the face grows. */
+  gap: 3.5%;
+  padding: 1.65%;
   border: 1px solid #83611f;
   box-shadow:
     inset 0 1px 2px rgba(0, 0, 0, 0.4),
@@ -272,7 +274,11 @@
 .face5-pad {
   width: 38%;
   display: flex;
-  gap: clamp(0.45rem, 1.4vw, 1.1rem);
+  /* Percentage gap (of the pad's own width) so the inter-key spacing scales with
+     the pad, and thus with the face, instead of drifting against a fixed pixel gap
+     as the device grows. Keeps each key a constant fraction of the face at every
+     resolution, so the keys stay seated in the sockets painted into the lid art. */
+  gap: 4.1%;
 }
 
 /* Each key is set into a hole cut into the slate. The hole (its brown rim and
