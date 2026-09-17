@@ -16,7 +16,7 @@ import useScrollNav from './useScrollNav.js'
 import useDragNav from './useDragNav.js'
 import RotateHint from './RotateHint.jsx'
 import { useDocumentTitle } from '../useDocumentTitle.js'
-import { REVEAL_TEXTURES, REST_FACE_TEXTURES, warmTextures } from './textures.js'
+import { REVEAL_TEXTURES, SECONDARY_TEXTURES, warmTextures } from './textures.js'
 import './MachineShell.css'
 
 export const FACES = ['I', 'II', 'III', 'IV', 'V']
@@ -223,9 +223,10 @@ function MachineShell() {
       // Assets are ready: reveal the whole face at once, already carved. Under
       // reduced motion it simply rests on Face I; there is no spin.
       setRevealed(true)
-      // Warm the stone under faces II-V now the opening is up, so the first turn
-      // paints the incoming face from cache rather than decoding it mid-spin.
-      warmTextures(REST_FACE_TEXTURES)
+      // Warm every other drum-surface texture now the opening is up: the stone
+      // under faces II-V and the decorations on them, so nothing loads late as a
+      // face swings in. Fire-and-forget - it never blocks the scene.
+      warmTextures(SECONDARY_TEXTURES)
       if (reducedMotion) return
       // Two frames so the held Face I has actually painted before the transform
       // kicks; then one full turn, the easing overshoots and rubber-bands back.
