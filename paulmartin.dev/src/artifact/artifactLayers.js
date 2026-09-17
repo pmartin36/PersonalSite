@@ -38,7 +38,7 @@ export const LAYERS = [
   { slug: 'ring_02', kind: 'static' },
   { slug: 'central_rings', kind: 'static' },
   { slug: 'central_gear', kind: 'static' },
-  { slug: 'gear_03', kind: 'orbit', center: [0.6468, 0.4865], speed: 'central' },
+  { slug: 'gear_03', kind: 'orbit', center: [0.6349, 0.4876], speed: 'central' },
   { slug: 'gem', kind: 'blue' },
   { slug: 'gem_glow', kind: 'glow' },
   { slug: 'gear_02', kind: 'orbit', center: [0.4989, 0.1614], speed: 'fore' },
@@ -46,22 +46,36 @@ export const LAYERS = [
 ]
 
 export const DEFAULT_CONFIG = {
+  // Global time multiplier (1 = real time). Drop it to crawl through the motion in
+  // slow motion, e.g. to check gear meshing; it scales every rate uniformly.
+  timeScale: 1,
   // gear speeds, degrees per second (negative = counter-clockwise)
   foreOrbit: 20,
   foreSpin: 100,
   centralOrbit: -40,
-  centralSpin: -80,
+  // The orbit wrapper already rotates gear_03 by the orbit angle, so absolute
+  // rotation = orbit + spin. Epicyclic mesh needs absolute = orbit*(1 + 24/20), so
+  // the LOCAL spin config = orbit * (24/20) = orbit * 1.2.
+  centralSpin: -48,
   backSpin: -6,
   // orbit radius scale for the orbiting gears (1 = the art's own distance from the
   // gem centre; <1 pulls them in toward the centre, >1 pushes them out)
   foreRadius: 1,
-  centralRadius: 1,
+  // gear_03 is a 20-tooth flat-top trapezoid matched to the 24-tooth central gear:
+  // its flank angle is steepened so the flanks come out parallel to the central
+  // gear's gap walls, so the tooth fills the gap along its whole length (base too).
+  // 0.991 pulls it in ~1px from the pitch-tangent distance to seat the seam.
+  centralRadius: 0.991,
+  // Fine phase trim (degrees) added to gear_03's rotation, to centre its tooth in
+  // the central gear's gap. Both gears are regular, so the baked half-tooth offset
+  // lands it centred and no trim is needed.
+  centralPhase: 0,
   // glow oscillation. The pulse peaks at max (never overshoots) at mid-period and
   // troughs at max*glowMin at the ends; the period is independent of max.
   glowPeriod: 4, // seconds for one floor->peak->floor cycle
   // Per-glow floor: the constant base level each glow never drops below (a
   // fraction of its max). The pulse/radial wave rides from this floor up to max.
-  glowMin: { blue_rays_glow: 0.25, blue_lines_glow: 0.25, gem_glow: 0.7 },
+  glowMin: { blue_rays_glow: 0.4, blue_lines_glow: 0.4, gem_glow: 0.7 },
   glowGain: 3, // brightness/saturate boost so faint source glows can be pushed up
   // 'whole' pulses each glow's opacity uniformly; 'out'/'in' instead sweep a comet
   // ring from the gem centre outward / inward on a sawtooth ramp over the period.

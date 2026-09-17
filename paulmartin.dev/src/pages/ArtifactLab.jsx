@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import Artifact from '../artifact/Artifact.jsx'
 import { DEFAULT_CONFIG, LAYERS } from '../artifact/artifactLayers.js'
 
@@ -9,6 +9,8 @@ const GLOW_SLUGS = LAYERS.filter((l) => l.kind === 'glow').map((l) => l.slug)
 // tuned look can be pasted back into DEFAULT_CONFIG (or passed as a prop when
 // the artifact drops under lid 5).
 const CONTROLS = [
+  { group: 'Global' },
+  { key: 'timeScale', label: 'Time scale', min: 0.02, max: 2, step: 0.02, unit: 'x' },
   { group: 'Fore gears (Gear_01, Gear_02)' },
   { key: 'foreOrbit', label: 'Orbit speed', min: -120, max: 120, step: 1, unit: 'deg/s' },
   { key: 'foreSpin', label: 'Local spin', min: -180, max: 180, step: 1, unit: 'deg/s' },
@@ -16,7 +18,8 @@ const CONTROLS = [
   { group: 'Central gear (Gear_03)' },
   { key: 'centralOrbit', label: 'Orbit speed', min: -120, max: 120, step: 1, unit: 'deg/s' },
   { key: 'centralSpin', label: 'Local spin', min: -180, max: 180, step: 1, unit: 'deg/s' },
-  { key: 'centralRadius', label: 'Orbit radius', min: 0, max: 1.8, step: 0.02, unit: 'x' },
+  { key: 'centralRadius', label: 'Orbit radius', min: 0.98, max: 1.01, step: 0.0005, unit: 'x' },
+  { key: 'centralPhase', label: 'Tooth phase', min: -18, max: 18, step: 0.25, unit: 'deg' },
   { group: 'Back gears (Back_Gear, Gear_04-08)' },
   { key: 'backSpin', label: 'Local spin', min: -180, max: 180, step: 1, unit: 'deg/s' },
   { group: 'Glows (synchronised)' },
@@ -36,6 +39,21 @@ export default function ArtifactLab() {
   const [config, setConfig] = useState(DEFAULT_CONFIG)
   const [ground, setGround] = useState(GROUNDS[0])
   const [size, setSize] = useState(820)
+  // Zoom + pan for inspecting details (e.g. gear meshing) up close.
+  const [zoom, setZoom] = useState(1)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const drag = useRef(null)
+  const onDown = (e) => { drag.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y } }
+  const onMove = (e) => {
+    if (!drag.current) return
+    setPan({ x: drag.current.px + (e.clientX - drag.current.x), y: drag.current.py + (e.clientY - drag.current.y) })
+  }
+  const onUp = () => { drag.current = null }
+  const onWheel = (e) => {
+    e.preventDefault()
+    setZoom((z) => Math.min(20, Math.max(1, z * (e.deltaY < 0 ? 1.12 : 1 / 1.12))))
+  }
+  const resetView = () => { setZoom(1); setPan({ x: 0, y: 0 }) }
   const set = (key, v) => setConfig((c) => ({ ...c, [key]: v }))
   const setGlowMax = (slug, v) =>
     setConfig((c) => ({ ...c, glowMax: { ...c.glowMax, [slug]: v } }))
@@ -47,8 +65,22 @@ export default function ArtifactLab() {
 
   return (
     <div style={S.page}>
-      <div style={{ ...S.stage, background: ground }}>
-        <div style={{ width: size, maxWidth: '90%' }}>
+      <div
+        style={{ ...S.stage, background: ground, overflow: 'hidden', cursor: zoom > 1 ? 'grab' : 'default' }}
+        onMouseDown={onDown}
+        onMouseMove={onMove}
+        onMouseUp={onUp}
+        onMouseLeave={onUp}
+        onWheel={onWheel}
+      >
+        <div
+          style={{
+            width: size,
+            maxWidth: '90%',
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            transformOrigin: 'center center',
+          }}
+        >
           <Artifact config={config} />
         </div>
       </div>
@@ -70,6 +102,14 @@ export default function ArtifactLab() {
         <label style={S.field}>
           <span style={S.label}>Preview size <b>{size}px</b></span>
           <input type="range" min={200} max={820} step={10} value={size} onChange={(e) => setSize(+e.target.value)} />
+        </label>
+        <label style={S.field}>
+          <span style={S.label}>
+            Zoom <b>{zoom.toFixed(1)}x</b>
+            <button onClick={resetView} style={{ float: 'right', ...S.btn, flex: 'none', padding: '0.15rem 0.5rem', fontSize: '0.72rem' }}>reset view</button>
+          </span>
+          <input type="range" min={1} max={20} step={0.1} value={zoom} onChange={(e) => setZoom(+e.target.value)} />
+          <span style={{ ...S.small, display: 'block', marginTop: '0.2rem' }}>scroll over the art to zoom, drag to pan</span>
         </label>
 
         {CONTROLS.map((c) =>
@@ -159,7 +199,9 @@ export default function ArtifactLab() {
 }
 
 function fmt(v) {
-  return Number.isInteger(v) ? v : Math.round(v * 100) / 100
+  // round to 4 decimals; JS drops trailing zeros so 0.4 stays 0.4 but 0.9885 reads
+  // in full (the fine orbit-radius slider steps by 0.0005).
+  return Number.isInteger(v) ? v : Math.round(v * 10000) / 10000
 }
 
 const S = {

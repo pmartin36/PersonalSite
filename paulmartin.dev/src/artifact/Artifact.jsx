@@ -48,23 +48,27 @@ export default function Artifact({ config = DEFAULT_CONFIG, className = '', cent
     widthRef.current = el.clientWidth
 
     let raf
-    let start = null
+    let lastT = null
+    let accum = 0 // scaled elapsed seconds (so changing timeScale never jumps)
     const loop = (t) => {
-      if (start == null) start = t
-      const sec = (t - start) / 1000
+      if (lastT == null) lastT = t
       const c = cfgRef.current
+      accum += ((t - lastT) / 1000) * (c.timeScale ?? 1)
+      lastT = t
+      const sec = accum
       const W = widthRef.current || 1
 
       // Local spins. Orbiting gears also translate radially (from the gem centre)
       // by their group's radius scale, so the slider moves them closer/farther.
       for (const slug in spin) {
         const rate = slug === 'gear_03' ? c.centralSpin : gearSpinRate(slug, c)
+        const phase = slug === 'gear_03' ? c.centralPhase ?? 0 : 0
         const meta = ORBIT_META[slug]
         if (meta) {
           const scale = (meta.group === 'central' ? c.centralRadius : c.foreRadius) ?? 1
           const dx = (scale - 1) * meta.vx * W
           const dy = (scale - 1) * meta.vy * W
-          spin[slug].style.transform = `translate(${dx}px, ${dy}px) rotate(${rate * sec}deg)`
+          spin[slug].style.transform = `translate(${dx}px, ${dy}px) rotate(${rate * sec + phase}deg)`
         } else {
           spin[slug].style.transform = `rotate(${rate * sec}deg)`
         }
