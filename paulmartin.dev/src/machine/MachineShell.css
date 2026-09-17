@@ -197,7 +197,10 @@
 }
 
 /* Wayfinding is carved into each face's own stone, bottom-right corner, so it
-   tumbles with the drum. There is no floating UI. */
+   tumbles with the drum. There is no floating UI. Scaled at the same design
+   resolution as the face content (1440px wide) so its size and corner offsets
+   stay a constant fraction of the face at every viewport, matching every other
+   on-face element instead of holding a fixed rem size that bloats on mobile. */
 .face-wayfinding {
   position: absolute;
   right: 1.6rem;
@@ -206,6 +209,7 @@
   display: flex;
   gap: 0.55rem;
   align-items: center;
+  zoom: calc(var(--face-w) / 1440px);
 }
 
 /* Each pip is a recessed socket chiselled into the stone: dark interior, a lit
