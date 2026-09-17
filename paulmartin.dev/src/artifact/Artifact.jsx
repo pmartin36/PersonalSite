@@ -3,6 +3,24 @@ import { LAYERS, DEFAULT_CONFIG, ORBIT_CENTER } from './artifactLayers.js'
 import './artifact.css'
 
 const BASE = '/artifact'
+
+// Decode the artifact's layer art up front so it is ready before the lid opens
+// (the Artifact only mounts at that point, and a cold mount showed a frame with
+// the art missing as the lid hinged up). Resolves, never rejects. Call it once
+// the finale is in reach (Face V active) so most visitors never pay for it.
+export function warmArtifactAssets() {
+  if (typeof Image === 'undefined') return Promise.resolve()
+  const urls = LAYERS.map((layer) => `${BASE}/${layer.slug}.png`)
+  urls.push(`${BASE}/noise.png`) // the perlin shimmer's tile (CSS background)
+  return Promise.allSettled(
+    urls.map((src) => {
+      const img = new Image()
+      img.src = src
+      return img.decode ? img.decode() : Promise.resolve()
+    }),
+  )
+}
+
 const TAU = Math.PI * 2
 // Radial-mode comet ring: a crisp leading edge (percent of the artifact); the
 // trailing fade length is tunable via config.glowTail.

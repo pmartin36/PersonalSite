@@ -5,7 +5,7 @@ import Clue, { DIRECTION_GLYPH } from '../Clue.jsx'
 import { useAudio } from '../audio.jsx'
 import { useMachine, faceIndex } from '../Machine.jsx'
 import { SEQUENCE } from '../model.js'
-import Artifact from '../../artifact/Artifact.jsx'
+import Artifact, { warmArtifactAssets } from '../../artifact/Artifact.jsx'
 import buttonLeft from '../assets/button_left.webp'
 import buttonUp from '../assets/button_up.webp'
 import buttonRight from '../assets/button_right.webp'
@@ -210,7 +210,7 @@ export default function FaceV() {
     enterIgnition,
     exitIgnition,
   } = useAudio()
-  const { rotateTo, lockRotation } = useMachine()
+  const { currentFace, rotateTo, lockRotation } = useMachine()
   const [progress, setProgress] = useState(0)
   // The recent presses (kept to SEQUENCE length), so the code matches on a trailing
   // window rather than a clean run from the start.
@@ -229,6 +229,15 @@ export default function FaceV() {
   // Pending "50% open" trigger for the power-up + idle gears, so it can be
   // cancelled if the drive is taken before the lid finishes opening.
   const lidTimerRef = useRef(null)
+  // Warm (decode) the artifact art once Face V is reached, so it is ready before
+  // the lid opens instead of loading as it hinges up. Guarded so it runs once.
+  const warmedArtifactRef = useRef(false)
+  useEffect(() => {
+    if (warmedArtifactRef.current) return
+    if (currentFace !== faceIndex('V')) return
+    warmedArtifactRef.current = true
+    warmArtifactAssets()
+  }, [currentFace])
 
   // The stone tap fires on the way DOWN (pointer-down), so the thunk lands as the
   // key sinks, not on release. The lock itself still advances on the click.
