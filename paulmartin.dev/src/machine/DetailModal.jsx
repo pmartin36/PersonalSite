@@ -51,7 +51,10 @@ export default function DetailModal({ project: projectProp, slug, onClose }) {
   const titleId = 'detail-modal-title'
   const { playDetailOpen, playDetailClose } = useAudio()
   const openedRef = useRef(false)
-  // A close that plays the dismiss tap first, then closes (covers X, backdrop, Escape).
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+  // A close that plays the dismiss tap first, then closes (covers X, backdrop,
+  // Escape). The pushed history entry is unwound in the effect cleanup below.
   const handleClose = useCallback(() => {
     playDetailClose()
     onClose?.()
@@ -105,6 +108,22 @@ export default function DetailModal({ project: projectProp, slug, onClose }) {
       opener?.focus()
     }
   }, [project, handleClose])
+
+  // The Back button / gesture closes the modal instead of leaving the page: push
+  // a history entry when the modal opens and close on popstate. On any other
+  // close (X/backdrop/Escape) the cleanup unwinds that entry, but only if it is
+  // still current -- a link-navigation out of the modal pushes the router's own
+  // entry on top, so history.state is no longer ours and the nav is preserved.
+  useEffect(() => {
+    if (!project) return undefined
+    window.history.pushState({ detailModal: true }, '')
+    const onPop = () => onCloseRef.current?.()
+    window.addEventListener('popstate', onPop)
+    return () => {
+      window.removeEventListener('popstate', onPop)
+      if (window.history.state?.detailModal) window.history.back()
+    }
+  }, [project])
 
   if (!project) return null
 

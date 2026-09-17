@@ -57,7 +57,9 @@
 .face5-artifact {
   position: relative;
   display: block;
-  height: 100%;
+  /* A touch under the chamber height so it clears the lid line at the top and the
+     credit at the bottom, centred by the chamber (never cut off by the lid). */
+  height: 92%;
   aspect-ratio: 1 / 1;
   pointer-events: none;
 }
@@ -209,10 +211,13 @@
    the bottom-right corner, revealed when the lid hinges open. Plain dark brown. */
 .face5-credit {
   position: absolute;
-  right: 0.7rem;
-  bottom: 0.5rem;
+  /* Face-relative (Face V doesn't use the content zoom), so the credit scales
+     and stays tucked in the corner at every device size instead of holding a
+     fixed rem that bloats on a small face. */
+  right: calc(var(--face-h) * 0.019);
+  bottom: calc(var(--face-h) * 0.014);
   font-family: 'Eczar Variable', 'Eczar', var(--display, serif);
-  font-size: 0.8rem;
+  font-size: calc(var(--face-h) * 0.022);
   letter-spacing: 0.02em;
   color: #3a2410;
 }
