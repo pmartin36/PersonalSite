@@ -13,6 +13,7 @@ import FaceIII from './faces/FaceIII.jsx'
 import FaceIV from './faces/FaceIV.jsx'
 import FaceV from './faces/FaceV.jsx'
 import useScrollNav from './useScrollNav.js'
+import useDragNav from './useDragNav.js'
 import './MachineShell.css'
 
 export const FACES = ['I', 'II', 'III', 'IV', 'V']
@@ -169,6 +170,20 @@ function MachineShell() {
   )
 
   useScrollNav(rootRef, { onStep: handleStep })
+  // Touch drag: the first turn comes with a light swipe; each further turn in
+  // the same drag needs a much longer pull, so a flick turns one face, not five.
+  useDragNav(rootRef, {
+    onStep: handleStep,
+    canInteract: useCallback(
+      () => !introBusyRef.current && !lockedRef.current,
+      [],
+    ),
+    firstPx: useCallback(
+      () => Math.max(90, (rootRef.current?.clientHeight || 800) * 0.14),
+      [],
+    ),
+    subsequentPx: useCallback(() => 260, []),
+  })
 
   // Fires once on mount under motion: hold on Face I until the scene is ready to
   // animate (fonts + background decoded, layout settled), then make one full turn
