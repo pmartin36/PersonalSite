@@ -207,7 +207,7 @@ function MachineShell() {
       [],
     ),
     firstPx: useCallback(
-      () => Math.max(90, (rootRef.current?.clientHeight || 800) * 0.14),
+      () => Math.max(66, (rootRef.current?.clientHeight || 800) * 0.1),
       [],
     ),
     subsequentPx: useCallback(() => 260, []),
