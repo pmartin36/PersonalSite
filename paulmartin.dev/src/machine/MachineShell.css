@@ -17,16 +17,16 @@
      dome's apex. --holder-rise lifts the bracket so the dome apex, which sits ~39px
      down inside the 362x1249 art canvas (the vine overhangs above and to the side
      of the stone), lands at that point. --holder-inset tucks each bracket behind
-     the drum's side edge. The art is intentionally oversized: height is driven off
-     the viewport so the bracket always runs past the bottom of the screen (never
-     floats), with the base left off-screen as a buffer. Width follows the art's
-     aspect; the 362 numerator maps the canvas so the stone shaft shows at its
-     native width. */
+     the drum's side edge. Width tracks the drum (a constant fraction of the face
+     height), so the bracket's size and its position relative to the drum stay put
+     at every aspect; the art (a very tall 3.45:1) is top-anchored and runs down
+     well past the screen bottom. The 21vh floor guarantees the shaft still reaches
+     the bottom on very tall/narrow windows, where a purely drum-sized bracket
+     would fall short. */
   --holder-inset: calc(var(--face-h) * 0.175);
   --holder-cap: calc(var(--face-h) * 0.085);
   --holder-rise: calc(var(--face-h) * 0.084);
-  --holder-h: calc((50vh + var(--holder-cap)) * 2.296);
-  --holder-w: calc(var(--holder-h) * 362 / 1185 * 0.765);
+  --holder-w: max(calc(var(--face-h) * 0.38), 21vh);
   position: relative;
   width: 100%;
   height: 100vh;
@@ -41,6 +41,134 @@
      state usually lasts a frame or two. */
   opacity: 1;
   transition: opacity 0.25s ease;
+}
+
+/* On a portrait phone the 1.82:1 face is width-bound, so the default 75vw leaves
+   the drum small. Let the face span the full viewport width plus a little, so the
+   drum's left/right edges bleed ~2% off each side and it reads big (still capped
+   at 80vh; width binds on a tall phone). */
+@media (orientation: portrait) and (pointer: coarse) {
+  .machine {
+    --face-h: min(80vh, 107vw / 1.82);
+  }
+  /* The viewport is a centering flex row, so the drum (a flex item) would shrink
+     to the viewport width and never bleed. Let it keep its --face-w so its edges
+     run ~2% off each side; the viewport's overflow:hidden clips the overhang. */
+  .machine__drum {
+    flex-shrink: 0;
+  }
+  /* The side brackets have no room on a full-width portrait drum. */
+  .machine__holder {
+    display: none;
+  }
+}
+
+/* "Better in landscape mode" hint: a black pill with a domed bubble on top
+   holding a turning phone. Portrait touch only; a plain nudge, never a block. */
+.rotate-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 11vh;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: none;
+  pointer-events: none;
+}
+@media (orientation: portrait) and (pointer: coarse) {
+  .rotate-hint {
+    display: block;
+  }
+}
+.rotate-hint__inner {
+  pointer-events: auto;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #fff;
+  transform-origin: bottom center;
+  animation: rotate-hint-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  /* One shadow over the whole silhouette (dome + pill), so there's no seam line
+     where the two meet. */
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.4));
+}
+/* The dome: a semicircular-topped bump sitting flush ON TOP of the pill (not
+   over its text). Same black as the pill, so the two read as one shape. */
+.rotate-hint__bubble {
+  width: 5.4rem;
+  height: 3.2rem;
+  border-radius: 2.7rem 2.7rem 0 0;
+  background: #0c0c0e;
+  display: grid;
+  place-items: end center;
+  padding-bottom: 0.15rem;
+  /* Overlap the pill a touch so there is no seam/gap between the dome and bar,
+     and sit above it so the phone is never clipped by the pill. */
+  margin-bottom: -0.25rem;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+.rotate-hint__phone {
+  width: 2.52rem;
+  height: 2.52rem;
+  display: block;
+}
+.rotate-hint__phone-g {
+  transform-box: fill-box;
+  transform-origin: center;
+  /* Fall over to landscape, reset to portrait, fall over again, and hold. */
+  animation: rotate-hint-phone 2.6s ease-in-out 0.5s both;
+}
+.rotate-hint__box {
+  background: #0c0c0e;
+  color: #fff;
+  font: 600 0.95rem/1 var(--sans, system-ui, sans-serif);
+  letter-spacing: 0.01em;
+  padding: 0.9rem 1.2rem 0.75rem;
+  border-radius: 0.85rem;
+  white-space: nowrap;
+}
+@keyframes rotate-hint-pop {
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes rotate-hint-phone {
+  0%,
+  10% {
+    transform: rotate(0deg);
+  }
+  35%,
+  46% {
+    transform: rotate(-90deg);
+  }
+  52%,
+  60% {
+    transform: rotate(0deg);
+  }
+  85%,
+  100% {
+    transform: rotate(-90deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rotate-hint__inner {
+    animation: none;
+  }
+  .rotate-hint__phone-g {
+    animation: none;
+  }
 }
 
 /* Pre-reveal: the scene is laid out (so the opening spin can prime) but not shown,
@@ -95,7 +223,10 @@
      bottom of the screen; the art is top-anchored, so whatever falls below the
      bottom edge is the buffer that goes off-screen. */
   top: calc(50% - var(--holder-cap) - var(--holder-rise));
-  height: var(--holder-h);
+  /* Tall enough to hold the whole top-anchored art down past the screen bottom;
+     .machine's overflow:hidden clips the off-screen remainder. The art size is
+     driven by width (drum-based), so this height only bounds the paint area. */
+  height: 150vh;
   width: var(--holder-w);
   /* Behind the drum, in front of the jungle background. */
   z-index: 1;

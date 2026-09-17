@@ -14,6 +14,7 @@ import FaceIV from './faces/FaceIV.jsx'
 import FaceV from './faces/FaceV.jsx'
 import useScrollNav from './useScrollNav.js'
 import useDragNav from './useDragNav.js'
+import RotateHint from './RotateHint.jsx'
 import './MachineShell.css'
 
 export const FACES = ['I', 'II', 'III', 'IV', 'V']
@@ -111,6 +112,7 @@ function MachineShell() {
   const [revealed, setRevealed] = useState(false)
   const didIntro = useRef(false)
   const rootRef = useRef(null)
+  const drumRef = useRef(null)
   const currentFaceRef = useRef(currentFace)
   // True until the opening spin first reaches Face I; scroll and clicks are
   // ignored until then so nothing fights the run-up. A ref mirrors introPhase so
@@ -163,6 +165,31 @@ function MachineShell() {
   useEffect(() => {
     currentFaceRef.current = currentFace
   }, [currentFace])
+
+  // The drum's transition:transform drives the nav turns, but it also catches
+  // the transform's translateZ(-apothem) change when --face-h shifts on a resize
+  // or orientation flip, lerping the drum's apparent size. Suppress the
+  // transition while the viewport is changing and restore it once it settles, so
+  // size changes snap while turns still animate.
+  useEffect(() => {
+    let timer
+    const onResize = () => {
+      const drum = drumRef.current
+      if (!drum) return
+      drum.style.transition = 'none'
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        if (drumRef.current) drumRef.current.style.transition = ''
+      }, 200)
+    }
+    window.addEventListener('resize', onResize)
+    window.addEventListener('orientationchange', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      window.removeEventListener('orientationchange', onResize)
+      clearTimeout(timer)
+    }
+  }, [])
 
   const handleStep = useCallback(
     (dir) => rotateTo(currentFaceRef.current + dir),
@@ -275,7 +302,7 @@ function MachineShell() {
         <div className="machine__holder machine__holder--left" aria-hidden="true" />
         <div className="machine__holder machine__holder--right" aria-hidden="true" />
         <div className="machine__viewport">
-          <div className="machine__drum" style={{ '--rot': rotationSteps }}>
+          <div ref={drumRef} className="machine__drum" style={{ '--rot': rotationSteps }}>
             {FACES.map((id, i) => {
               const Face = FACE_COMPONENTS[i]
               const isActive = i === currentFace
@@ -324,6 +351,7 @@ function MachineShell() {
             scene as the viewport resizes. */}
         <div className="machine__foreground" aria-hidden="true" />
         <MuteToggle className="machine__mute" />
+        <RotateHint />
       </div>
     </MachineContext.Provider>
   )
