@@ -57,9 +57,10 @@
 .face5-artifact {
   position: relative;
   display: block;
-  /* A touch under the chamber height so it clears the lid line at the top and the
-     credit at the bottom, centred by the chamber (never cut off by the lid). */
-  height: 92%;
+  /* Sit smaller than the chamber so there's spare space on every side, centred
+     in the art-matched recess (the chamber inset is matched to the face art, so
+     this is the measured centre, not a guessed offset). */
+  height: 85%;
   aspect-ratio: 1 / 1;
   pointer-events: none;
 }

@@ -143,6 +143,18 @@
   transition: color 0.16s ease;
 }
 
+/* On touch devices, counter the content zoom (face-w/1440) so the text and tap
+   target render at a near-constant, usable size instead of shrinking with the
+   small face. */
+@media (pointer: coarse) {
+  .plaque__details {
+    --unzoom: calc(1440px / var(--face-w));
+    font-size: calc(16px * var(--unzoom));
+    padding: calc(13px * var(--unzoom)) calc(8px * var(--unzoom));
+    margin-top: calc(10px * var(--unzoom));
+  }
+}
+
 .plaque__details::after {
   content: ' \2192';
   transition: margin-left 0.16s ease;
