@@ -3,11 +3,14 @@ import { getByUrlName, storeLinks } from '../data/games'
 import { MBM_BASE } from '../lib/base'
 import Background from '../components/Background'
 import Header from '../components/Header'
+import { useDocumentTitle } from '../../useDocumentTitle'
 import styles from './GameDetails.module.css'
 
 export default function GameDetails() {
   const { name } = useParams()
   const game = getByUrlName(name)
+
+  useDocumentTitle(game ? `${game.name} · Made By Moonlight` : undefined)
 
   // Original guard: unknown game -> 404.
   if (!game) return <Navigate to={`${MBM_BASE}/404`} replace />

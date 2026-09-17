@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useParams, Link, Navigate } from 'react-router-dom'
 import { getProject } from '../data/projects'
+import { useDocumentTitle } from '../useDocumentTitle'
 import ProjectMedia from '../components/ProjectMedia'
 import OrgTag from '../components/OrgTag'
 
@@ -45,6 +46,11 @@ function DetailLink({ link }) {
 export default function ProjectDetail() {
   const { slug } = useParams()
   const project = getProject(slug)
+
+  useDocumentTitle(
+    project ? `${project.name} · Paul Martin` : undefined,
+    project ? project.headline : undefined,
+  )
 
   useEffect(() => {
     window.scrollTo(0, 0)

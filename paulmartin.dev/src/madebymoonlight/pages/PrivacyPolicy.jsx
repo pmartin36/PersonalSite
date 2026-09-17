@@ -3,11 +3,16 @@ import { getByUrlName } from '../data/games'
 import { MBM_BASE } from '../lib/base'
 import Background from '../components/Background'
 import Header from '../components/Header'
+import { useDocumentTitle } from '../../useDocumentTitle'
 import styles from './PrivacyPolicy.module.css'
 
 export default function PrivacyPolicy() {
   const { name } = useParams()
   const model = getByUrlName(name)
+
+  useDocumentTitle(
+    model ? `Privacy Policy · ${model.name} · Made By Moonlight` : undefined,
+  )
 
   if (!model) return <Navigate to={`${MBM_BASE}/404`} replace />
 

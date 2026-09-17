@@ -15,6 +15,7 @@ import FaceV from './faces/FaceV.jsx'
 import useScrollNav from './useScrollNav.js'
 import useDragNav from './useDragNav.js'
 import RotateHint from './RotateHint.jsx'
+import { useDocumentTitle } from '../useDocumentTitle.js'
 import './MachineShell.css'
 
 export const FACES = ['I', 'II', 'III', 'IV', 'V']
@@ -358,6 +359,11 @@ function MachineShell() {
 }
 
 export default function Machine() {
+  // The base title, restored when a reader navigates back here from a project.
+  useDocumentTitle(
+    'Paul Martin — Software Engineer & Game Developer',
+    'Paul Martin is a software engineer building games and interactive experiences, from AR games to terminal engines. Explore his projects through an interactive puzzle box.',
+  )
   return (
     <AudioProvider>
       <MachineShell />

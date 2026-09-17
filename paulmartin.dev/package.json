@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "sitemap": "node scripts/generate-sitemap.mjs",
+    "build": "node scripts/generate-sitemap.mjs && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "assert:machine": "node e2e/assert-machine.mjs"
