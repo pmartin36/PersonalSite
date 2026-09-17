@@ -6,6 +6,9 @@ import OrgTag from '../../components/OrgTag.jsx'
 import Clue from '../Clue.jsx'
 import DetailModal from '../DetailModal.jsx'
 import { currentProjects } from '../../data/projects.js'
+import backStone1 from '../assets/back_stone_1.webp'
+import backStone2 from '../assets/back_stone_2.webp'
+import backStone3 from '../assets/back_stone_3.webp'
 import './FaceII.css'
 
 // How far a card tips back on the spindle when the pointer favours its top or
@@ -14,11 +17,7 @@ const WOBBLE_MAX = 6
 
 // Each card back is a different square cut from the hero face's stone, so the three
 // read as pieces of one slab rather than repeated tiles.
-const BACK_STONE = [
-  '/machine/back_stone_1.png',
-  '/machine/back_stone_2.png',
-  '/machine/back_stone_3.png',
-]
+const BACK_STONE = [backStone1, backStone2, backStone3]
 
 // Shared carve filters, the hero name's technique: the stone sunk into deep warm
 // shadow by a per-channel brightness subtraction (keeps texture and hue, unlike a
@@ -55,7 +54,7 @@ function ClueCarveDefs() {
 
 // One stone for every cut's floor (the slices differ in tone, which made one card's
 // bar read a different colour); the card backgrounds still vary.
-const CARVE_STONE = '/machine/back_stone_1.png'
+const CARVE_STONE = backStone1
 
 // Shapes carved into the stone, the same way the hero name is cut: a dark upper wall
 // peeking above, the stone floor sunk into shadow (clipped to the shapes, so an

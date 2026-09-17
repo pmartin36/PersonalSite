@@ -2,6 +2,11 @@ import { useState } from 'react'
 import FaceSurface from '../FaceSurface.jsx'
 import { useAudio } from '../audio.jsx'
 import Clue from '../Clue.jsx'
+import tile01 from '../assets/tile_01.webp'
+import tile02 from '../assets/tile_02.webp'
+import tile03 from '../assets/tile_03.webp'
+import tile04 from '../assets/tile_04.webp'
+import tile05 from '../assets/tile_05.webp'
 import './FaceIV.css'
 
 const EMAIL_HREF = 'mailto:p@ulmartin.me'
@@ -47,12 +52,12 @@ function TallyMark({ count }) {
 // 2x3 grid, cells 0..5. Row 1 = About (left half) / About (right half) / gap.
 // Row 2 = Email / LinkedIn / GitHub. null is the gap tile.
 const INITIAL_TILES = [
-  { id: 'about-0', kind: 'about', half: 'left', tex: '/machine/tile_01.png' },
-  { id: 'about-1', kind: 'about', half: 'right', tex: '/machine/tile_02.png' },
+  { id: 'about-0', kind: 'about', half: 'left', tex: tile01 },
+  { id: 'about-1', kind: 'about', half: 'right', tex: tile02 },
   null,
-  { id: 'email', kind: 'contact', label: 'Email', icon: 'envelope', value: 'p@ulmartin.me', href: EMAIL_HREF, tex: '/machine/tile_03.png' },
-  { id: 'linkedin', kind: 'contact', label: 'LinkedIn', icon: 'linkedin', value: 'Paul Martin', href: LINKEDIN_HREF, tex: '/machine/tile_04.png' },
-  { id: 'bluesky', kind: 'contact', label: 'Bluesky', icon: 'bluesky', value: 'paulmartindev', href: BLUESKY_HREF, tex: '/machine/tile_05.png' },
+  { id: 'email', kind: 'contact', label: 'Email', icon: 'envelope', value: 'p@ulmartin.me', href: EMAIL_HREF, tex: tile03 },
+  { id: 'linkedin', kind: 'contact', label: 'LinkedIn', icon: 'linkedin', value: 'Paul Martin', href: LINKEDIN_HREF, tex: tile04 },
+  { id: 'bluesky', kind: 'contact', label: 'Bluesky', icon: 'bluesky', value: 'paulmartindev', href: BLUESKY_HREF, tex: tile05 },
 ]
 
 // Stable render order so the DOM never reorders on a slide (only each tile's

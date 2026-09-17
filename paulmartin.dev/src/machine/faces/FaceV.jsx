@@ -6,6 +6,10 @@ import { useAudio } from '../audio.jsx'
 import { useMachine, faceIndex } from '../Machine.jsx'
 import { SEQUENCE } from '../model.js'
 import Artifact from '../../artifact/Artifact.jsx'
+import buttonLeft from '../assets/button_left.webp'
+import buttonUp from '../assets/button_up.webp'
+import buttonRight from '../assets/button_right.webp'
+import buttonDown from '../assets/button_down.webp'
 import './FaceV.css'
 
 // The pad's input alphabet, laid out as a single row: Left, Up, Right, Down.
@@ -20,10 +24,10 @@ if (PAD_ORDER.slice().sort().join() !== Object.keys(DIRECTION_GLYPH).sort().join
 // The keys are painted button faces (a jade tile with a gold arrow), one PNG per
 // direction. The sink and the top-darkening on press are CSS on the button.
 const BUTTON_SRC = {
-  Left: '/machine/button_left.png',
-  Up: '/machine/button_up.png',
-  Right: '/machine/button_right.png',
-  Down: '/machine/button_down.png',
+  Left: buttonLeft,
+  Up: buttonUp,
+  Right: buttonRight,
+  Down: buttonDown,
 }
 
 // A key holds its depressed state for at least this long, so a quick tap still

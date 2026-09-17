@@ -16,6 +16,7 @@ import useScrollNav from './useScrollNav.js'
 import useDragNav from './useDragNav.js'
 import RotateHint from './RotateHint.jsx'
 import { useDocumentTitle } from '../useDocumentTitle.js'
+import { REVEAL_TEXTURES, REST_FACE_TEXTURES, warmTextures } from './textures.js'
 import './MachineShell.css'
 
 export const FACES = ['I', 'II', 'III', 'IV', 'V']
@@ -35,23 +36,17 @@ const INTRO_REACH_MS = Math.round(INTRO_SPIN_MS * 0.68)
 // so a slow asset can never stall the opening.
 const INTRO_HOLD_CAP_MS = 800
 
-// Decode the background up front so its first paint doesn't jank the opening
-// spin. Resolves (never rejects) once it is ready or immediately if it can't.
-const MACHINE_BG_URL = '/machine/ruins-bg.png'
-function decodeBackground() {
-  if (typeof Image === 'undefined') return Promise.resolve()
-  const img = new Image()
-  img.src = MACHINE_BG_URL
-  return img.decode ? img.decode().catch(() => {}) : Promise.resolve()
-}
-
+// Decode the reveal-critical textures (background + Face I's stone) up front so
+// their first paint doesn't jank the opening spin, and hold the reveal until the
+// fonts and those textures are ready. Capped so a slow asset can never stall the
+// opening. Resolves, never rejects.
 function scenePainted() {
   const fonts =
     typeof document !== 'undefined' && document.fonts
       ? document.fonts.ready
       : Promise.resolve()
   return Promise.race([
-    Promise.all([fonts, decodeBackground()]),
+    Promise.all([fonts, warmTextures(REVEAL_TEXTURES)]),
     new Promise((resolve) => setTimeout(resolve, INTRO_HOLD_CAP_MS)),
   ])
 }
@@ -228,6 +223,9 @@ function MachineShell() {
       // Assets are ready: reveal the whole face at once, already carved. Under
       // reduced motion it simply rests on Face I; there is no spin.
       setRevealed(true)
+      // Warm the stone under faces II-V now the opening is up, so the first turn
+      // paints the incoming face from cache rather than decoding it mid-spin.
+      warmTextures(REST_FACE_TEXTURES)
       if (reducedMotion) return
       // Two frames so the held Face I has actually painted before the transform
       // kicks; then one full turn, the easing overshoots and rubber-bands back.

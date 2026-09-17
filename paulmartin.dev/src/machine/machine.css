@@ -37,7 +37,10 @@
   background-image:
     radial-gradient(140% 100% at 50% -12%, rgba(233, 216, 176, 0.32) 0%, rgba(189, 160, 103, 0) 46%),
     radial-gradient(120% 80% at 50% 118%, rgba(36, 29, 18, 0.28) 0%, transparent 60%),
-    var(--face-stone, url('/machine/face1.png'));
+    var(--face-stone, image-set(
+      url('./assets/face1.avif') type('image/avif'),
+      url('./assets/face1.webp') type('image/webp')
+    ));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -55,18 +58,30 @@
 /* Per-face painted stone. Faces IV and V carry their recess (tray / chamber) baked
    into the art, so their in-CSS inset shading is removed (see FaceIV/FaceV css). */
 .machine__face--II .face-surface__base {
-  --face-stone: url('/machine/stone_face_02.png');
+  --face-stone: image-set(
+    url('./assets/stone_face_02.avif') type('image/avif'),
+    url('./assets/stone_face_02.webp') type('image/webp')
+  );
 }
 .machine__face--III .face-surface__base {
   /* Stone only; the leaves are a separate layer painted over the reels (see
      .face3-leaves) so they drape in front of the content. */
-  --face-stone: url('/machine/background_face_03.png');
+  --face-stone: image-set(
+    url('./assets/background_face_03.avif') type('image/avif'),
+    url('./assets/background_face_03.webp') type('image/webp')
+  );
 }
 .machine__face--IV .face-surface__base {
-  --face-stone: url('/machine/stone_face_04.png');
+  --face-stone: image-set(
+    url('./assets/stone_face_04.avif') type('image/avif'),
+    url('./assets/stone_face_04.webp') type('image/webp')
+  );
 }
 .machine__face--V .face-surface__base {
-  --face-stone: url('/machine/stone_face_05.png');
+  --face-stone: image-set(
+    url('./assets/stone_face_05.avif') type('image/avif'),
+    url('./assets/stone_face_05.webp') type('image/webp')
+  );
 }
 
 /* Faces III/IV align content to a recess baked into the face art AND must scale

@@ -89,9 +89,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="theme-color" content="#050508" />
-    <!-- The scene background: fetch it early so the opening spin doesn't wait on
-         a cold-load decode. -->
-    <link rel="preload" as="image" href="/machine/ruins-bg.jpeg" />
+    <!-- The scene background and Face I stone are hashed by Vite and warmed
+         (decoded) at boot in Machine.jsx, which gates the opening reveal; no
+         static preload here can name the hashed file. -->
     <!-- The carved-name font (Eczar). Preloaded so it is ready before the stone's
          first paint: the face appears already carved, with no fallback-then-swap. -->
     <link

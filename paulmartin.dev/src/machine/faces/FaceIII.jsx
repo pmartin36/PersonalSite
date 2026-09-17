@@ -6,6 +6,9 @@ import ProjectPlaque from '../ProjectPlaque.jsx'
 import { directionLetter } from '../Clue.jsx'
 import { MOVES } from '../model.js'
 import { getProject } from '../../data/projects.js'
+import tile01 from '../assets/tile_01.webp'
+import tile02 from '../assets/tile_02.webp'
+import tile03 from '../assets/tile_03.webp'
 import './FaceIII.css'
 
 // Three reels, each a 3-sided wheel (project | project | blank). Every reel's
@@ -103,11 +106,7 @@ const REEL_CTA = ['MORE', 'PROJECTS', 'ON']
 // Each reel's blank face carries its own stone, ripped from the tile art, so the
 // three CTA faces read as distinct carved stone rather than flat fill. One tile
 // per reel (different from each other); cover-fit so it fills without stretching.
-const REEL_STONE = [
-  '/machine/tile_01.png',
-  '/machine/tile_03.png',
-  '/machine/tile_02.png',
-]
+const REEL_STONE = [tile01, tile03, tile02]
 
 // The average stone colour of each reel's tile, used as the flat background for
 // that reel's content (project) faces so they match the textured blank face.

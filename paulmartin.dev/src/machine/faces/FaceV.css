@@ -190,7 +190,10 @@
     inset 0 1px 2px rgba(0, 0, 0, 0.4),
     0 1px 0 rgba(210, 190, 140, 0.22);
   /* The cap slab that seals the chamber - its own painted art. */
-  background: url('/machine/cap_face_05.png') center / cover no-repeat;
+  background: image-set(
+      url('../assets/cap_face_05.avif') type('image/avif'),
+      url('../assets/cap_face_05.webp') type('image/webp')
+    ) center / cover no-repeat;
 }
 
 /* The chiselled inner side of the slab: a darker, rougher stone with a deep rim,
@@ -203,7 +206,10 @@
      toward the bottom, so it reads as stone in shade, not a flat gradient. */
   background:
     linear-gradient(180deg, rgba(74, 47, 22, 0.4) 0%, rgba(48, 30, 13, 0.62) 100%),
-    url('/machine/cap_underside_05.png') center / cover no-repeat;
+    image-set(
+      url('../assets/cap_underside_05.avif') type('image/avif'),
+      url('../assets/cap_underside_05.webp') type('image/webp')
+    ) center / cover no-repeat;
   /* No border or rim: its bottom edge fades into the chamber below instead of
      cutting a hard seam across the opening. A warm brown shade, not black. */
   box-shadow: inset 0 6px 16px rgba(30, 18, 8, 0.5);

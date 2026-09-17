@@ -2,6 +2,7 @@ import FaceSurface from '../FaceSurface.jsx'
 import Clue from '../Clue.jsx'
 import { useMachine, faceIndex } from '../Machine.jsx'
 import { RESUME_URL } from '../model.js'
+import carveStone from '../assets/face1-carve-stone.webp'
 import './FaceI.css'
 
 const RESUME_WORD = 'resume'
@@ -83,7 +84,7 @@ export default function FaceI() {
         </text>
         {/* 2. floor: the subtracted stone, clipped to the letters */}
         <image
-          href="/machine/test_asset_with_leaves2.png"
+          href={carveStone}
           x="0"
           y="0"
           width="1820"

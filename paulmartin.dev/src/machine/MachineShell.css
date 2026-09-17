@@ -39,7 +39,10 @@
   overflow: hidden;
   /* The device stands in sunlit jungle ruins. */
   background-color: var(--m-crevice);
-  background-image: url('/machine/ruins-bg.png');
+  background-image: image-set(
+    url('./assets/ruins-bg.avif') type('image/avif'),
+    url('./assets/ruins-bg.webp') type('image/webp')
+  );
   background-size: cover;
   background-position: center;
   /* Held hidden until the font and background are ready, then faded in whole (see
@@ -226,7 +229,10 @@
   inset: 0;
   z-index: 5;
   pointer-events: none;
-  background-image: url('/machine/ruins-fg.png');
+  background-image: image-set(
+    url('./assets/ruins-fg.avif') type('image/avif'),
+    url('./assets/ruins-fg.webp') type('image/webp')
+  );
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -259,12 +265,18 @@
    occludes the bracket's inner edge. */
 .machine__holder--left {
   left: calc(50% - var(--face-w) / 2 - var(--holder-w) + var(--holder-inset));
-  --holder-art: url('/machine/holder_left.png');
+  --holder-art: image-set(
+    url('./assets/holder_left.avif') type('image/avif'),
+    url('./assets/holder_left.webp') type('image/webp')
+  );
 }
 
 .machine__holder--right {
   left: calc(50% + var(--face-w) / 2 - var(--holder-inset));
-  --holder-art: url('/machine/holder_right.png');
+  --holder-art: image-set(
+    url('./assets/holder_right.avif') type('image/avif'),
+    url('./assets/holder_right.webp') type('image/webp')
+  );
 }
 
 .machine__viewport {

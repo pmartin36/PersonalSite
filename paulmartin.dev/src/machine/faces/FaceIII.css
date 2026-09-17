@@ -15,7 +15,10 @@
   inset: 0;
   z-index: 5;
   pointer-events: none;
-  background: url('/machine/leaves_face_03.png') center / cover no-repeat;
+  background: image-set(
+      url('../assets/leaves_face_03.avif') type('image/avif'),
+      url('../assets/leaves_face_03.webp') type('image/webp')
+    ) center / cover no-repeat;
 }
 
 .face3-title {
