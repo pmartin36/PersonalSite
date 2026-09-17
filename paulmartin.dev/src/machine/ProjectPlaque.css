@@ -144,13 +144,28 @@
 }
 
 /* On touch devices drop the description (Title/Year, headline, tags, CTA) and
-   size the CTA to sit under the title, scaled with the card so proportions hold. */
+   grow the remaining text into the freed space so it's readable; everything
+   stays scaled with the card, so the proportions hold. */
 @media (pointer: coarse) {
   .plaque__blurb {
     display: none;
   }
+  /* Same ~1.5x on each (from their base sizes), so the proportions hold; the CTA
+     is scaled a little less so it renders under the title. */
+  .plaque__name {
+    font-size: 1.53rem;
+  }
+  .plaque__year {
+    font-size: 1.02rem;
+  }
+  .plaque__headline {
+    font-size: 1.32rem;
+  }
+  .plaque__tag {
+    font-size: 0.96rem;
+  }
   .plaque__details {
-    font-size: 1rem;
+    font-size: 1.05rem;
     padding: 0.4rem 0;
     margin-top: 0.45rem;
   }

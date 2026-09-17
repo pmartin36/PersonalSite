@@ -322,13 +322,28 @@
 }
 
 /* On touch devices drop the description (Title/Year, headline, tags, CTA) and
-   size the CTA to sit under the title, scaled with the card so proportions hold. */
+   grow the remaining text into the freed space so it's readable; everything
+   stays scaled with the card, so the proportions hold. */
 @media (pointer: coarse) {
   .face2-blurb {
     display: none;
   }
+  /* Same ~1.5x on each (from their base sizes), so the proportions hold; the CTA
+     is scaled a little less so it renders under the title. */
+  .face2-name {
+    font-size: 1.53rem;
+  }
+  .face2-year {
+    font-size: 1.02rem;
+  }
+  .face2-headline {
+    font-size: 1.32rem;
+  }
+  .face2-tag {
+    font-size: 0.96rem;
+  }
   .face2-details {
-    font-size: 1rem;
+    font-size: 1.05rem;
     padding: 0.4rem 0;
     margin-top: 0.3rem;
   }
