@@ -154,6 +154,12 @@
      is scaled a little less so it renders under the title. */
   .plaque__name {
     font-size: 1.53rem;
+    /* Keep the title + org pill on one line (the pill scales down to fit). */
+    flex-wrap: nowrap;
+  }
+  .plaque__name .org-tag {
+    font-size: 0.5rem;
+    padding: 0.1rem 0.32rem;
   }
   .plaque__year {
     font-size: 1.02rem;
@@ -161,11 +167,16 @@
   .plaque__headline {
     font-size: 1.32rem;
   }
+  /* One row of tags only; any that would wrap to a second row are clipped out. */
+  .plaque__tags {
+    max-height: 1.5rem;
+    overflow: hidden;
+  }
   .plaque__tag {
     font-size: 0.96rem;
   }
   .plaque__details {
-    font-size: 1.05rem;
+    font-size: 1.4rem;
     padding: 0.4rem 0;
     margin-top: 0.45rem;
   }

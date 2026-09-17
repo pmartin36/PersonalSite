@@ -37,6 +37,11 @@ export default function useDragNav(
       if (event.touches.length !== 1) return
       if (!canInteract()) return
       if (findScrollableAncestor(event.target, root)) return
+      // A Face III reel owns its own vertical drag (it rolls the reel, not the
+      // drum), so leave those touches to it.
+      if (event.target.closest && event.target.closest('.face3-reel__window')) {
+        return
+      }
       const y = event.touches[0].clientY
       // Cede to the browser (pull-to-refresh) only for a swipe that starts high
       // (top third in portrait, top 40% in landscape) AND on empty scene, not on

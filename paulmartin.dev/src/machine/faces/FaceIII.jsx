@@ -172,7 +172,67 @@ function Reel({ faces, reelIndex, position, onSpin, onOpen }) {
       spinRef.current(event.deltaY > 0 ? 1 : -1)
     }
     el.addEventListener('wheel', onWheel, { passive: false })
-    return () => el.removeEventListener('wheel', onWheel)
+
+    // Touch drag rolls this reel (same one-face-per-chunk logic as the drum: the
+    // first roll is easy, each further roll in the drag needs a longer pull). It
+    // preventDefaults/stops so it overrides the drum's own drag while the finger
+    // is on the reel; a tap still rolls one face via onClick.
+    let active = false
+    let refY = 0
+    let steps = 0
+    let dragged = false
+    const FIRST_PX = 44
+    const NEXT_PX = 82
+    const onStart = (event) => {
+      if (event.touches.length !== 1) return
+      active = true
+      refY = event.touches[0].clientY
+      steps = 0
+      dragged = false
+    }
+    const onMove = (event) => {
+      if (!active) return
+      const y = event.touches[0].clientY
+      event.preventDefault()
+      event.stopPropagation()
+      for (;;) {
+        const need = steps === 0 ? FIRST_PX : NEXT_PX
+        if (refY - y >= need) {
+          spinRef.current(1)
+          refY -= need
+        } else if (y - refY >= need) {
+          spinRef.current(-1)
+          refY += need
+        } else {
+          break
+        }
+        steps += 1
+        dragged = true
+      }
+    }
+    const onEnd = () => {
+      active = false
+    }
+    const onClickCapture = (event) => {
+      if (!dragged) return
+      dragged = false
+      event.preventDefault()
+      event.stopPropagation()
+    }
+    el.addEventListener('touchstart', onStart, { passive: true })
+    el.addEventListener('touchmove', onMove, { passive: false })
+    el.addEventListener('touchend', onEnd)
+    el.addEventListener('touchcancel', onEnd)
+    el.addEventListener('click', onClickCapture, true)
+
+    return () => {
+      el.removeEventListener('wheel', onWheel)
+      el.removeEventListener('touchstart', onStart)
+      el.removeEventListener('touchmove', onMove)
+      el.removeEventListener('touchend', onEnd)
+      el.removeEventListener('touchcancel', onEnd)
+      el.removeEventListener('click', onClickCapture, true)
+    }
   }, [])
 
   // Repeat the three entries around a 6-sided drum so the neighbours sit at 60°
