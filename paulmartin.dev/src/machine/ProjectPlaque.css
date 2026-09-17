@@ -143,11 +143,14 @@
   transition: color 0.16s ease;
 }
 
-/* On touch devices give the CTA a bigger share of the card (it stays scaled with
-   the card, so the proportions hold -- just uses more of the space). */
+/* On touch devices drop the description (Title/Year, headline, tags, CTA) and
+   size the CTA to sit under the title, scaled with the card so proportions hold. */
 @media (pointer: coarse) {
+  .plaque__blurb {
+    display: none;
+  }
   .plaque__details {
-    font-size: 1.25rem;
+    font-size: 1rem;
     padding: 0.4rem 0;
     margin-top: 0.45rem;
   }
