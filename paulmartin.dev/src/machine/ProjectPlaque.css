@@ -143,15 +143,13 @@
   transition: color 0.16s ease;
 }
 
-/* On touch devices, counter the content zoom (face-w/1440) so the text and tap
-   target render at a near-constant, usable size instead of shrinking with the
-   small face. */
+/* On touch devices give the CTA a bigger share of the card (it stays scaled with
+   the card, so the proportions hold -- just uses more of the space). */
 @media (pointer: coarse) {
   .plaque__details {
-    --unzoom: calc(1440px / var(--face-w));
-    font-size: calc(16px * var(--unzoom));
-    padding: calc(13px * var(--unzoom)) calc(8px * var(--unzoom));
-    margin-top: calc(10px * var(--unzoom));
+    font-size: 1.25rem;
+    padding: 0.4rem 0;
+    margin-top: 0.45rem;
   }
 }
 
