@@ -35,6 +35,9 @@ export default function useDragNav(
     function onTouchStart(event) {
       if (active) return
       if (event.touches.length !== 1) return
+      // Fresh gesture: never let a stale swallow flag (from a drag that ended
+      // without a click) eat this tap.
+      swallowClick = false
       if (!canInteract()) return
       if (findScrollableAncestor(event.target, root)) return
       // A Face III reel owns its own vertical drag (it rolls the reel, not the

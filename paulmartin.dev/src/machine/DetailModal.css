@@ -135,27 +135,13 @@
   }
 }
 
-/* Landscape phone: the modal is short, so cap the hero to ~40% of the height.
-   That leaves the title and a sliver of the body visible above the fold, so it
-   reads as scrollable. The hero fills the capped box (cropped, not letterboxed). */
+/* Landscape phone: the viewport is short, so instead of cropping the hero to a
+   capped height, narrow the modal. The hero then shows at its natural aspect
+   (whole video, uncropped) and still leaves the title and a line of the headline
+   peeking below the fold, so it reads as scrollable. */
 @media (orientation: landscape) and (pointer: coarse) {
   .detail-modal__panel {
+    width: min(480px, 96vw);
     max-height: 94dvh;
-  }
-  .detail-modal__body .detail-media {
-    height: 56dvh;
-  }
-  .detail-modal__body .detail-media .media-still,
-  .detail-modal__body .detail-media .media-embed,
-  .detail-modal__body .detail-media .shot {
-    aspect-ratio: auto;
-    height: 100%;
-  }
-  .detail-modal__body .detail-media img,
-  .detail-modal__body .detail-media video,
-  .detail-modal__body .detail-media iframe {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
   }
 }
