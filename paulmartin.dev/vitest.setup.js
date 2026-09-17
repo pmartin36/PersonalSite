@@ -13,3 +13,13 @@ if (!window.matchMedia) {
     removeEventListener: () => {},
   })
 }
+
+// jsdom has no ResizeObserver; components that measure their box (e.g. the
+// artifact under the Face V lid) construct one on mount. Stub it so they render.
+if (!window.ResizeObserver) {
+  window.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+}

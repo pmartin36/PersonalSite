@@ -68,14 +68,14 @@ describe('FaceV arrow pad', () => {
 })
 
 describe('FaceV sequence lock (sliding window)', () => {
-  it('solves on the full correct SEQUENCE: stage opens and the drive can be taken', () => {
+  it('solves on the full correct SEQUENCE: stage opens and the artifact can be taken', () => {
     const { container, getByLabelText } = render(<FaceV />)
     SEQUENCE.forEach((direction) => pressArrow(container, direction))
     expect(isSolved(container)).toBe(true)
     expect(lockWrapper(container).getAttribute('data-lock-progress')).toBe(
       String(SEQUENCE.length),
     )
-    expect(getByLabelText('Take the drive')).toBeTruthy()
+    expect(getByLabelText('Take the artifact')).toBeTruthy()
   })
 
   it('garbage presses followed by the full SEQUENCE still solve (the window matches the trailing presses)', () => {

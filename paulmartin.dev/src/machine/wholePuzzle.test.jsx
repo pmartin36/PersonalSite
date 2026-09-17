@@ -41,7 +41,7 @@ describe('whole-puzzle clue integrity', () => {
     })
   })
 
-  it('entering SEQUENCE into Face V opens the lock and reveals the drive', () => {
+  it('entering SEQUENCE into Face V opens the lock and reveals the artifact', () => {
     renderMachine()
     const faceV = screen.getByRole('region', { name: 'Face V' })
     for (const direction of SEQUENCE) {
@@ -49,7 +49,7 @@ describe('whole-puzzle clue integrity', () => {
     }
     const slab = faceV.querySelector('.face5-slab')
     expect(slab.getAttribute('data-stage')).toBe('open')
-    expect(within(faceV).getByLabelText('Take the drive')).toBeInTheDocument()
+    expect(within(faceV).getByLabelText('Take the artifact')).toBeInTheDocument()
   })
 })
 
