@@ -57,11 +57,12 @@
 .face5-artifact {
   position: relative;
   display: block;
-  /* Sit smaller than the chamber so there's spare space on every side, centred
-     in the art-matched recess (the chamber inset is matched to the face art, so
-     this is the measured centre, not a guessed offset). */
-  height: 85%;
+  height: 100%;
   aspect-ratio: 1 / 1;
+  /* Full size, biased down into the artwork's own spare bottom margin (its
+     content has ~9.8% transparent space at the bottom vs ~6.3% at the top), so
+     it sits lower under the lid without shrinking or leaving the recess. */
+  transform: translateY(6%);
   pointer-events: none;
 }
 
