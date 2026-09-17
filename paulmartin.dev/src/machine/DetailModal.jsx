@@ -53,11 +53,23 @@ export default function DetailModal({ project: projectProp, slug, onClose }) {
   const openedRef = useRef(false)
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
+  // Tracks whether our Back-button history entry is currently on the stack, so we
+  // push it at most once and unwind it at most once (survives StrictMode's
+  // double-invoked effects, which must not fire a spurious history.back).
+  const pushedRef = useRef(false)
+  // Set while handleClose unwinds its own history entry, so the popstate that
+  // unwind fires doesn't also call onClose (that would double-close).
+  const closingRef = useRef(false)
   // A close that plays the dismiss tap first, then closes (covers X, backdrop,
-  // Escape). The pushed history entry is unwound in the effect cleanup below.
+  // Escape), and unwinds the pushed history entry so the stack stays clean.
   const handleClose = useCallback(() => {
     playDetailClose()
     onClose?.()
+    if (typeof window !== 'undefined' && pushedRef.current) {
+      pushedRef.current = false
+      closingRef.current = true
+      window.history.back()
+    }
   }, [playDetailClose, onClose])
 
   // Play the open tap once, when the panel first opens.
@@ -110,19 +122,27 @@ export default function DetailModal({ project: projectProp, slug, onClose }) {
   }, [project, handleClose])
 
   // The Back button / gesture closes the modal instead of leaving the page: push
-  // a history entry when the modal opens and close on popstate. On any other
-  // close (X/backdrop/Escape) the cleanup unwinds that entry, but only if it is
-  // still current -- a link-navigation out of the modal pushes the router's own
-  // entry on top, so history.state is no longer ours and the nav is preserved.
+  // one history entry when the modal opens and close on popstate; handleClose
+  // unwinds the entry on any other close. The pushedRef guard keeps this correct
+  // under StrictMode's mount/cleanup/mount, and the cleanup only detaches the
+  // listener (no history.back there), so a fake unmount can't close the modal.
   useEffect(() => {
     if (!project) return undefined
-    window.history.pushState({ detailModal: true }, '')
-    const onPop = () => onCloseRef.current?.()
-    window.addEventListener('popstate', onPop)
-    return () => {
-      window.removeEventListener('popstate', onPop)
-      if (window.history.state?.detailModal) window.history.back()
+    if (!pushedRef.current) {
+      window.history.pushState({ detailModal: true }, '')
+      pushedRef.current = true
     }
+    const onPop = () => {
+      pushedRef.current = false
+      // Our own unwind (handleClose already closed) -- don't close again.
+      if (closingRef.current) {
+        closingRef.current = false
+        return
+      }
+      onCloseRef.current?.()
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
   }, [project])
 
   if (!project) return null
