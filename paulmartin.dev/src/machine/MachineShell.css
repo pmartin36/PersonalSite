@@ -53,6 +53,17 @@
    the drum small. Let the face span the full viewport width plus a little, so the
    drum's left/right edges bleed ~2% off each side and it reads big (still capped
    at 80vh; width binds on a tall phone). */
+/* Landscape phone: fill nearly the whole height so the device is as large as
+   possible with only a thin sliver of sky/ground. Everything is keyed off
+   --face-h, so the width and all content scale up with it. The vw term is a
+   safety cap so a squarer landscape can't overflow the sides. */
+@media (orientation: landscape) and (pointer: coarse) {
+  .machine {
+    --face-h: min(95vh, 92vw / 1.82);
+    --face-h: min(95dvh, 92vw / 1.82);
+  }
+}
+
 @media (orientation: portrait) and (pointer: coarse) {
   .machine {
     --face-h: min(80vh, 107vw / 1.82);
