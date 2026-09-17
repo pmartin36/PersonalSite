@@ -59,10 +59,10 @@
   display: block;
   height: 100%;
   aspect-ratio: 1 / 1;
-  /* Full size, biased down into the artwork's own spare bottom margin (its
-     content has ~9.8% transparent space at the bottom vs ~6.3% at the top), so
-     it sits lower under the lid without shrinking or leaving the recess. */
-  transform: translateY(6%);
+  /* Full size, nudged down so it reads centred in the opening with the lid up.
+     translateY is a percent of the artifact's own height, which scales with the
+     face, so the offset stays proportional at every size. */
+  transform: translateY(2.2%);
   pointer-events: none;
 }
 
