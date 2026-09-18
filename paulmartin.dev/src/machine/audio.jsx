@@ -47,6 +47,9 @@ export const SAMPLES = {
   // Face V arrow-pad press: a muted stone slide, a deep stone thunk seating into
   // place, then a soft return slide.
   pad_press: 'machine/sfx/pad_press.mp3',
+  // Face I leaves brushing aside (a light cloth-foley rustle). Played at true pitch
+  // when they move up/aside and slightly pitched down when they settle back.
+  leaf_move: 'machine/sfx/leaf_move.mp3',
 }
 
 // Sample levels. The jungle bed sits well under the effects.
@@ -73,6 +76,9 @@ const TILE_RATES = [1.0, 1.122, 1.189]
 const CARD_GAIN = 0.35
 // Face V arrow-pad press, a small frequent stone tap, kept quiet and non-fatiguing.
 const PAD_GAIN = 0.42
+// Face I leaf rustle, a subtle decorative accent. The return plays a touch lower.
+const LEAF_GAIN = 0.32
+const LEAF_DOWN_RATE = 0.9
 
 const DEFAULT_AUDIO = {
   playTurn: () => {},
@@ -89,6 +95,7 @@ const DEFAULT_AUDIO = {
   playTileSlide: () => {},
   playCardFlip: () => {},
   playPadPress: () => {},
+  playLeaf: () => {},
   enterIgnition: () => {},
   exitIgnition: () => {},
   muted: true,
@@ -381,6 +388,19 @@ export function AudioProvider({ children }) {
     [armed, muted, s, playBuffer]
   )
 
+  // Face I leaves brushing aside ('up') and settling back ('down'). The return is
+  // pitched down a touch; a small random jitter keeps repeat hovers from sounding
+  // copy-pasted.
+  const playLeaf = useCallback(
+    (direction = 'up') => {
+      if (!armed || muted || !s.ctx) return
+      const base = direction === 'down' ? LEAF_DOWN_RATE : 1
+      const rate = base * (1 + (Math.random() * 2 - 1) * 0.03)
+      playBuffer(s.buffers.leaf_move, { gain: LEAF_GAIN, rate })
+    },
+    [armed, muted, s, playBuffer],
+  )
+
   // Master gain follows mute so EVERYTHING (synths, one-shot samples, and the
   // bed) is silenced the instant you mute, not just newly-triggered sounds. A
   // short ramp avoids a click.
@@ -403,7 +423,7 @@ export function AudioProvider({ children }) {
     else stopJungle()
   }, [armed, muted, ignited, startJungle, stopJungle])
 
-  const value = { playTurn, playIntroSpin, playArtifactBurst, playLidOpen, playPowerup, startGears, stopGears, playMuteClick, playDetailOpen, playDetailClose, playReelSpin, playTileSlide, playCardFlip, playPadPress, enterIgnition, exitIgnition, muted, armed, toggleMute, mute, unmute, arm }
+  const value = { playTurn, playIntroSpin, playArtifactBurst, playLidOpen, playPowerup, startGears, stopGears, playMuteClick, playDetailOpen, playDetailClose, playReelSpin, playTileSlide, playCardFlip, playPadPress, playLeaf, enterIgnition, exitIgnition, muted, armed, toggleMute, mute, unmute, arm }
 
   return (
     <MachineAudioContext.Provider value={value}>

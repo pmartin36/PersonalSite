@@ -84,20 +84,55 @@
 }
 
 /* An engraved "4" cut into the stone behind the leaves, centred on the leaf mass.
-   z-index 1 puts it under the leaves layer (z-index 2), so at rest the foliage
-   covers the digit and only its lower stem pokes out below the leaves; skew the
-   leaves aside and the whole 4 is revealed. Uses the shared .machine-carve etch. */
+   Stacking is stone < shadow (z1) < this engraving (z2) < leaves (z3): the leaf
+   shadow sits under the digit, so the engraving reads as cut into shadowed stone,
+   and at rest the foliage covers the digit with only its lower stem poking out;
+   skew the leaves aside and the whole 4 is revealed. Uses the shared .machine-carve
+   etch, whose translucent fill lets the shadow beneath darken it. */
 .face1-clue4 {
   position: absolute;
   /* Centred on the leaf-mass collider (its centre x ~= 9.7%). */
   left: 10.3%;
   top: 20.55%;
   transform: translateX(-50%);
-  z-index: 1;
+  z-index: 2;
   font-family: var(--display, serif);
   font-weight: 700;
   font-size: calc(var(--face-h) * 0.0612);
   line-height: 1;
+}
+
+/* The leaves' cast shadow, its own layer (lifted out of the base) so it can move.
+   Sits above the stone but below the engraving and the leaves (z1). It skews on the
+   same hover/tap as the leaves but HALF as much, so the shadow trails the foliage
+   instead of staying pinned to the stone while the leaves lift away. NORMAL blend,
+   matching how it composited when it was baked in. */
+.face1-leaves-shadow {
+  position: absolute;
+  left: 0.33%;
+  top: 14.4%;
+  width: 12.637%;
+  height: 18.4%;
+  z-index: 1;
+  pointer-events: none;
+  background: image-set(
+      url('../assets/leaves_shadow.avif') type('image/avif'),
+      url('../assets/leaves_shadow.webp') type('image/webp')
+    ) left top / contain no-repeat;
+  transform-origin: left center;
+  transition: transform 0.55s cubic-bezier(0.34, 1.1, 0.42, 1);
+  will-change: transform;
+}
+
+.face1-leaves-hit:hover ~ .face1-leaves-shadow,
+.face1-leaves-shadow.is-skewed {
+  transform: translateX(-1.25%) skewY(-5.5deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .face1-leaves-shadow {
+    transition-duration: 0.01ms;
+  }
 }
 
 /* Static hit area over the resting leaf mass. It never transforms, so it can't
@@ -106,11 +141,11 @@
    fills only ~35% of its layer box), not the full transparent box. */
 .face1-leaves-hit {
   position: absolute;
-  left: 6.6%;
+  left: 6.7%;
   top: 17.8%;
-  width: 6.2%;
-  height: 9.5%;
-  z-index: 3;
+  width: 5.9%;
+  height: 9.3%;
+  z-index: 4;
   cursor: pointer;
 }
 
@@ -122,11 +157,11 @@
    bare stone beneath. */
 .face1-leaves {
   position: absolute;
-  left: 0.33%;
-  top: 14.4%;
-  width: 12.637%;
-  height: 18.4%;
-  z-index: 2;
+  left: 0.44%;
+  top: 16.2%;
+  width: 12.527%;
+  height: 16.1%;
+  z-index: 3;
   pointer-events: none;
   background: image-set(
       url('../assets/leaves_moveable.avif') type('image/avif'),

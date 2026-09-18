@@ -13,6 +13,8 @@ import face1Webp from './assets/face1.webp'
 import face1CarveWebp from './assets/face1-carve-stone.webp'
 import leavesMoveAvif from './assets/leaves_moveable.avif'
 import leavesMoveWebp from './assets/leaves_moveable.webp'
+import leavesShadowAvif from './assets/leaves_shadow.avif'
+import leavesShadowWebp from './assets/leaves_shadow.webp'
 import stone02Avif from './assets/stone_face_02.avif'
 import stone02Webp from './assets/stone_face_02.webp'
 import bg03Avif from './assets/background_face_03.avif'
@@ -53,6 +55,7 @@ export const REVEAL_TEXTURES = [
   pair(face1Avif, face1Webp),
   face1CarveWebp,
   pair(leavesMoveAvif, leavesMoveWebp),
+  pair(leavesShadowAvif, leavesShadowWebp),
 ]
 
 // Every other drum-surface texture: the stone under faces II-V and the

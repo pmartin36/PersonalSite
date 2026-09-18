@@ -22,6 +22,7 @@ const DUAL = [
   ['ruins-fg.png', 'ruins-fg', 1920],
   ['face1.png', 'face1', 1280],
   ['leaves_moveable.png', 'leaves_moveable', 230],
+  ['leaves_shadow.png', 'leaves_shadow', 230],
   ['stone_face_02.png', 'stone_face_02', 1280],
   ['background_face_03.png', 'background_face_03', 1280],
   ['stone_face_04.png', 'stone_face_04', 1280],

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import FaceSurface from '../FaceSurface.jsx'
 import Clue from '../Clue.jsx'
 import { useMachine, faceIndex } from '../Machine.jsx'
+import { useAudio } from '../audio.jsx'
 import { RESUME_URL } from '../model.js'
 import carveStone from '../assets/face1-carve-stone.webp'
 import './FaceI.css'
@@ -10,15 +11,32 @@ const RESUME_WORD = 'resume'
 
 export default function FaceI() {
   const { rotateTo } = useMachine()
+  const { playLeaf } = useAudio()
   // Desktop skews the leaves aside on hover (pure CSS). Touch has no hover, so a
-  // tap skews them, then they settle back on their own after a beat.
+  // tap skews them, then they settle back on their own after a beat. The rustle
+  // plays on the way aside ('up') and on the way back ('down').
   const [leavesSkewed, setLeavesSkewed] = useState(false)
   const leavesTimer = useRef(null)
   useEffect(() => () => clearTimeout(leavesTimer.current), [])
   const nudgeLeaves = () => {
     clearTimeout(leavesTimer.current)
     setLeavesSkewed(true)
-    leavesTimer.current = setTimeout(() => setLeavesSkewed(false), 1800)
+    playLeaf('up')
+    leavesTimer.current = setTimeout(() => {
+      setLeavesSkewed(false)
+      playLeaf('down')
+    }, 1800)
+  }
+  // Mouse hover drives the CSS skew and its rustle; touch fires pointerenter too,
+  // so ignore touch here and let the tap (pointerdown) own the skew + sound.
+  const onLeafEnter = (e) => {
+    if (e.pointerType !== 'touch') playLeaf('up')
+  }
+  const onLeafLeave = (e) => {
+    if (e.pointerType !== 'touch') playLeaf('down')
+  }
+  const onLeafDown = (e) => {
+    if (e.pointerType === 'touch') nudgeLeaves()
   }
 
   return (
@@ -148,9 +166,19 @@ export default function FaceI() {
       <div className="face1-clue4 machine-carve" aria-hidden="true">
         4
       </div>
-      <div className="face1-leaves-hit" aria-hidden="true" onClick={nudgeLeaves} />
+      <div
+        className="face1-leaves-hit"
+        aria-hidden="true"
+        onPointerEnter={onLeafEnter}
+        onPointerLeave={onLeafLeave}
+        onPointerDown={onLeafDown}
+      />
       <div
         className={`face1-leaves${leavesSkewed ? ' is-skewed' : ''}`}
+        aria-hidden="true"
+      />
+      <div
+        className={`face1-leaves-shadow${leavesSkewed ? ' is-skewed' : ''}`}
         aria-hidden="true"
       />
       <h1 className="face1-name">Paul Martin</h1>
