@@ -21,6 +21,7 @@ const DUAL = [
   ['ruins-bg.png', 'ruins-bg', 1920],
   ['ruins-fg.png', 'ruins-fg', 1920],
   ['face1.png', 'face1', 1280],
+  ['leaves_moveable.png', 'leaves_moveable', 230],
   ['stone_face_02.png', 'stone_face_02', 1280],
   ['background_face_03.png', 'background_face_03', 1280],
   ['stone_face_04.png', 'stone_face_04', 1280],
@@ -37,7 +38,7 @@ const DUAL = [
 const WEBP_ONLY = [
   // Face I carve source: sunk into the name by a per-channel brightness
   // subtraction, so keep it high quality and full resolution.
-  ['test_asset_with_leaves2.png', 'face1-carve-stone', 1820, 90],
+  ['face1.png', 'face1-carve-stone', 1820, 90],
   ['back_stone_1.png', 'back_stone_1', 460, 82],
   ['back_stone_2.png', 'back_stone_2', 460, 82],
   ['back_stone_3.png', 'back_stone_3', 460, 82],

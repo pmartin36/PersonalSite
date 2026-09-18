@@ -159,8 +159,15 @@
   pointer-events: none;
   font-family: var(--display, serif);
   font-weight: 700;
-  /* Tall: the glyph stands about 40% of the face height. */
-  font-size: calc(var(--reel-face-h) * 0.50);
+  /* One knob for size. Each reel shows a HALF of the glyph and they reunite across
+     the physical inter-reel gap; the clip below is derived from this same scale, so
+     the two halves always meet at the true half-way line no matter the size. Making
+     this bigger reveals more of each half AND keeps the character's aspect (the gap
+     is a fixed share of the glyph baked into the 3.05% constant), so it never
+     stretches wide. Reveal per side tops out near 50% (a clean half); past that,
+     more reveal only comes from a bigger glyph, not a smaller clip. */
+  --seam-scale: 0.66;
+  font-size: calc(var(--reel-face-h) * var(--seam-scale));
   line-height: 1;
   text-transform: uppercase;
   /* Subtractive, but a mid warm brown rather than near-black, so multiplying it
@@ -242,17 +249,18 @@
   color: rgba(52, 38, 18, 0.82);
 }
 
-/* Left reel's right edge: the glyph's outer-left ~35% peeks past the edge, the
-   middle ~30% hidden across the gap. */
+/* The alignment point: half the glyph, plus half the fixed gap expressed as a
+   share of the glyph (3.05% at scale 1, divided by the scale as the glyph grows).
+   Left reel shows the outer-left half up to here; the rest hides in the gap. */
 .face3-seam--right {
   right: 0;
-  transform: translate(65%, -50%);
-  clip-path: inset(0 65% 0 0);
+  transform: translate(calc(50% + 3.05% / var(--seam-scale)), -50%);
+  clip-path: inset(0 calc(50% + 3.05% / var(--seam-scale)) 0 0);
 }
 
-/* Right reel's left edge: the glyph's outer-right ~35% peeks past the edge. */
+/* Right reel's left edge: mirror. */
 .face3-seam--left {
   left: 0;
-  transform: translate(-65%, -50%);
-  clip-path: inset(0 0 0 65%);
+  transform: translate(calc(-50% - 3.05% / var(--seam-scale)), -50%);
+  clip-path: inset(0 0 0 calc(50% + 3.05% / var(--seam-scale)));
 }

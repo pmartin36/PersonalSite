@@ -40,6 +40,119 @@
   letter-spacing: 0.04em;
 }
 
+/* Scroll-hint chevrons, one at the top edge, one at the bottom, telling the
+   visitor the box turns up and down. Drawn as SVG so the shape is exact, engraved
+   with the shared .machine-carve (shallow) values (translucent warm-brown stroke so
+   the stone reads through, gold lit lower lip, dark upper wall) - drop-shadow rather
+   than text-shadow because it is a shape, not text. font-size drives the em offsets
+   so the engrave scales with the arrow. */
+.face1-scroll {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(var(--face-h) * 0.052);
+  font-size: calc(var(--face-h) * 0.052);
+  color: rgba(64, 44, 18, 0.66);
+  pointer-events: none;
+  z-index: 1;
+  filter:
+    drop-shadow(0 0.06em 0.01em rgba(250, 226, 164, 0.7))
+    drop-shadow(0 -0.035em 0 rgba(22, 13, 4, 0.42));
+}
+
+.face1-scroll--up {
+  top: 2.3%;
+}
+
+.face1-scroll--down {
+  bottom: 2.3%;
+}
+
+.face1-scroll svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.face1-scroll path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* An engraved "4" cut into the stone behind the leaves, centred on the leaf mass.
+   z-index 1 puts it under the leaves layer (z-index 2), so at rest the foliage
+   covers the digit and only its lower stem pokes out below the leaves; skew the
+   leaves aside and the whole 4 is revealed. Uses the shared .machine-carve etch. */
+.face1-clue4 {
+  position: absolute;
+  /* Centred on the leaf-mass collider (its centre x ~= 9.7%). */
+  left: 10.3%;
+  top: 20.55%;
+  transform: translateX(-50%);
+  z-index: 1;
+  font-family: var(--display, serif);
+  font-weight: 700;
+  font-size: calc(var(--face-h) * 0.0612);
+  line-height: 1;
+}
+
+/* Static hit area over the resting leaf mass. It never transforms, so it can't
+   move out from under the cursor as the leaves skew - that back-and-forth was what
+   made the skew toggle on and off. Sized to the leaves' core (the painted cluster
+   fills only ~35% of its layer box), not the full transparent box. */
+.face1-leaves-hit {
+  position: absolute;
+  left: 6.6%;
+  top: 17.8%;
+  width: 6.2%;
+  height: 9.5%;
+  z-index: 3;
+  cursor: pointer;
+}
+
+/* A cluster of leaves overhanging the top-left, painted as its own layer (lifted
+   out of the base stone art) so it can move. Positioned to the exact box the
+   Leaves_Moveable PSD layer occupied on the 1820x1000 face. Pointer-transparent:
+   only the static hit area above catches hover/tap, so the moving art never fights
+   the collider. On hover (desktop) or tap (mobile) it skews aside, revealing the
+   bare stone beneath. */
+.face1-leaves {
+  position: absolute;
+  left: 0.33%;
+  top: 14.4%;
+  width: 12.637%;
+  height: 18.4%;
+  z-index: 2;
+  pointer-events: none;
+  background: image-set(
+      url('../assets/leaves_moveable.avif') type('image/avif'),
+      url('../assets/leaves_moveable.webp') type('image/webp')
+    ) left top / contain no-repeat;
+  /* Anchor the shear at the left edge (the leaves' base), so the left stays put
+     and the right end is what lifts. */
+  transform-origin: left center;
+  transition: transform 0.55s cubic-bezier(0.34, 1.1, 0.42, 1);
+  will-change: transform;
+}
+
+/* A single-axis vertical shear: horizontal lines tilt up toward the right, so the
+   right side rises (a true skew, not a rotation - a second skew axis would compose
+   into a rotation and read as a rigid tip). A small slide carries it left too. */
+.face1-leaves-hit:hover + .face1-leaves,
+.face1-leaves.is-skewed {
+  transform: translateX(-2.5%) skewY(-11deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .face1-leaves {
+    transition-duration: 0.01ms;
+  }
+}
+
 .face1-actions {
   position: absolute;
   left: 50%;

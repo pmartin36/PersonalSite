@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import FaceSurface from '../FaceSurface.jsx'
 import Clue from '../Clue.jsx'
 import { useMachine, faceIndex } from '../Machine.jsx'
@@ -9,9 +10,31 @@ const RESUME_WORD = 'resume'
 
 export default function FaceI() {
   const { rotateTo } = useMachine()
+  // Desktop skews the leaves aside on hover (pure CSS). Touch has no hover, so a
+  // tap skews them, then they settle back on their own after a beat.
+  const [leavesSkewed, setLeavesSkewed] = useState(false)
+  const leavesTimer = useRef(null)
+  useEffect(() => () => clearTimeout(leavesTimer.current), [])
+  const nudgeLeaves = () => {
+    clearTimeout(leavesTimer.current)
+    setLeavesSkewed(true)
+    leavesTimer.current = setTimeout(() => setLeavesSkewed(false), 1800)
+  }
 
   return (
     <FaceSurface aria-label="Face I">
+      {/* Scroll hints: deep-engraved chevrons top and bottom telling the visitor
+          the box turns up/down. Decorative, so aria-hidden and no pointer events. */}
+      <div className="face1-scroll face1-scroll--up" aria-hidden="true">
+        <svg viewBox="0 0 24 14">
+          <path d="M2 12 L12 3 L22 12" />
+        </svg>
+      </div>
+      <div className="face1-scroll face1-scroll--down" aria-hidden="true">
+        <svg viewBox="0 0 24 14">
+          <path d="M2 2 L12 11 L22 2" />
+        </svg>
+      </div>
       {/* The carved name: the same sandstone as the face, clipped to the
           letterforms and shifted straight down in brightness by a per-channel
           subtraction (feComponentTransfer). Subtraction keeps the crack sharp and
@@ -122,6 +145,14 @@ export default function FaceI() {
           Paul Martin
         </text>
       </svg>
+      <div className="face1-clue4 machine-carve" aria-hidden="true">
+        4
+      </div>
+      <div className="face1-leaves-hit" aria-hidden="true" onClick={nudgeLeaves} />
+      <div
+        className={`face1-leaves${leavesSkewed ? ' is-skewed' : ''}`}
+        aria-hidden="true"
+      />
       <h1 className="face1-name">Paul Martin</h1>
       <div className="face1-actions">
         <a
