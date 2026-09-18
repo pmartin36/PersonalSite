@@ -55,7 +55,7 @@ export const SAMPLES = {
 // Sample levels. The jungle bed sits well under the effects.
 const TURN_GAIN = 0.7
 const INTRO_GAIN = 0.9
-const JUNGLE_GAIN = 0.225
+const JUNGLE_GAIN = 0.18
 // The artifact detonation (crystal core exploding, ears ringing) on ignition.
 // Left just under unity so it stacks with the jungle bed without clipping.
 const BURST_GAIN = 0.92
