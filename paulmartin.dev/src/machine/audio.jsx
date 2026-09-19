@@ -61,9 +61,9 @@ const JUNGLE_GAIN = 0.09
 const BURST_GAIN = 0.92
 // Lid reveal: the grind is the action (prominent), the power-up sits just under
 // it, and the idle gear bed sits low like the jungle.
-const LID_GAIN = 0.9
-const POWERUP_GAIN = 0.7
-const GEARS_GAIN = 0.3
+const LID_GAIN = 0.574
+const POWERUP_GAIN = 0.4
+const GEARS_GAIN = 0.191
 // Light UI accents. Kept low so they never dominate.
 const UI_GAIN = 0.4
 // The reel spin sits like the turn, a bit under so a fast flurry isn't fatiguing.
