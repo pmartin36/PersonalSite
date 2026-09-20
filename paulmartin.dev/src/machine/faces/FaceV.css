@@ -377,6 +377,30 @@
   filter: brightness(1.12);
 }
 
+/* A "U" carved into the jade at the top-right of the up key. The same engrave
+   treatment as the stone carve, retinted for jade: a translucent dark-green fill so
+   the tile's green reads through darkened (an etch, not brown paint), a cool pale-
+   green lit lower lip, and a dark upper wall. */
+.face5-pad__glyph {
+  position: absolute;
+  top: 9%;
+  right: 10%;
+  z-index: 2;
+  pointer-events: none;
+  font-family: var(--display, serif);
+  font-weight: 700;
+  font-size: calc(var(--face-h) * 0.0255);
+  line-height: 1;
+  /* Dark jade: legibility comes from the LIT bevel, not the dark recess (which has
+     no contrast to work with on a dark tile). So the fill is a light jade catching
+     the light, defined by a dark upper wall and a soft dark drop below - an incision
+     lit from above, the inverse emphasis of the engrave on bright gold. */
+  color: rgba(184, 220, 148, 0.8);
+  text-shadow:
+    0 -0.028em 0 rgba(4, 10, 3, 0.6),
+    0 0.03em 0.02em rgba(2, 6, 1, 0.4);
+}
+
 /* The painted button face fills the key. */
 .face5-pad__img {
   position: absolute;

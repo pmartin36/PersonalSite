@@ -104,6 +104,11 @@ function ArrowPad({ onPress, onPressStart }) {
               aria-hidden="true"
               draggable="false"
             />
+            {direction === 'Up' && (
+              <span className="face5-pad__glyph" aria-hidden="true">
+                U
+              </span>
+            )}
           </button>
         </span>
       ))}
