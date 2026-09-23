@@ -226,9 +226,9 @@
 /* A giant icon carved into the tile: a translucent recess so the stone reads
    through it, a dark top wall and a lit lower lip for depth. Decorative only, so
    clicking it slides the tile. */
-/* A small engraved icon stacked above the value; the pair is the link, sized to
-   just the icon+text (not the whole tile) and centred a hair below middle, so
-   only it reacts and the surrounding tile still slides. */
+/* A small engraved icon stacked above the value, centred a hair below middle. The
+   container is not interactive: only the value text below is the link; the icon and
+   the surrounding tile slide. */
 .face4-contact {
   position: absolute;
   left: 50%;
@@ -258,11 +258,14 @@
   transition: fill 0.16s ease;
 }
 
+/* Only the value text is the link. */
 .face4-contact__value {
   max-width: 92%;
   font-family: var(--mono, monospace);
   font-size: 1.3rem;
   white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
   color: rgba(64, 44, 18, 0.66);
   text-shadow:
     0 0.06em 0.01em rgba(250, 226, 164, 0.7),
@@ -270,14 +273,9 @@
   transition: color 0.16s ease;
 }
 
-/* Hover deepens the carve of both the icon and the value, the same engraving
+/* Hover deepens the carve of the value only (the link), the same engraving
    highlight used on the Face I actions and the Face III GitHub link. */
-.face4-contact:hover .face4-contact__value,
-.face4-contact:focus-visible .face4-contact__value {
+.face4-contact__value:hover,
+.face4-contact__value:focus-visible {
   color: rgba(52, 38, 18, 0.82);
-}
-
-.face4-contact:hover .face4-contact__icon path,
-.face4-contact:focus-visible .face4-contact__icon path {
-  fill: rgba(52, 38, 18, 0.82);
 }

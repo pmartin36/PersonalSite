@@ -129,24 +129,26 @@ const CONTACT_ICONS = {
 }
 
 // A contact tile: a giant icon carved into the tile, with the value below it.
-// Only the value is the link (so most of the tile stays draggable), and only the
-// value lights up. Clicking the link always navigates (it stops the click from
-// reaching the tile's slide handler); clicking the surrounding stone slides.
+// Only the value TEXT is the link, and only it lights up; the icon is decorative.
+// Clicking the link always navigates (it stops the click from reaching the tile's
+// slide handler); clicking the icon or the surrounding stone slides.
 function ContactTile({ tile, onSlide }) {
   const Icon = CONTACT_ICONS[tile.icon]
   return (
     <div className="face4-tile face4-tile--contact" onClick={onSlide}>
-      <a
-        className="face4-contact"
-        href={tile.href}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={tile.label}
-        onClick={(event) => event.stopPropagation()}
-      >
+      <span className="face4-contact">
         <Icon className="face4-contact__icon" />
-        <span className="face4-contact__value">{tile.value}</span>
-      </a>
+        <a
+          className="face4-contact__value"
+          href={tile.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={tile.label}
+          onClick={(event) => event.stopPropagation()}
+        >
+          {tile.value}
+        </a>
+      </span>
     </div>
   )
 }
