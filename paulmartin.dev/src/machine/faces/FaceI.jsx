@@ -80,7 +80,7 @@ export default function FaceI() {
               alpha up and subtract it (composite out) to isolate the lower edge,
               then flood it warm gold. Offsets in user units (tuner px x 1.17). */}
           <filter id="face1-lip" x="-30%" y="-30%" width="160%" height="160%" colorInterpolationFilters="sRGB">
-            <feOffset in="SourceAlpha" dx="0" dy="-7" result="up" />
+            <feOffset in="SourceAlpha" dx="0" dy="-5.04" result="up" />
             <feComposite in="SourceAlpha" in2="up" operator="out" result="band" />
             <feGaussianBlur in="band" stdDeviation="1.4" result="soft" />
             <feFlood floodColor="#f2c77d" floodOpacity="0.74" result="col" />
@@ -89,11 +89,11 @@ export default function FaceI() {
           {/* Core: the deepest shadow, a thin near-black line just above the lit
               lip (a wider edge band minus the lip band). */}
           <filter id="face1-core" x="-30%" y="-30%" width="160%" height="160%" colorInterpolationFilters="sRGB">
-            <feOffset in="SourceAlpha" dx="0" dy="-15" result="up2" />
+            <feOffset in="SourceAlpha" dx="0" dy="-10.8" result="up2" />
             <feComposite in="SourceAlpha" in2="up2" operator="out" result="wide" />
-            <feOffset in="SourceAlpha" dx="0" dy="-7" result="cut" />
+            <feOffset in="SourceAlpha" dx="0" dy="-5.04" result="cut" />
             <feComposite in="wide" in2="cut" operator="out" result="ring" />
-            <feFlood floodColor="#150a02" floodOpacity="0.28" result="col2" />
+            <feFlood floodColor="#3a210d" floodOpacity="0.28" result="col2" />
             <feComposite in="col2" in2="ring" operator="in" />
           </filter>
           <clipPath id="face1-clip">
@@ -116,10 +116,10 @@ export default function FaceI() {
               fontSize="158"
               x="910"
           y="500"
-          transform="translate(18,-5.3)"
+          transform="translate(18,-4.8)"
           textAnchor="middle"
           dominantBaseline="central"
-          fill="rgba(18,11,3,0.9)"
+          fill="rgba(45,26,11,0.9)"
         >
           Paul Martin
         </text>
